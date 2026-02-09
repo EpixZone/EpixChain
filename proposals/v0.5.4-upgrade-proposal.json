@@ -1,0 +1,17 @@
+{
+  "messages": [
+    {
+      "@type": "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
+      "authority": "epix10d07y265gmmuvt4z0w9aw880jnsr700j0fas3g",
+      "plan": {
+        "name": "v0.5.4",
+        "height": "",
+        "info": "https://github.com/EpixZone/EpixChain/releases/tag/v0.5.4"
+      }
+    }
+  ],
+  "metadata": "EpixChain v0.5.4 Upgrade Proposal - IBC Wallet Compatibility Fix + Min Validator Self-Delegation",
+  "deposit": "5000000000000000000000aepix",
+  "title": "EpixChain v0.5.4 IBC Wallet Fix + Min Validator Self-Delegation",
+  "summary": "## EpixChain v0.5.4 Upgrade\n\n### IBC Wallet Compatibility Fix\nFixes IBC transfer signature verification for Keplr and Leap wallet users.\n\n### Minimum Validator Self-Delegation\nSets a minimum validator self-delegation requirement of **1,000,000 EPIX** to ensure validators maintain meaningful stake in the network."
+}
