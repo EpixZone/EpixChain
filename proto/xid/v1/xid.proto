@@ -1,0 +1,67 @@
+syntax = "proto3";
+package xid.v1;
+
+option go_package = "github.com/cosmos/evm/x/xid/types";
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+
+// NameRecord represents a registered name within a TLD.
+message NameRecord {
+  // name is the registered label (e.g. "alice")
+  string name = 1;
+  // tld is the top-level domain (e.g. "epix")
+  string tld = 2;
+  // owner is the bech32 address of the name owner
+  string owner = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // registered_at is the block height when the name was registered
+  int64 registered_at = 4;
+}
+
+// TLDConfig defines a top-level domain and its pricing configuration.
+message TLDConfig {
+  // tld is the top-level domain string (e.g. "epix")
+  string tld = 1;
+  // enabled indicates whether new registrations are accepted
+  bool enabled = 2;
+  // price_tiers defines the length-based pricing schedule
+  repeated PriceTier price_tiers = 3 [(gogoproto.nullable) = false];
+}
+
+// PriceTier defines the registration price for names up to a given length.
+message PriceTier {
+  // max_length is the maximum name length (inclusive) for this tier
+  uint32 max_length = 1;
+  // price is the registration cost in base denomination (aepix)
+  string price = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// Profile contains identity metadata associated with a name.
+message Profile {
+  // avatar is a URL or IPFS hash for the user's avatar image
+  string avatar = 1;
+  // bio is a short text description
+  string bio = 2;
+  // metadata contains extensible key-value pairs
+  repeated KeyValue metadata = 3 [(gogoproto.nullable) = false];
+}
+
+// KeyValue is a generic key-value pair for extensible metadata.
+message KeyValue {
+  string key = 1;
+  string value = 2;
+}
+
+// DNSRecord represents a DNS resource record.
+message DNSRecord {
+  // record_type is the DNS record type (1=A, 2=AAAA, 5=CNAME, 16=TXT)
+  uint32 record_type = 1;
+  // value is the record data
+  string value = 2;
+  // ttl is the time-to-live in seconds
+  uint32 ttl = 3;
+}

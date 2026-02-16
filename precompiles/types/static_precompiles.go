@@ -18,8 +18,10 @@ import (
 	"github.com/cosmos/evm/precompiles/p256"
 	slashingprecompile "github.com/cosmos/evm/precompiles/slashing"
 	stakingprecompile "github.com/cosmos/evm/precompiles/staking"
+	xidprecompile "github.com/cosmos/evm/precompiles/xid"
 	erc20Keeper "github.com/cosmos/evm/x/erc20/keeper"
 	transferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
+	xidkeeper "github.com/cosmos/evm/x/xid/keeper"
 	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -182,5 +184,14 @@ func (s StaticPrecompiles) WithSlashingPrecompile(
 	)
 
 	s[slashingPrecompile.Address()] = slashingPrecompile
+	return s
+}
+
+func (s StaticPrecompiles) WithXIDPrecompile(
+	xidKeeper xidkeeper.Keeper,
+	bankKeeper cmn.BankKeeper,
+) StaticPrecompiles {
+	xidPc := xidprecompile.NewPrecompile(xidKeeper, bankKeeper)
+	s[xidPc.Address()] = xidPc
 	return s
 }

@@ -16,6 +16,7 @@ import (
 
 	"github.com/cosmos/evm/config"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	xidtypes "github.com/cosmos/evm/x/xid/types"
 )
 
 // Upgrade names
@@ -23,9 +24,10 @@ const UpgradeName_v0_5_1 = "v0.5.1"
 const UpgradeName_v0_5_2 = "v0.5.2"
 const UpgradeName_v0_5_3 = "v0.5.3"
 const UpgradeName_v0_5_4 = "v0.5.4"
+const UpgradeName_v0_5_5 = "v0.5.5"
 
 // UpgradeName is the current upgrade (for store upgrades)
-const UpgradeName = UpgradeName_v0_5_4
+const UpgradeName = UpgradeName_v0_5_5
 
 // RegisterUpgradeHandlers registers upgrade handlers for v0.5.1 and v0.5.2
 func (app EVMD) RegisterUpgradeHandlers() {
@@ -126,12 +128,27 @@ func (app EVMD) RegisterUpgradeHandlers() {
 		},
 	)
 
+	// Register v0.5.5 upgrade handler - xID Identity System
+	app.UpgradeKeeper.SetUpgradeHandler(
+		UpgradeName_v0_5_5,
+		func(ctx context.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+			sdkCtx := sdk.UnwrapSDKContext(ctx)
+			sdkCtx.Logger().Info("Starting EpixChain v0.5.5 upgrade - xID Identity System...")
+			sdkCtx.Logger().Info("This upgrade introduces the xID on-chain identity and DNS module")
+
+			// RunMigrations will call InitGenesis for the new xid module
+			// (since it has no prior version in the version map), which creates
+			// the default .epix TLD with length-based pricing.
+			return app.ModuleManager.RunMigrations(ctx, app.Configurator(), fromVM)
+		},
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(err)
 	}
 
-	// Handle v0.5.1, v0.5.2, and v0.5.3 upgrades
+	// Handle v0.5.1 through v0.5.4 upgrades (no new store keys)
 	if (upgradeInfo.Name == UpgradeName_v0_5_1 ||
 		upgradeInfo.Name == UpgradeName_v0_5_2 ||
 		upgradeInfo.Name == UpgradeName_v0_5_3 ||
@@ -140,7 +157,15 @@ func (app EVMD) RegisterUpgradeHandlers() {
 		storeUpgrades := storetypes.StoreUpgrades{
 			Added: []string{},
 		}
-		// configure store loader that checks if version == upgradeHeight and applies store upgrades
+		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
+	}
+
+	// Handle v0.5.5 upgrade - adds xID module store key
+	if upgradeInfo.Name == UpgradeName_v0_5_5 &&
+		!app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		storeUpgrades := storetypes.StoreUpgrades{
+			Added: []string{xidtypes.StoreKey},
+		}
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
 	}
 }

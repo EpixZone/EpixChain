@@ -1,0 +1,38 @@
+syntax = "proto3";
+package xid.v1;
+
+option go_package = "github.com/cosmos/evm/x/xid/types";
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "xid/v1/xid.proto";
+
+// GenesisState defines the xid module's genesis state.
+message GenesisState {
+  // params defines the module parameters
+  Params params = 1 [(gogoproto.nullable) = false];
+  // tlds is the list of registered top-level domains
+  repeated TLDConfig tlds = 2 [(gogoproto.nullable) = false];
+  // names is the list of all registered name entries
+  repeated NameEntry names = 3 [(gogoproto.nullable) = false];
+}
+
+// Params defines the xid module parameters.
+message Params {
+  option (gogoproto.equal) = true;
+  option (gogoproto.goproto_stringer) = false;
+
+  // fee_denom is the denomination used for registration fees
+  string fee_denom = 1;
+  // min_name_length is the minimum allowed name length
+  uint32 min_name_length = 2;
+  // max_name_length is the maximum allowed name length
+  uint32 max_name_length = 3;
+}
+
+// NameEntry bundles a name record with its profile and DNS records for genesis export.
+message NameEntry {
+  NameRecord record = 1 [(gogoproto.nullable) = false];
+  Profile profile = 2;
+  repeated DNSRecord dns_records = 3 [(gogoproto.nullable) = false];
+}

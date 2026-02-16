@@ -1,0 +1,127 @@
+syntax = "proto3";
+package xid.v1;
+
+option go_package = "github.com/cosmos/evm/x/xid/types";
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "google/api/annotations.proto";
+import "xid/v1/xid.proto";
+import "xid/v1/genesis.proto";
+
+// Query defines the xid module's gRPC query service.
+service Query {
+  // ResolveName resolves a name.tld to an owner address.
+  rpc ResolveName(QueryResolveNameRequest) returns (QueryResolveNameResponse) {
+    option (google.api.http).get = "/xid/v1/resolve/{tld}/{name}";
+  }
+  // ReverseResolve finds the primary name for an address.
+  rpc ReverseResolve(QueryReverseResolveRequest) returns (QueryReverseResolveResponse) {
+    option (google.api.http).get = "/xid/v1/reverse/{address}";
+  }
+  // GetProfile returns the profile for a name.
+  rpc GetProfile(QueryGetProfileRequest) returns (QueryGetProfileResponse) {
+    option (google.api.http).get = "/xid/v1/profile/{tld}/{name}";
+  }
+  // GetDNSRecords returns all DNS records for a name.
+  rpc GetDNSRecords(QueryGetDNSRecordsRequest) returns (QueryGetDNSRecordsResponse) {
+    option (google.api.http).get = "/xid/v1/dns/{tld}/{name}";
+  }
+  // GetTLD returns the configuration for a TLD.
+  rpc GetTLD(QueryGetTLDRequest) returns (QueryGetTLDResponse) {
+    option (google.api.http).get = "/xid/v1/tld/{tld}";
+  }
+  // ListTLDs returns all registered TLDs.
+  rpc ListTLDs(QueryListTLDsRequest) returns (QueryListTLDsResponse) {
+    option (google.api.http).get = "/xid/v1/tlds";
+  }
+  // GetNamesByOwner returns all names owned by an address.
+  rpc GetNamesByOwner(QueryGetNamesByOwnerRequest) returns (QueryGetNamesByOwnerResponse) {
+    option (google.api.http).get = "/xid/v1/names/{owner}";
+  }
+  // Params returns the module parameters.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/xid/v1/params";
+  }
+  // GetRegistrationFee returns the registration fee for a given name and TLD.
+  rpc GetRegistrationFee(QueryGetRegistrationFeeRequest) returns (QueryGetRegistrationFeeResponse) {
+    option (google.api.http).get = "/xid/v1/fee/{tld}/{name}";
+  }
+}
+
+message QueryResolveNameRequest {
+  string name = 1;
+  string tld = 2;
+}
+
+message QueryResolveNameResponse {
+  NameRecord record = 1;
+}
+
+message QueryReverseResolveRequest {
+  string address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+message QueryReverseResolveResponse {
+  // primary_name is the first name found for this address
+  NameRecord primary_name = 1;
+}
+
+message QueryGetProfileRequest {
+  string name = 1;
+  string tld = 2;
+}
+
+message QueryGetProfileResponse {
+  Profile profile = 1;
+}
+
+message QueryGetDNSRecordsRequest {
+  string name = 1;
+  string tld = 2;
+}
+
+message QueryGetDNSRecordsResponse {
+  repeated DNSRecord records = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryGetTLDRequest {
+  string tld = 1;
+}
+
+message QueryGetTLDResponse {
+  TLDConfig tld_config = 1;
+}
+
+message QueryListTLDsRequest {}
+
+message QueryListTLDsResponse {
+  repeated TLDConfig tlds = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryGetNamesByOwnerRequest {
+  string owner = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+message QueryGetNamesByOwnerResponse {
+  repeated NameRecord names = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryParamsRequest {}
+
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryGetRegistrationFeeRequest {
+  string name = 1;
+  string tld = 2;
+}
+
+message QueryGetRegistrationFeeResponse {
+  string fee = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
