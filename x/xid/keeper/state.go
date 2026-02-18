@@ -88,19 +88,20 @@ func (k Keeper) GetNamesByOwnerAddr(ctx sdk.Context, owner sdk.AccAddress) []typ
 
 	var records []types.NameRecord
 	for ; iterator.Valid(); iterator.Next() {
-		// Parse the key to extract tld and name
+		// KVStorePrefixIterator returns full keys (not stripped).
+		// Full key: [prefixByte][owner 20 bytes][len(tld)][tld][name]
+		// Skip past the prefix to get [len(tld)][tld][name]
 		key := iterator.Key()
-		// key format after prefix: [len(tld)][tld][name]
-		// prefix is already stripped by the prefix iterator
-		if len(key) < 1 {
+		remaining := key[len(prefix):]
+		if len(remaining) < 1 {
 			continue
 		}
-		tldLen := int(key[0])
-		if len(key) < 1+tldLen {
+		tldLen := int(remaining[0])
+		if len(remaining) < 1+tldLen {
 			continue
 		}
-		tld := string(key[1 : 1+tldLen])
-		name := string(key[1+tldLen:])
+		tld := string(remaining[1 : 1+tldLen])
+		name := string(remaining[1+tldLen:])
 
 		record, found := k.GetNameRecord(ctx, tld, name)
 		if found {
