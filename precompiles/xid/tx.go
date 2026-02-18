@@ -7,16 +7,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	"cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/evm/x/xid/types"
-
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
-// Register handles the payable register(name, tld) function.
-// The caller must send the registration fee as msg.value.
+// Register handles the register(name, tld) function.
+// The registration fee is deducted directly from the caller's bank balance
+// and burned via the xID module account.
 func (p Precompile) Register(
 	ctx sdk.Context,
 	contract *vm.Contract,
@@ -40,67 +37,11 @@ func (p Precompile) Register(
 	caller := contract.Caller()
 	callerAddr := sdk.AccAddress(caller.Bytes())
 
-	// Calculate the required fee
-	requiredFee, err := p.xidKeeper.CalculateRegistrationFee(ctx, tld, name)
-	if err != nil {
+	// Delegate to the keeper which handles validation, fee collection
+	// (SendCoinsFromAccountToModule), burning (BurnCoins), and storage.
+	if err := p.xidKeeper.RegisterNameRecord(ctx, callerAddr, tld, name); err != nil {
 		return nil, err
 	}
-
-	// Verify the sent value covers the fee
-	sentValue := contract.Value()
-	if sentValue == nil || sentValue.IsZero() {
-		return nil, fmt.Errorf("registration requires a fee of %s", requiredFee.String())
-	}
-
-	sentAmount := math.NewIntFromBigInt(sentValue.ToBig())
-	if sentAmount.LT(requiredFee.Amount) {
-		return nil, fmt.Errorf("insufficient fee: sent %s, required %s", sentAmount.String(), requiredFee.Amount.String())
-	}
-
-	// The EVM has already transferred the value from caller to the precompile address.
-	// Now send from precompile address to the xid module account, then burn.
-	precompileAccAddr := sdk.AccAddress(p.Address().Bytes())
-	feeCoins := sdk.NewCoins(sdk.NewCoin(evmtypes.GetEVMCoinDenom(), requiredFee.Amount))
-
-	if err := p.bankKeeper.SendCoins(ctx, precompileAccAddr, sdk.AccAddress(types.ModuleAddress.Bytes()), feeCoins); err != nil {
-		return nil, fmt.Errorf("failed to send fee to module: %w", err)
-	}
-
-	// Register the name (this handles storage + owner index but NOT the fee since we handled it above)
-	// We call the keeper directly for storage operations
-	if err := types.ValidateName(name); err != nil {
-		return nil, err
-	}
-
-	if p.xidKeeper.HasNameRecord(ctx, tld, name) {
-		return nil, fmt.Errorf("%s.%s is already registered", name, tld)
-	}
-
-	tldConfig, found := p.xidKeeper.GetTLDConfig(ctx, tld)
-	if !found {
-		return nil, fmt.Errorf("TLD %q not found", tld)
-	}
-	if !tldConfig.Enabled {
-		return nil, fmt.Errorf("TLD %q is disabled", tld)
-	}
-
-	// Burn the fee from the module account
-	// NOTE: The bank keeper's BurnCoins requires the module to have Burner permission
-	// We use SendCoinsFromAccountToModule then BurnCoins pattern
-	moduleAddr := sdk.AccAddress(types.ModuleAddress.Bytes())
-	if err := p.bankKeeper.SendCoins(ctx, moduleAddr, sdk.AccAddress(types.ModuleAddress.Bytes()), sdk.Coins{}); err != nil {
-		// This is a no-op send, the burn happens next
-	}
-
-	// Store the name record
-	record := types.NameRecord{
-		Name:         name,
-		Tld:          tld,
-		Owner:        callerAddr.String(),
-		RegisteredAt: ctx.BlockHeight(),
-	}
-	p.xidKeeper.SetNameRecord(ctx, record)
-	p.xidKeeper.SetOwnerIndex(ctx, callerAddr, tld, name)
 
 	// Emit EVM event
 	if err := p.EmitNameRegistered(ctx, stateDB, caller, name, tld); err != nil {
