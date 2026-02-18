@@ -136,6 +136,17 @@ func (app EVMD) RegisterUpgradeHandlers() {
 			sdkCtx.Logger().Info("Starting EpixChain v0.5.5 upgrade - xID Identity System...")
 			sdkCtx.Logger().Info("This upgrade introduces the xID on-chain identity and DNS module")
 
+			// Add the xID precompile to the active static precompiles list
+			evmParams := app.EVMKeeper.GetParams(sdkCtx)
+			evmParams.ActiveStaticPrecompiles = append(
+				evmParams.ActiveStaticPrecompiles,
+				evmtypes.XIDPrecompileAddress,
+			)
+			if err := app.EVMKeeper.SetParams(sdkCtx, evmParams); err != nil {
+				return nil, fmt.Errorf("failed to set EVM params with xID precompile: %w", err)
+			}
+			sdkCtx.Logger().Info("Enabled xID precompile at " + evmtypes.XIDPrecompileAddress)
+
 			// RunMigrations will call InitGenesis for the new xid module
 			// (since it has no prior version in the version map), which creates
 			// the default .epix TLD with length-based pricing.
@@ -168,6 +179,7 @@ func (app EVMD) RegisterUpgradeHandlers() {
 		}
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
 	}
+
 }
 
 // applyRecoveryFix contains the actual recovery logic for v0.5.1/v0.5.2 upgrades
