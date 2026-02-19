@@ -30,6 +30,10 @@ service Msg {
   rpc UpdateTLDConfig(MsgUpdateTLDConfig) returns (MsgUpdateTLDConfigResponse);
   // UpdateParams updates the module parameters (governance only).
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+  // SetEpixNetPeer adds or updates an EpixNet peer for a name.
+  rpc SetEpixNetPeer(MsgSetEpixNetPeer) returns (MsgSetEpixNetPeerResponse);
+  // DeleteEpixNetPeer removes an EpixNet peer from a name.
+  rpc DeleteEpixNetPeer(MsgDeleteEpixNetPeer) returns (MsgDeleteEpixNetPeerResponse);
 }
 
 // MsgRegisterName registers a name under a TLD.
@@ -128,3 +132,29 @@ message MsgUpdateParams {
 }
 
 message MsgUpdateParamsResponse {}
+
+// MsgSetEpixNetPeer adds or updates an EpixNet peer for a name.
+message MsgSetEpixNetPeer {
+  option (cosmos.msg.v1.signer) = "owner";
+  option (amino.name) = "cosmos/evm/x/xid/MsgSetEpixNetPeer";
+
+  string owner = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string name = 2;
+  string tld = 3;
+  EpixNetPeer peer = 4 [(gogoproto.nullable) = false];
+}
+
+message MsgSetEpixNetPeerResponse {}
+
+// MsgDeleteEpixNetPeer removes an EpixNet peer from a name.
+message MsgDeleteEpixNetPeer {
+  option (cosmos.msg.v1.signer) = "owner";
+  option (amino.name) = "cosmos/evm/x/xid/MsgDeleteEpixNetPeer";
+
+  string owner = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string name = 2;
+  string tld = 3;
+  string address = 4;
+}
+
+message MsgDeleteEpixNetPeerResponse {}
