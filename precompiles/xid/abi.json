@@ -671,5 +671,29 @@
     ],
     "stateMutability": "view",
     "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "bech32Addr",
+        "type": "string"
+      }
+    ],
+    "name": "reverseResolveBech32",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "tld",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
   }
 ]

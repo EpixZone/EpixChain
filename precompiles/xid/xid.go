@@ -38,8 +38,9 @@ const (
 	GetProfileMethod         = "getProfile"
 	GetDNSRecordMethod       = "getDNSRecord"
 	GetRegistrationFeeMethod = "getRegistrationFee"
-	GetEpixNetPeersMethod    = "getEpixNetPeers"
-	GetContentRootMethod     = "getContentRoot"
+	GetEpixNetPeersMethod           = "getEpixNetPeers"
+	GetContentRootMethod            = "getContentRoot"
+	ReverseResolveBech32Method      = "reverseResolveBech32"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}
@@ -150,6 +151,8 @@ func (p Precompile) Execute(ctx sdk.Context, stateDB vm.StateDB, contract *vm.Co
 		bz, err = p.GetEpixNetPeers(ctx, method, args)
 	case GetContentRootMethod:
 		bz, err = p.GetContentRoot(ctx, method, args)
+	case ReverseResolveBech32Method:
+		bz, err = p.ReverseResolveBech32(ctx, method, args)
 	default:
 		return nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
 	}

@@ -225,5 +225,35 @@ func (p Precompile) GetContentRoot(
 	return method.Outputs.Pack(root.Root, root.UpdatedAt)
 }
 
+// ReverseResolveBech32 handles the reverseResolveBech32(bech32Addr) view function.
+// Accepts a bech32 string (e.g. "epix1...") and returns the primary name and TLD.
+func (p Precompile) ReverseResolveBech32(
+	ctx sdk.Context,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	if len(args) != 1 {
+		return nil, fmt.Errorf("expected 1 argument, got %d", len(args))
+	}
+
+	bech32Addr, ok := args[0].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid argument type for bech32Addr: %T", args[0])
+	}
+
+	ownerAddr, err := sdk.AccAddressFromBech32(bech32Addr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid bech32 address: %s", bech32Addr)
+	}
+
+	names := p.xidKeeper.GetNamesByOwnerAddr(ctx, ownerAddr)
+
+	if len(names) == 0 {
+		return method.Outputs.Pack("", "")
+	}
+
+	return method.Outputs.Pack(names[0].Name, names[0].Tld)
+}
+
 // ensure big.Int is used
 var _ = (*big.Int)(nil)
