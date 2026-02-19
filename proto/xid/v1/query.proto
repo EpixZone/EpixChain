@@ -56,6 +56,10 @@ service Query {
   rpc GetStats(QueryGetStatsRequest) returns (QueryGetStatsResponse) {
     option (google.api.http).get = "/xid/v1/stats";
   }
+  // GetEpixNetPeers returns all EpixNet peers for a name.
+  rpc GetEpixNetPeers(QueryGetEpixNetPeersRequest) returns (QueryGetEpixNetPeersResponse) {
+    option (google.api.http).get = "/xid/v1/epixnet/{tld}/{name}";
+  }
 }
 
 message QueryResolveNameRequest {
@@ -159,4 +163,13 @@ message QueryGetStatsResponse {
   uint64 total_names = 1;
   string total_fees_burned = 2;
   repeated TLDStats tld_stats = 3 [(gogoproto.nullable) = false];
+}
+
+message QueryGetEpixNetPeersRequest {
+  string name = 1;
+  string tld = 2;
+}
+
+message QueryGetEpixNetPeersResponse {
+  repeated EpixNetPeer peers = 1 [(gogoproto.nullable) = false];
 }
