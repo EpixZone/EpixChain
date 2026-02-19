@@ -15,8 +15,10 @@ const (
 	EventNameRegistered   = "NameRegistered"
 	EventNameTransferred  = "NameTransferred"
 	EventProfileUpdated   = "ProfileUpdated"
-	EventDNSRecordSet     = "DNSRecordSet"
-	EventDNSRecordDeleted = "DNSRecordDeleted"
+	EventDNSRecordSet        = "DNSRecordSet"
+	EventDNSRecordDeleted    = "DNSRecordDeleted"
+	EventEpixNetPeerSet      = "EpixNetPeerSet"
+	EventEpixNetPeerDeleted  = "EpixNetPeerDeleted"
 )
 
 // EmitNameRegistered emits a NameRegistered event to the EVM state DB.
@@ -173,6 +175,60 @@ func (p Precompile) EmitDNSRecordDeleted(
 
 	arguments := event.Inputs.NonIndexed()
 	packed, err := arguments.Pack(name, tld, recordType)
+	if err != nil {
+		return err
+	}
+
+	stateDB.AddLog(&ethtypes.Log{
+		Address:     p.Address(),
+		Topics:      topics,
+		Data:        packed,
+		BlockNumber: uint64(ctx.BlockHeight()),
+	})
+
+	return nil
+}
+
+// EmitEpixNetPeerSet emits an EpixNetPeerSet event to the EVM state DB.
+func (p Precompile) EmitEpixNetPeerSet(
+	ctx sdk.Context,
+	stateDB vm.StateDB,
+	name, tld, peerAddress, label string,
+) error {
+	event := p.Events[EventEpixNetPeerSet]
+
+	topics := make([]common.Hash, 1)
+	topics[0] = event.ID
+
+	arguments := event.Inputs.NonIndexed()
+	packed, err := arguments.Pack(name, tld, peerAddress, label)
+	if err != nil {
+		return err
+	}
+
+	stateDB.AddLog(&ethtypes.Log{
+		Address:     p.Address(),
+		Topics:      topics,
+		Data:        packed,
+		BlockNumber: uint64(ctx.BlockHeight()),
+	})
+
+	return nil
+}
+
+// EmitEpixNetPeerDeleted emits an EpixNetPeerDeleted event to the EVM state DB.
+func (p Precompile) EmitEpixNetPeerDeleted(
+	ctx sdk.Context,
+	stateDB vm.StateDB,
+	name, tld, peerAddress string,
+) error {
+	event := p.Events[EventEpixNetPeerDeleted]
+
+	topics := make([]common.Hash, 1)
+	topics[0] = event.ID
+
+	arguments := event.Inputs.NonIndexed()
+	packed, err := arguments.Pack(name, tld, peerAddress)
 	if err != nil {
 		return err
 	}

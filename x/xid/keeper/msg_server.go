@@ -195,3 +195,63 @@ func (k Keeper) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) 
 
 	return &types.MsgUpdateParamsResponse{}, nil
 }
+
+// SetEpixNetPeer handles MsgSetEpixNetPeer
+func (k Keeper) SetEpixNetPeer(goCtx context.Context, msg *types.MsgSetEpixNetPeer) (*types.MsgSetEpixNetPeerResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Verify name exists and caller is owner
+	record, found := k.GetNameRecord(ctx, msg.Tld, msg.Name)
+	if !found {
+		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", msg.Name, msg.Tld)
+	}
+	if record.Owner != msg.Owner {
+		return nil, errorsmod.Wrapf(types.ErrNotOwner, "sender %s is not the owner", msg.Owner)
+	}
+
+	if err := k.SetEpixNetPeerEntry(ctx, msg.Tld, msg.Name, msg.Peer); err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			"xid_epixnet_peer_set",
+			sdk.NewAttribute("name", msg.Name+"."+msg.Tld),
+			sdk.NewAttribute("address", msg.Peer.Address),
+			sdk.NewAttribute("label", msg.Peer.Label),
+		),
+	})
+
+	return &types.MsgSetEpixNetPeerResponse{}, nil
+}
+
+// DeleteEpixNetPeer handles MsgDeleteEpixNetPeer
+func (k Keeper) DeleteEpixNetPeer(goCtx context.Context, msg *types.MsgDeleteEpixNetPeer) (*types.MsgDeleteEpixNetPeerResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Verify name exists and caller is owner
+	record, found := k.GetNameRecord(ctx, msg.Tld, msg.Name)
+	if !found {
+		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", msg.Name, msg.Tld)
+	}
+	if record.Owner != msg.Owner {
+		return nil, errorsmod.Wrapf(types.ErrNotOwner, "sender %s is not the owner", msg.Owner)
+	}
+
+	// Verify the peer exists
+	if _, found := k.GetEpixNetPeerEntry(ctx, msg.Tld, msg.Name, msg.Address); !found {
+		return nil, errorsmod.Wrapf(types.ErrEpixNetPeerNotFound, "peer %s not found for %s.%s", msg.Address, msg.Name, msg.Tld)
+	}
+
+	k.DeleteEpixNetPeerEntry(ctx, msg.Tld, msg.Name, msg.Address)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			"xid_epixnet_peer_deleted",
+			sdk.NewAttribute("name", msg.Name+"."+msg.Tld),
+			sdk.NewAttribute("address", msg.Address),
+		),
+	})
+
+	return &types.MsgDeleteEpixNetPeerResponse{}, nil
+}

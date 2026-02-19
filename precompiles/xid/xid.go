@@ -28,12 +28,16 @@ const (
 	SetDNSRecordMethod    = "setDNSRecord"
 	DeleteDNSRecordMethod = "deleteDNSRecord"
 
+	SetEpixNetPeerMethod    = "setEpixNetPeer"
+	DeleteEpixNetPeerMethod = "deleteEpixNetPeer"
+
 	// Queries
 	ResolveMethod            = "resolve"
 	ReverseResolveMethod     = "reverseResolve"
 	GetProfileMethod         = "getProfile"
 	GetDNSRecordMethod       = "getDNSRecord"
 	GetRegistrationFeeMethod = "getRegistrationFee"
+	GetEpixNetPeersMethod    = "getEpixNetPeers"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}
@@ -122,6 +126,10 @@ func (p Precompile) Execute(ctx sdk.Context, stateDB vm.StateDB, contract *vm.Co
 		bz, err = p.SetDNSRecord(ctx, contract, stateDB, method, args)
 	case DeleteDNSRecordMethod:
 		bz, err = p.DeleteDNSRecord(ctx, contract, stateDB, method, args)
+	case SetEpixNetPeerMethod:
+		bz, err = p.SetEpixNetPeer(ctx, contract, stateDB, method, args)
+	case DeleteEpixNetPeerMethod:
+		bz, err = p.DeleteEpixNetPeer(ctx, contract, stateDB, method, args)
 
 	// Queries
 	case ResolveMethod:
@@ -134,6 +142,8 @@ func (p Precompile) Execute(ctx sdk.Context, stateDB vm.StateDB, contract *vm.Co
 		bz, err = p.GetDNSRecord(ctx, method, args)
 	case GetRegistrationFeeMethod:
 		bz, err = p.GetRegistrationFee(ctx, method, args)
+	case GetEpixNetPeersMethod:
+		bz, err = p.GetEpixNetPeers(ctx, method, args)
 	default:
 		return nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
 	}
@@ -144,7 +154,7 @@ func (p Precompile) Execute(ctx sdk.Context, stateDB vm.StateDB, contract *vm.Co
 // IsTransaction checks if the given method is a state-changing transaction
 func (Precompile) IsTransaction(method *abi.Method) bool {
 	switch method.Name {
-	case RegisterMethod, TransferNameMethod, UpdateProfileMethod, SetDNSRecordMethod, DeleteDNSRecordMethod:
+	case RegisterMethod, TransferNameMethod, UpdateProfileMethod, SetDNSRecordMethod, DeleteDNSRecordMethod, SetEpixNetPeerMethod, DeleteEpixNetPeerMethod:
 		return true
 	default:
 		return false

@@ -65,3 +65,11 @@ message DNSRecord {
   // ttl is the time-to-live in seconds
   uint32 ttl = 3;
 }
+
+// EpixNetPeer represents an EpixNet peer address attached to a name.
+message EpixNetPeer {
+  string address = 1;
+  string label = 2;
+  // added_at is the block height when this peer was added
+  uint64 added_at = 3;
+}

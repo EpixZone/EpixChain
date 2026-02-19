@@ -204,6 +204,23 @@ func (k Keeper) GetRegistrationFee(goCtx context.Context, req *types.QueryGetReg
 	return &types.QueryGetRegistrationFeeResponse{Fee: fee.Amount}, nil
 }
 
+// GetEpixNetPeers returns all EpixNet peers for a name
+func (k Keeper) GetEpixNetPeers(goCtx context.Context, req *types.QueryGetEpixNetPeersRequest) (*types.QueryGetEpixNetPeersResponse, error) {
+	if req == nil {
+		return nil, errorsmod.Wrap(types.ErrInvalidName, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Verify name exists
+	if !k.HasNameRecord(ctx, req.Tld, req.Name) {
+		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", req.Name, req.Tld)
+	}
+
+	peers := k.GetAllEpixNetPeers(ctx, req.Tld, req.Name)
+	return &types.QueryGetEpixNetPeersResponse{Peers: peers}, nil
+}
+
 // GetStats returns xID module statistics
 func (k Keeper) GetStats(goCtx context.Context, _ *types.QueryGetStatsRequest) (*types.QueryGetStatsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)

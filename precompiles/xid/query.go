@@ -159,5 +159,39 @@ func (p Precompile) GetRegistrationFee(
 	return method.Outputs.Pack(fee.Amount.BigInt())
 }
 
+// GetEpixNetPeers handles the getEpixNetPeers(name, tld) view function.
+// Returns arrays of peer addresses and labels.
+func (p Precompile) GetEpixNetPeers(
+	ctx sdk.Context,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	if len(args) != 2 {
+		return nil, fmt.Errorf("expected 2 arguments, got %d", len(args))
+	}
+
+	name, ok := args[0].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid argument type for name: %T", args[0])
+	}
+	tld, ok := args[1].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid argument type for tld: %T", args[1])
+	}
+
+	peers := p.xidKeeper.GetAllEpixNetPeers(ctx, tld, name)
+
+	addresses := make([]string, len(peers))
+	labels := make([]string, len(peers))
+	addedAts := make([]uint64, len(peers))
+	for i, peer := range peers {
+		addresses[i] = peer.Address
+		labels[i] = peer.Label
+		addedAts[i] = peer.AddedAt
+	}
+
+	return method.Outputs.Pack(addresses, labels, addedAts)
+}
+
 // ensure big.Int is used
 var _ = (*big.Int)(nil)

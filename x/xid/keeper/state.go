@@ -382,6 +382,100 @@ func (k Keeper) GetAllDNSRecords(ctx sdk.Context, tld, name string) []types.DNSR
 }
 
 // ---------------------------------------------------------------------------
+// EpixNet Peers
+// ---------------------------------------------------------------------------
+
+// peerReverseEntry is the value stored in the peer address reverse index.
+type peerReverseEntry struct {
+	Tld  string `json:"tld"`
+	Name string `json:"name"`
+}
+
+// SetEpixNetPeerEntry stores an EpixNet peer for a name.
+// Returns ErrEpixNetPeerAlreadyLinked if the peer address is linked to a different xID.
+func (k Keeper) SetEpixNetPeerEntry(ctx sdk.Context, tld, name string, peer types.EpixNetPeer) error {
+	store := ctx.KVStore(k.storeKey)
+
+	// Check the reverse index: is this peer address already linked to another name?
+	revKey := types.EpixNetPeerReverseKey(peer.Address)
+	if bz := store.Get(revKey); bz != nil {
+		var existing peerReverseEntry
+		if err := json.Unmarshal(bz, &existing); err == nil {
+			// Allow re-adding to the same name (label update), reject if linked elsewhere
+			if existing.Tld != tld || existing.Name != name {
+				return types.ErrEpixNetPeerAlreadyLinked.Wrapf(
+					"address %s is already linked to %s.%s", peer.Address, existing.Name, existing.Tld,
+				)
+			}
+		}
+	}
+
+	peer.AddedAt = uint64(ctx.BlockHeight())
+	bz, _ := json.Marshal(peer)
+	store.Set(types.EpixNetPeerKey(tld, name, peer.Address), bz)
+
+	// Write the reverse index
+	revBz, _ := json.Marshal(peerReverseEntry{Tld: tld, Name: name})
+	store.Set(revKey, revBz)
+
+	return nil
+}
+
+// GetEpixNetPeerEntry retrieves a specific EpixNet peer by address
+func (k Keeper) GetEpixNetPeerEntry(ctx sdk.Context, tld, name, address string) (types.EpixNetPeer, bool) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.EpixNetPeerKey(tld, name, address))
+	if bz == nil {
+		return types.EpixNetPeer{}, false
+	}
+
+	var peer types.EpixNetPeer
+	if err := json.Unmarshal(bz, &peer); err != nil {
+		return types.EpixNetPeer{}, false
+	}
+	return peer, true
+}
+
+// DeleteEpixNetPeerEntry removes an EpixNet peer from the store
+func (k Keeper) DeleteEpixNetPeerEntry(ctx sdk.Context, tld, name, address string) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.EpixNetPeerKey(tld, name, address))
+	store.Delete(types.EpixNetPeerReverseKey(address))
+}
+
+// GetEpixNetPeerOwner returns the tld and name that a peer address is linked to.
+func (k Keeper) GetEpixNetPeerOwner(ctx sdk.Context, address string) (tld, name string, found bool) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.EpixNetPeerReverseKey(address))
+	if bz == nil {
+		return "", "", false
+	}
+	var entry peerReverseEntry
+	if err := json.Unmarshal(bz, &entry); err != nil {
+		return "", "", false
+	}
+	return entry.Tld, entry.Name, true
+}
+
+// GetAllEpixNetPeers returns all EpixNet peers for a name
+func (k Keeper) GetAllEpixNetPeers(ctx sdk.Context, tld, name string) []types.EpixNetPeer {
+	store := ctx.KVStore(k.storeKey)
+	pfx := types.EpixNetPeerPrefix(tld, name)
+	iterator := storetypes.KVStorePrefixIterator(store, pfx)
+	defer iterator.Close()
+
+	var peers []types.EpixNetPeer
+	for ; iterator.Valid(); iterator.Next() {
+		var peer types.EpixNetPeer
+		if err := json.Unmarshal(iterator.Value(), &peer); err != nil {
+			continue
+		}
+		peers = append(peers, peer)
+	}
+	return peers
+}
+
+// ---------------------------------------------------------------------------
 // TLD Config
 // ---------------------------------------------------------------------------
 

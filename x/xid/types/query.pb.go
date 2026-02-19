@@ -985,6 +985,8 @@ type QueryClient interface {
 	ListAllNames(ctx context.Context, in *QueryListAllNamesRequest, opts ...grpc.CallOption) (*QueryListAllNamesResponse, error)
 	// GetStats returns xID module statistics.
 	GetStats(ctx context.Context, in *QueryGetStatsRequest, opts ...grpc.CallOption) (*QueryGetStatsResponse, error)
+	// GetEpixNetPeers returns all EpixNet peers for a name.
+	GetEpixNetPeers(ctx context.Context, in *QueryGetEpixNetPeersRequest, opts ...grpc.CallOption) (*QueryGetEpixNetPeersResponse, error)
 }
 
 type queryClient struct {
@@ -1094,6 +1096,15 @@ func (c *queryClient) GetStats(ctx context.Context, in *QueryGetStatsRequest, op
 	return out, nil
 }
 
+func (c *queryClient) GetEpixNetPeers(ctx context.Context, in *QueryGetEpixNetPeersRequest, opts ...grpc.CallOption) (*QueryGetEpixNetPeersResponse, error) {
+	out := new(QueryGetEpixNetPeersResponse)
+	err := c.cc.Invoke(ctx, "/xid.v1.Query/GetEpixNetPeers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// ResolveName resolves a name.tld to an owner address.
@@ -1118,6 +1129,8 @@ type QueryServer interface {
 	ListAllNames(context.Context, *QueryListAllNamesRequest) (*QueryListAllNamesResponse, error)
 	// GetStats returns xID module statistics.
 	GetStats(context.Context, *QueryGetStatsRequest) (*QueryGetStatsResponse, error)
+	// GetEpixNetPeers returns all EpixNet peers for a name.
+	GetEpixNetPeers(context.Context, *QueryGetEpixNetPeersRequest) (*QueryGetEpixNetPeersResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -1156,6 +1169,9 @@ func (*UnimplementedQueryServer) ListAllNames(ctx context.Context, req *QueryLis
 }
 func (*UnimplementedQueryServer) GetStats(ctx context.Context, req *QueryGetStatsRequest) (*QueryGetStatsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetStats not implemented")
+}
+func (*UnimplementedQueryServer) GetEpixNetPeers(ctx context.Context, req *QueryGetEpixNetPeersRequest) (*QueryGetEpixNetPeersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetEpixNetPeers not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -1360,6 +1376,24 @@ func _Query_GetStats_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_GetEpixNetPeers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryGetEpixNetPeersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).GetEpixNetPeers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/xid.v1.Query/GetEpixNetPeers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).GetEpixNetPeers(ctx, req.(*QueryGetEpixNetPeersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var Query_serviceDesc = _Query_serviceDesc
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "xid.v1.Query",
@@ -1408,6 +1442,10 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetStats",
 			Handler:    _Query_GetStats_Handler,
+		},
+		{
+			MethodName: "GetEpixNetPeers",
+			Handler:    _Query_GetEpixNetPeers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"crypto/sha256"
 	"encoding/binary"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -40,6 +41,8 @@ const (
 	prefixTLDNameCount
 	prefixGlobalFeesBurned
 	prefixTLDFeesBurned
+	prefixEpixNetPeer
+	prefixEpixNetPeerReverse
 )
 
 // KVStore key prefixes
@@ -158,6 +161,46 @@ func TLDFeesBurnedKey(tld string) []byte {
 	key := make([]byte, 0, 1+len(tld))
 	key = append(key, prefixTLDFeesBurned)
 	key = append(key, []byte(tld)...)
+	return key
+}
+
+// EpixNetPeerKey returns the store key for an EpixNet peer:
+// [prefix][len(tld)][tld][len(name)][name][sha256(address)[:8]]
+func EpixNetPeerKey(tld, name, address string) []byte {
+	tldBytes := []byte(tld)
+	nameBytes := []byte(name)
+	addrHash := sha256.Sum256([]byte(address))
+	key := make([]byte, 0, 1+1+len(tldBytes)+1+len(nameBytes)+8)
+	key = append(key, prefixEpixNetPeer)
+	key = append(key, byte(len(tldBytes)))
+	key = append(key, tldBytes...)
+	key = append(key, byte(len(nameBytes)))
+	key = append(key, nameBytes...)
+	key = append(key, addrHash[:8]...)
+	return key
+}
+
+// EpixNetPeerPrefix returns the prefix for iterating all EpixNet peers for a name
+func EpixNetPeerPrefix(tld, name string) []byte {
+	tldBytes := []byte(tld)
+	nameBytes := []byte(name)
+	key := make([]byte, 0, 1+1+len(tldBytes)+1+len(nameBytes))
+	key = append(key, prefixEpixNetPeer)
+	key = append(key, byte(len(tldBytes)))
+	key = append(key, tldBytes...)
+	key = append(key, byte(len(nameBytes)))
+	key = append(key, nameBytes...)
+	return key
+}
+
+// EpixNetPeerReverseKey returns the store key for the peer reverse index:
+// [prefix][sha256(address)[:8]]
+// The value stores the tld and name that this peer address is linked to.
+func EpixNetPeerReverseKey(address string) []byte {
+	addrHash := sha256.Sum256([]byte(address))
+	key := make([]byte, 0, 1+8)
+	key = append(key, prefixEpixNetPeerReverse)
+	key = append(key, addrHash[:8]...)
 	return key
 }
 

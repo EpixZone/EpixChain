@@ -44,6 +44,12 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState *types.GenesisState)
 		for _, dns := range entry.DnsRecords {
 			k.SetDNSRecordEntry(ctx, entry.Record.Tld, entry.Record.Name, dns)
 		}
+
+		for _, peer := range entry.EpixnetPeers {
+			if err := k.SetEpixNetPeerEntry(ctx, entry.Record.Tld, entry.Record.Name, peer); err != nil {
+				panic(err)
+			}
+		}
 	}
 
 	// Persist owner counts
@@ -69,8 +75,9 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	var names []types.NameEntry
 	k.IterateNameRecords(ctx, func(record types.NameRecord) bool {
 		entry := types.NameEntry{
-			Record:     record,
-			DnsRecords: k.GetAllDNSRecords(ctx, record.Tld, record.Name),
+			Record:       record,
+			DnsRecords:   k.GetAllDNSRecords(ctx, record.Tld, record.Name),
+			EpixnetPeers: k.GetAllEpixNetPeers(ctx, record.Tld, record.Name),
 		}
 
 		profile, found := k.GetProfileRecord(ctx, record.Tld, record.Name)

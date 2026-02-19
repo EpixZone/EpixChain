@@ -153,9 +153,10 @@ func (m *Params) GetMaxNameLength() uint32 {
 
 // NameEntry bundles a name record with its profile and DNS records for genesis export.
 type NameEntry struct {
-	Record     NameRecord  `protobuf:"bytes,1,opt,name=record,proto3" json:"record"`
-	Profile    *Profile    `protobuf:"bytes,2,opt,name=profile,proto3" json:"profile,omitempty"`
-	DnsRecords []DNSRecord `protobuf:"bytes,3,rep,name=dns_records,json=dnsRecords,proto3" json:"dns_records"`
+	Record       NameRecord    `protobuf:"bytes,1,opt,name=record,proto3" json:"record"`
+	Profile      *Profile      `protobuf:"bytes,2,opt,name=profile,proto3" json:"profile,omitempty"`
+	DnsRecords   []DNSRecord   `protobuf:"bytes,3,rep,name=dns_records,json=dnsRecords,proto3" json:"dns_records"`
+	EpixnetPeers []EpixNetPeer `protobuf:"bytes,4,rep,name=epixnet_peers,json=epixnetPeers,proto3" json:"epixnet_peers"`
 }
 
 func (m *NameEntry) Reset()         { *m = NameEntry{} }
@@ -208,6 +209,13 @@ func (m *NameEntry) GetProfile() *Profile {
 func (m *NameEntry) GetDnsRecords() []DNSRecord {
 	if m != nil {
 		return m.DnsRecords
+	}
+	return nil
+}
+
+func (m *NameEntry) GetEpixnetPeers() []EpixNetPeer {
+	if m != nil {
+		return m.EpixnetPeers
 	}
 	return nil
 }
@@ -401,6 +409,20 @@ func (m *NameEntry) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.EpixnetPeers) > 0 {
+		for iNdEx := len(m.EpixnetPeers) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.EpixnetPeers[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x22
+		}
+	}
 	if len(m.DnsRecords) > 0 {
 		for iNdEx := len(m.DnsRecords) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -507,6 +529,12 @@ func (m *NameEntry) Size() (n int) {
 	}
 	if len(m.DnsRecords) > 0 {
 		for _, e := range m.DnsRecords {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.EpixnetPeers) > 0 {
+		for _, e := range m.EpixnetPeers {
 			l = e.Size()
 			n += 1 + l + sovGenesis(uint64(l))
 		}
@@ -920,6 +948,40 @@ func (m *NameEntry) Unmarshal(dAtA []byte) error {
 			}
 			m.DnsRecords = append(m.DnsRecords, DNSRecord{})
 			if err := m.DnsRecords[len(m.DnsRecords)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpixnetPeers", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EpixnetPeers = append(m.EpixnetPeers, EpixNetPeer{})
+			if err := m.EpixnetPeers[len(m.EpixnetPeers)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

@@ -17,5 +17,7 @@ var (
 	ErrDNSRecordNotFound = errorsmod.Register(ModuleName, 12, "DNS record not found")
 	ErrInvalidProfile    = errorsmod.Register(ModuleName, 13, "invalid profile")
 	ErrInvalidParams     = errorsmod.Register(ModuleName, 14, "invalid module parameters")
-	ErrInvalidPriceTier  = errorsmod.Register(ModuleName, 15, "invalid price tier configuration")
+	ErrInvalidPriceTier    = errorsmod.Register(ModuleName, 15, "invalid price tier configuration")
+	ErrEpixNetPeerNotFound      = errorsmod.Register(ModuleName, 16, "EpixNet peer not found")
+	ErrEpixNetPeerAlreadyLinked = errorsmod.Register(ModuleName, 17, "EpixNet peer address is already linked to another xID")
 )

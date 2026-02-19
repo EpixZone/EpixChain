@@ -815,6 +815,70 @@ func (m *MsgUpdateParamsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 
+// MsgSetEpixNetPeer adds or updates an EpixNet peer address for a name.
+type MsgSetEpixNetPeer struct {
+	Owner   string       `protobuf:"bytes,1,opt,name=owner,proto3" json:"owner,omitempty"`
+	Name    string       `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Tld     string       `protobuf:"bytes,3,opt,name=tld,proto3" json:"tld,omitempty"`
+	Peer    EpixNetPeer  `protobuf:"bytes,4,opt,name=peer,proto3" json:"peer"`
+}
+
+func (m *MsgSetEpixNetPeer) Reset()         { *m = MsgSetEpixNetPeer{} }
+func (m *MsgSetEpixNetPeer) String() string { return proto.CompactTextString(m) }
+func (*MsgSetEpixNetPeer) ProtoMessage()    {}
+func (m *MsgSetEpixNetPeer) GetOwner() string { if m != nil { return m.Owner }; return "" }
+func (m *MsgSetEpixNetPeer) GetName() string  { if m != nil { return m.Name }; return "" }
+func (m *MsgSetEpixNetPeer) GetTld() string   { if m != nil { return m.Tld }; return "" }
+func (m *MsgSetEpixNetPeer) GetPeer() EpixNetPeer { if m != nil { return m.Peer }; return EpixNetPeer{} }
+func (m *MsgSetEpixNetPeer) Marshal() (dAtA []byte, err error) { return nil, nil }
+func (m *MsgSetEpixNetPeer) MarshalTo(dAtA []byte) (int, error) { return 0, nil }
+func (m *MsgSetEpixNetPeer) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
+func (m *MsgSetEpixNetPeer) Size() int { return 0 }
+func (m *MsgSetEpixNetPeer) Unmarshal(dAtA []byte) error { return nil }
+
+type MsgSetEpixNetPeerResponse struct{}
+
+func (m *MsgSetEpixNetPeerResponse) Reset()         { *m = MsgSetEpixNetPeerResponse{} }
+func (m *MsgSetEpixNetPeerResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgSetEpixNetPeerResponse) ProtoMessage()    {}
+func (m *MsgSetEpixNetPeerResponse) Marshal() (dAtA []byte, err error) { return nil, nil }
+func (m *MsgSetEpixNetPeerResponse) MarshalTo(dAtA []byte) (int, error) { return 0, nil }
+func (m *MsgSetEpixNetPeerResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
+func (m *MsgSetEpixNetPeerResponse) Size() int { return 0 }
+func (m *MsgSetEpixNetPeerResponse) Unmarshal(dAtA []byte) error { return nil }
+
+// MsgDeleteEpixNetPeer removes an EpixNet peer address from a name.
+type MsgDeleteEpixNetPeer struct {
+	Owner   string `protobuf:"bytes,1,opt,name=owner,proto3" json:"owner,omitempty"`
+	Name    string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Tld     string `protobuf:"bytes,3,opt,name=tld,proto3" json:"tld,omitempty"`
+	Address string `protobuf:"bytes,4,opt,name=address,proto3" json:"address,omitempty"`
+}
+
+func (m *MsgDeleteEpixNetPeer) Reset()         { *m = MsgDeleteEpixNetPeer{} }
+func (m *MsgDeleteEpixNetPeer) String() string { return proto.CompactTextString(m) }
+func (*MsgDeleteEpixNetPeer) ProtoMessage()    {}
+func (m *MsgDeleteEpixNetPeer) GetOwner() string   { if m != nil { return m.Owner }; return "" }
+func (m *MsgDeleteEpixNetPeer) GetName() string    { if m != nil { return m.Name }; return "" }
+func (m *MsgDeleteEpixNetPeer) GetTld() string     { if m != nil { return m.Tld }; return "" }
+func (m *MsgDeleteEpixNetPeer) GetAddress() string { if m != nil { return m.Address }; return "" }
+func (m *MsgDeleteEpixNetPeer) Marshal() (dAtA []byte, err error) { return nil, nil }
+func (m *MsgDeleteEpixNetPeer) MarshalTo(dAtA []byte) (int, error) { return 0, nil }
+func (m *MsgDeleteEpixNetPeer) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
+func (m *MsgDeleteEpixNetPeer) Size() int { return 0 }
+func (m *MsgDeleteEpixNetPeer) Unmarshal(dAtA []byte) error { return nil }
+
+type MsgDeleteEpixNetPeerResponse struct{}
+
+func (m *MsgDeleteEpixNetPeerResponse) Reset()         { *m = MsgDeleteEpixNetPeerResponse{} }
+func (m *MsgDeleteEpixNetPeerResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgDeleteEpixNetPeerResponse) ProtoMessage()    {}
+func (m *MsgDeleteEpixNetPeerResponse) Marshal() (dAtA []byte, err error) { return nil, nil }
+func (m *MsgDeleteEpixNetPeerResponse) MarshalTo(dAtA []byte) (int, error) { return 0, nil }
+func (m *MsgDeleteEpixNetPeerResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
+func (m *MsgDeleteEpixNetPeerResponse) Size() int { return 0 }
+func (m *MsgDeleteEpixNetPeerResponse) Unmarshal(dAtA []byte) error { return nil }
+
 func init() {
 	proto.RegisterType((*MsgRegisterName)(nil), "xid.v1.MsgRegisterName")
 	proto.RegisterType((*MsgRegisterNameResponse)(nil), "xid.v1.MsgRegisterNameResponse")
@@ -832,6 +896,10 @@ func init() {
 	proto.RegisterType((*MsgUpdateTLDConfigResponse)(nil), "xid.v1.MsgUpdateTLDConfigResponse")
 	proto.RegisterType((*MsgUpdateParams)(nil), "xid.v1.MsgUpdateParams")
 	proto.RegisterType((*MsgUpdateParamsResponse)(nil), "xid.v1.MsgUpdateParamsResponse")
+	proto.RegisterType((*MsgSetEpixNetPeer)(nil), "xid.v1.MsgSetEpixNetPeer")
+	proto.RegisterType((*MsgSetEpixNetPeerResponse)(nil), "xid.v1.MsgSetEpixNetPeerResponse")
+	proto.RegisterType((*MsgDeleteEpixNetPeer)(nil), "xid.v1.MsgDeleteEpixNetPeer")
+	proto.RegisterType((*MsgDeleteEpixNetPeerResponse)(nil), "xid.v1.MsgDeleteEpixNetPeerResponse")
 }
 
 func init() { proto.RegisterFile("xid/v1/tx.proto", fileDescriptor_aacf6221724f4840) }
@@ -918,6 +986,10 @@ type MsgClient interface {
 	UpdateTLDConfig(ctx context.Context, in *MsgUpdateTLDConfig, opts ...grpc.CallOption) (*MsgUpdateTLDConfigResponse, error)
 	// UpdateParams updates the module parameters (governance only).
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
+	// SetEpixNetPeer adds or updates an EpixNet peer address for a name.
+	SetEpixNetPeer(ctx context.Context, in *MsgSetEpixNetPeer, opts ...grpc.CallOption) (*MsgSetEpixNetPeerResponse, error)
+	// DeleteEpixNetPeer removes an EpixNet peer address from a name.
+	DeleteEpixNetPeer(ctx context.Context, in *MsgDeleteEpixNetPeer, opts ...grpc.CallOption) (*MsgDeleteEpixNetPeerResponse, error)
 }
 
 type msgClient struct {
@@ -1000,6 +1072,24 @@ func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts 
 	return out, nil
 }
 
+func (c *msgClient) SetEpixNetPeer(ctx context.Context, in *MsgSetEpixNetPeer, opts ...grpc.CallOption) (*MsgSetEpixNetPeerResponse, error) {
+	out := new(MsgSetEpixNetPeerResponse)
+	err := c.cc.Invoke(ctx, "/xid.v1.Msg/SetEpixNetPeer", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) DeleteEpixNetPeer(ctx context.Context, in *MsgDeleteEpixNetPeer, opts ...grpc.CallOption) (*MsgDeleteEpixNetPeerResponse, error) {
+	out := new(MsgDeleteEpixNetPeerResponse)
+	err := c.cc.Invoke(ctx, "/xid.v1.Msg/DeleteEpixNetPeer", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// RegisterName registers a new name under a TLD.
@@ -1018,6 +1108,10 @@ type MsgServer interface {
 	UpdateTLDConfig(context.Context, *MsgUpdateTLDConfig) (*MsgUpdateTLDConfigResponse, error)
 	// UpdateParams updates the module parameters (governance only).
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
+	// SetEpixNetPeer adds or updates an EpixNet peer address for a name.
+	SetEpixNetPeer(context.Context, *MsgSetEpixNetPeer) (*MsgSetEpixNetPeerResponse, error)
+	// DeleteEpixNetPeer removes an EpixNet peer address from a name.
+	DeleteEpixNetPeer(context.Context, *MsgDeleteEpixNetPeer) (*MsgDeleteEpixNetPeerResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -1047,6 +1141,12 @@ func (*UnimplementedMsgServer) UpdateTLDConfig(ctx context.Context, req *MsgUpda
 }
 func (*UnimplementedMsgServer) UpdateParams(ctx context.Context, req *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
+}
+func (*UnimplementedMsgServer) SetEpixNetPeer(ctx context.Context, req *MsgSetEpixNetPeer) (*MsgSetEpixNetPeerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetEpixNetPeer not implemented")
+}
+func (*UnimplementedMsgServer) DeleteEpixNetPeer(ctx context.Context, req *MsgDeleteEpixNetPeer) (*MsgDeleteEpixNetPeerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteEpixNetPeer not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -1197,6 +1297,42 @@ func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_SetEpixNetPeer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgSetEpixNetPeer)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).SetEpixNetPeer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/xid.v1.Msg/SetEpixNetPeer",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).SetEpixNetPeer(ctx, req.(*MsgSetEpixNetPeer))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_DeleteEpixNetPeer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgDeleteEpixNetPeer)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).DeleteEpixNetPeer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/xid.v1.Msg/DeleteEpixNetPeer",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).DeleteEpixNetPeer(ctx, req.(*MsgDeleteEpixNetPeer))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var Msg_serviceDesc = _Msg_serviceDesc
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "xid.v1.Msg",
@@ -1233,6 +1369,14 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateParams",
 			Handler:    _Msg_UpdateParams_Handler,
+		},
+		{
+			MethodName: "SetEpixNetPeer",
+			Handler:    _Msg_SetEpixNetPeer_Handler,
+		},
+		{
+			MethodName: "DeleteEpixNetPeer",
+			Handler:    _Msg_DeleteEpixNetPeer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

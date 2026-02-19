@@ -35,4 +35,5 @@ message NameEntry {
   NameRecord record = 1 [(gogoproto.nullable) = false];
   Profile profile = 2;
   repeated DNSRecord dns_records = 3 [(gogoproto.nullable) = false];
+  repeated EpixNetPeer epixnet_peers = 4 [(gogoproto.nullable) = false];
 }
