@@ -25,6 +25,8 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgCreateTLD{}, "cosmos/evm/x/xid/MsgCreateTLD", nil)
 	cdc.RegisterConcrete(&MsgUpdateTLDConfig{}, "cosmos/evm/x/xid/MsgUpdateTLDConfig", nil)
 	cdc.RegisterConcrete(&MsgUpdateParams{}, "cosmos/evm/x/xid/MsgUpdateParams", nil)
+	cdc.RegisterConcrete(&MsgSetEpixNetPeer{}, "cosmos/evm/x/xid/MsgSetEpixNetPeer", nil)
+	cdc.RegisterConcrete(&MsgDeleteEpixNetPeer{}, "cosmos/evm/x/xid/MsgDeleteEpixNetPeer", nil)
 }
 
 // RegisterInterfaces registers the xid module interface types
@@ -38,6 +40,8 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgCreateTLD{},
 		&MsgUpdateTLDConfig{},
 		&MsgUpdateParams{},
+		&MsgSetEpixNetPeer{},
+		&MsgDeleteEpixNetPeer{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
