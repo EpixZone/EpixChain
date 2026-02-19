@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 
+	"cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -59,6 +60,26 @@ func (k Keeper) IterateNameRecords(ctx sdk.Context, cb func(record types.NameRec
 			break
 		}
 	}
+}
+
+// GetAllNamesPaginated returns a paginated list of all name records.
+func (k Keeper) GetAllNamesPaginated(ctx sdk.Context, pageReq *query.PageRequest) ([]types.NameRecord, *query.PageResponse, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixNameRecord)
+
+	var records []types.NameRecord
+	pageRes, err := query.Paginate(store, pageReq, func(_, value []byte) error {
+		var record types.NameRecord
+		if err := json.Unmarshal(value, &record); err != nil {
+			return nil // skip malformed entries
+		}
+		records = append(records, record)
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return records, pageRes, nil
 }
 
 // ---------------------------------------------------------------------------
@@ -143,6 +164,108 @@ func (k Keeper) DecrementOwnerCount(ctx sdk.Context, owner sdk.AccAddress) {
 	if count > 0 {
 		k.SetOwnerCount(ctx, owner, count-1)
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Global Name Count (O(1) counter for total registered names)
+// ---------------------------------------------------------------------------
+
+// GetGlobalNameCount returns the total number of registered names.
+func (k Keeper) GetGlobalNameCount(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.KeyGlobalNameCount)
+	if bz == nil {
+		return 0
+	}
+	return binary.BigEndian.Uint64(bz)
+}
+
+// SetGlobalNameCount sets the total registered name count.
+func (k Keeper) SetGlobalNameCount(ctx sdk.Context, count uint64) {
+	store := ctx.KVStore(k.storeKey)
+	bz := make([]byte, 8)
+	binary.BigEndian.PutUint64(bz, count)
+	store.Set(types.KeyGlobalNameCount, bz)
+}
+
+// IncrementGlobalNameCount atomically increments the global name count by 1.
+func (k Keeper) IncrementGlobalNameCount(ctx sdk.Context) {
+	k.SetGlobalNameCount(ctx, k.GetGlobalNameCount(ctx)+1)
+}
+
+// ---------------------------------------------------------------------------
+// TLD Name Count (O(1) counter per TLD)
+// ---------------------------------------------------------------------------
+
+// GetTLDNameCount returns the number of names registered under a TLD.
+func (k Keeper) GetTLDNameCount(ctx sdk.Context, tld string) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.TLDNameCountKey(tld))
+	if bz == nil {
+		return 0
+	}
+	return binary.BigEndian.Uint64(bz)
+}
+
+// SetTLDNameCount sets the name count for a TLD.
+func (k Keeper) SetTLDNameCount(ctx sdk.Context, tld string, count uint64) {
+	store := ctx.KVStore(k.storeKey)
+	bz := make([]byte, 8)
+	binary.BigEndian.PutUint64(bz, count)
+	store.Set(types.TLDNameCountKey(tld), bz)
+}
+
+// IncrementTLDNameCount atomically increments a TLD's name count by 1.
+func (k Keeper) IncrementTLDNameCount(ctx sdk.Context, tld string) {
+	k.SetTLDNameCount(ctx, tld, k.GetTLDNameCount(ctx, tld)+1)
+}
+
+// ---------------------------------------------------------------------------
+// Fee Burn Accumulators (O(1) totals stored as JSON math.Int)
+// ---------------------------------------------------------------------------
+
+// GetGlobalFeesBurned returns the total fees burned across all registrations.
+func (k Keeper) GetGlobalFeesBurned(ctx sdk.Context) math.Int {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.KeyGlobalFeesBurned)
+	if bz == nil {
+		return math.ZeroInt()
+	}
+	var v math.Int
+	if err := json.Unmarshal(bz, &v); err != nil {
+		return math.ZeroInt()
+	}
+	return v
+}
+
+// AddGlobalFeesBurned adds an amount to the global fees burned total.
+func (k Keeper) AddGlobalFeesBurned(ctx sdk.Context, amount math.Int) {
+	current := k.GetGlobalFeesBurned(ctx)
+	store := ctx.KVStore(k.storeKey)
+	bz, _ := json.Marshal(current.Add(amount))
+	store.Set(types.KeyGlobalFeesBurned, bz)
+}
+
+// GetTLDFeesBurned returns the total fees burned for a specific TLD.
+func (k Keeper) GetTLDFeesBurned(ctx sdk.Context, tld string) math.Int {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.TLDFeesBurnedKey(tld))
+	if bz == nil {
+		return math.ZeroInt()
+	}
+	var v math.Int
+	if err := json.Unmarshal(bz, &v); err != nil {
+		return math.ZeroInt()
+	}
+	return v
+}
+
+// AddTLDFeesBurned adds an amount to a TLD's fees burned total.
+func (k Keeper) AddTLDFeesBurned(ctx sdk.Context, tld string, amount math.Int) {
+	current := k.GetTLDFeesBurned(ctx, tld)
+	store := ctx.KVStore(k.storeKey)
+	bz, _ := json.Marshal(current.Add(amount))
+	store.Set(types.TLDFeesBurnedKey(tld), bz)
 }
 
 // GetNamesByOwnerPaginated returns a paginated list of name records owned by an address.

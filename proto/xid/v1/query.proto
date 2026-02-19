@@ -48,6 +48,14 @@ service Query {
   rpc GetRegistrationFee(QueryGetRegistrationFeeRequest) returns (QueryGetRegistrationFeeResponse) {
     option (google.api.http).get = "/xid/v1/fee/{tld}/{name}";
   }
+  // ListAllNames returns all registered names with pagination.
+  rpc ListAllNames(QueryListAllNamesRequest) returns (QueryListAllNamesResponse) {
+    option (google.api.http).get = "/xid/v1/allnames";
+  }
+  // GetStats returns xID module statistics.
+  rpc GetStats(QueryGetStatsRequest) returns (QueryGetStatsResponse) {
+    option (google.api.http).get = "/xid/v1/stats";
+  }
 }
 
 message QueryResolveNameRequest {
@@ -127,4 +135,28 @@ message QueryGetRegistrationFeeResponse {
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
+}
+
+message QueryListAllNamesRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryListAllNamesResponse {
+  repeated NameRecord names = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message TLDStats {
+  string tld = 1;
+  uint64 name_count = 2;
+  string fees_burned = 3;
+  bool enabled = 4;
+}
+
+message QueryGetStatsRequest {}
+
+message QueryGetStatsResponse {
+  uint64 total_names = 1;
+  string total_fees_burned = 2;
+  repeated TLDStats tld_stats = 3 [(gogoproto.nullable) = false];
 }

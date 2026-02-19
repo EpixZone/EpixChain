@@ -98,8 +98,12 @@ func (k Keeper) RegisterNameRecord(ctx sdk.Context, ownerAddr sdk.AccAddress, tl
 	// Set owner index for reverse lookups
 	k.SetOwnerIndex(ctx, ownerAddr, tld, name)
 
-	// Increment owner's name count
+	// Increment counters
 	k.IncrementOwnerCount(ctx, ownerAddr)
+	k.IncrementGlobalNameCount(ctx)
+	k.IncrementTLDNameCount(ctx, tld)
+	k.AddGlobalFeesBurned(ctx, fee.Amount)
+	k.AddTLDFeesBurned(ctx, tld, fee.Amount)
 
 	// Emit event
 	ctx.EventManager().EmitEvents(sdk.Events{

@@ -36,6 +36,10 @@ const (
 	prefixTLDConfig
 	prefixParams
 	prefixOwnerCount
+	prefixGlobalNameCount
+	prefixTLDNameCount
+	prefixGlobalFeesBurned
+	prefixTLDFeesBurned
 )
 
 // KVStore key prefixes
@@ -46,7 +50,9 @@ var (
 	KeyPrefixDNSRecord  = []byte{prefixDNSRecord}
 	KeyPrefixTLDConfig  = []byte{prefixTLDConfig}
 	KeyPrefixParams     = []byte{prefixParams}
-	KeyPrefixOwnerCount = []byte{prefixOwnerCount}
+	KeyPrefixOwnerCount     = []byte{prefixOwnerCount}
+	KeyGlobalNameCount      = []byte{prefixGlobalNameCount}
+	KeyGlobalFeesBurned     = []byte{prefixGlobalFeesBurned}
 )
 
 // NameRecordKey returns the store key for a name record: [prefix][len(tld)][tld][name]
@@ -136,6 +142,22 @@ func OwnerCountKey(owner []byte) []byte {
 	key := make([]byte, 0, 1+20)
 	key = append(key, prefixOwnerCount)
 	key = append(key, padOrTruncate(owner, 20)...)
+	return key
+}
+
+// TLDNameCountKey returns the store key for a TLD's name count: [prefix][tld]
+func TLDNameCountKey(tld string) []byte {
+	key := make([]byte, 0, 1+len(tld))
+	key = append(key, prefixTLDNameCount)
+	key = append(key, []byte(tld)...)
+	return key
+}
+
+// TLDFeesBurnedKey returns the store key for a TLD's burned fee total: [prefix][tld]
+func TLDFeesBurnedKey(tld string) []byte {
+	key := make([]byte, 0, 1+len(tld))
+	key = append(key, prefixTLDFeesBurned)
+	key = append(key, []byte(tld)...)
 	return key
 }
 

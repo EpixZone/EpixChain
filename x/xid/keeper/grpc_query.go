@@ -149,6 +149,38 @@ func (k Keeper) GetNamesByOwner(goCtx context.Context, req *types.QueryGetNamesB
 	return &types.QueryGetNamesByOwnerResponse{Names: names, Pagination: pageRes}, nil
 }
 
+// ListAllNames returns a paginated list of all registered names
+func (k Keeper) ListAllNames(goCtx context.Context, req *types.QueryListAllNamesRequest) (*types.QueryListAllNamesResponse, error) {
+	if req == nil {
+		return nil, errorsmod.Wrap(types.ErrInvalidName, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	pageReq := req.Pagination
+	if pageReq == nil {
+		pageReq = &query.PageRequest{Limit: maxPageSize}
+	} else if pageReq.Limit == 0 || pageReq.Limit > maxPageSize {
+		pageReq.Limit = maxPageSize
+	}
+
+	// Disable CountTotal in Paginate — we use a stored counter instead
+	wantTotal := pageReq.CountTotal
+	pageReq.CountTotal = false
+
+	names, pageRes, err := k.GetAllNamesPaginated(ctx, pageReq)
+	if err != nil {
+		return nil, err
+	}
+
+	// Supply the total from the O(1) stored counter
+	if wantTotal {
+		pageRes.Total = k.GetGlobalNameCount(ctx)
+	}
+
+	return &types.QueryListAllNamesResponse{Names: names, Pagination: pageRes}, nil
+}
+
 // Params returns the module parameters
 func (k Keeper) Params(goCtx context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -170,4 +202,26 @@ func (k Keeper) GetRegistrationFee(goCtx context.Context, req *types.QueryGetReg
 	}
 
 	return &types.QueryGetRegistrationFeeResponse{Fee: fee.Amount}, nil
+}
+
+// GetStats returns xID module statistics
+func (k Keeper) GetStats(goCtx context.Context, _ *types.QueryGetStatsRequest) (*types.QueryGetStatsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	tlds := k.GetAllTLDs(ctx)
+	var tldStats []types.TLDStats
+	for _, tld := range tlds {
+		tldStats = append(tldStats, types.TLDStats{
+			Tld:        tld.Tld,
+			NameCount:  k.GetTLDNameCount(ctx, tld.Tld),
+			FeesBurned: k.GetTLDFeesBurned(ctx, tld.Tld).String(),
+			Enabled:    tld.Enabled,
+		})
+	}
+
+	return &types.QueryGetStatsResponse{
+		TotalNames:      k.GetGlobalNameCount(ctx),
+		TotalFeesBurned: k.GetGlobalFeesBurned(ctx).String(),
+		TldStats:        tldStats,
+	}, nil
 }

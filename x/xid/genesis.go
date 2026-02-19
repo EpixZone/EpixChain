@@ -23,8 +23,9 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState *types.GenesisState)
 		k.SetTLDConfig(ctx, tld)
 	}
 
-	// Set name entries and build owner counts
+	// Set name entries and build owner/TLD counts
 	ownerCounts := make(map[string]uint64)
+	tldCounts := make(map[string]uint64)
 	for _, entry := range genState.Names {
 		k.SetNameRecord(ctx, entry.Record)
 
@@ -34,6 +35,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState *types.GenesisState)
 		}
 		k.SetOwnerIndex(ctx, ownerAddr, entry.Record.Tld, entry.Record.Name)
 		ownerCounts[entry.Record.Owner]++
+		tldCounts[entry.Record.Tld]++
 
 		if entry.Profile != nil {
 			k.SetProfileRecord(ctx, entry.Record.Tld, entry.Record.Name, *entry.Profile)
@@ -48,6 +50,14 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState *types.GenesisState)
 	for ownerBech32, count := range ownerCounts {
 		ownerAddr, _ := sdk.AccAddressFromBech32(ownerBech32)
 		k.SetOwnerCount(ctx, ownerAddr, count)
+	}
+
+	// Persist global name count
+	k.SetGlobalNameCount(ctx, uint64(len(genState.Names)))
+
+	// Persist TLD name counts
+	for tld, count := range tldCounts {
+		k.SetTLDNameCount(ctx, tld, count)
 	}
 }
 

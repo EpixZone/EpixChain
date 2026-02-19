@@ -965,6 +965,10 @@ type QueryClient interface {
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	// GetRegistrationFee returns the registration fee for a given name and TLD.
 	GetRegistrationFee(ctx context.Context, in *QueryGetRegistrationFeeRequest, opts ...grpc.CallOption) (*QueryGetRegistrationFeeResponse, error)
+	// ListAllNames returns all registered names with pagination.
+	ListAllNames(ctx context.Context, in *QueryListAllNamesRequest, opts ...grpc.CallOption) (*QueryListAllNamesResponse, error)
+	// GetStats returns xID module statistics.
+	GetStats(ctx context.Context, in *QueryGetStatsRequest, opts ...grpc.CallOption) (*QueryGetStatsResponse, error)
 }
 
 type queryClient struct {
@@ -1056,6 +1060,24 @@ func (c *queryClient) GetRegistrationFee(ctx context.Context, in *QueryGetRegist
 	return out, nil
 }
 
+func (c *queryClient) ListAllNames(ctx context.Context, in *QueryListAllNamesRequest, opts ...grpc.CallOption) (*QueryListAllNamesResponse, error) {
+	out := new(QueryListAllNamesResponse)
+	err := c.cc.Invoke(ctx, "/xid.v1.Query/ListAllNames", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) GetStats(ctx context.Context, in *QueryGetStatsRequest, opts ...grpc.CallOption) (*QueryGetStatsResponse, error) {
+	out := new(QueryGetStatsResponse)
+	err := c.cc.Invoke(ctx, "/xid.v1.Query/GetStats", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// ResolveName resolves a name.tld to an owner address.
@@ -1076,6 +1098,10 @@ type QueryServer interface {
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	// GetRegistrationFee returns the registration fee for a given name and TLD.
 	GetRegistrationFee(context.Context, *QueryGetRegistrationFeeRequest) (*QueryGetRegistrationFeeResponse, error)
+	// ListAllNames returns all registered names with pagination.
+	ListAllNames(context.Context, *QueryListAllNamesRequest) (*QueryListAllNamesResponse, error)
+	// GetStats returns xID module statistics.
+	GetStats(context.Context, *QueryGetStatsRequest) (*QueryGetStatsResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -1108,6 +1134,12 @@ func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsReq
 }
 func (*UnimplementedQueryServer) GetRegistrationFee(ctx context.Context, req *QueryGetRegistrationFeeRequest) (*QueryGetRegistrationFeeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRegistrationFee not implemented")
+}
+func (*UnimplementedQueryServer) ListAllNames(ctx context.Context, req *QueryListAllNamesRequest) (*QueryListAllNamesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAllNames not implemented")
+}
+func (*UnimplementedQueryServer) GetStats(ctx context.Context, req *QueryGetStatsRequest) (*QueryGetStatsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStats not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -1276,6 +1308,42 @@ func _Query_GetRegistrationFee_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_ListAllNames_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryListAllNamesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).ListAllNames(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/xid.v1.Query/ListAllNames",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).ListAllNames(ctx, req.(*QueryListAllNamesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_GetStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryGetStatsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).GetStats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/xid.v1.Query/GetStats",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).GetStats(ctx, req.(*QueryGetStatsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var Query_serviceDesc = _Query_serviceDesc
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "xid.v1.Query",
@@ -1316,6 +1384,14 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetRegistrationFee",
 			Handler:    _Query_GetRegistrationFee_Handler,
+		},
+		{
+			MethodName: "ListAllNames",
+			Handler:    _Query_ListAllNames_Handler,
+		},
+		{
+			MethodName: "GetStats",
+			Handler:    _Query_GetStats_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
