@@ -3,8 +3,10 @@ package keeper
 import (
 	"encoding/json"
 
+	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/evm/x/xid/types"
 )
 
@@ -40,11 +42,6 @@ func (k Keeper) HasNameRecord(ctx sdk.Context, tld, name string) bool {
 	return store.Has(types.NameRecordKey(tld, name))
 }
 
-// DeleteNameRecord removes a name record from the store
-func (k Keeper) DeleteNameRecord(ctx sdk.Context, tld, name string) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.NameRecordKey(tld, name))
-}
 
 // IterateNameRecords iterates over all name records
 func (k Keeper) IterateNameRecords(ctx sdk.Context, cb func(record types.NameRecord) bool) {
@@ -110,6 +107,37 @@ func (k Keeper) GetNamesByOwnerAddr(ctx sdk.Context, owner sdk.AccAddress) []typ
 	}
 
 	return records
+}
+
+// GetNamesByOwnerPaginated returns a paginated list of name records owned by an address.
+func (k Keeper) GetNamesByOwnerPaginated(ctx sdk.Context, owner sdk.AccAddress, pageReq *query.PageRequest) ([]types.NameRecord, *query.PageResponse, error) {
+	ownerPrefix := types.OwnerIndexPrefix(owner.Bytes())
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), ownerPrefix)
+
+	var records []types.NameRecord
+	pageRes, err := query.Paginate(store, pageReq, func(key, _ []byte) error {
+		// key is [len(tld)][tld][name] (prefix already stripped)
+		if len(key) < 1 {
+			return nil
+		}
+		tldLen := int(key[0])
+		if len(key) < 1+tldLen {
+			return nil
+		}
+		tld := string(key[1 : 1+tldLen])
+		name := string(key[1+tldLen:])
+
+		record, found := k.GetNameRecord(ctx, tld, name)
+		if found {
+			records = append(records, record)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return records, pageRes, nil
 }
 
 // ---------------------------------------------------------------------------

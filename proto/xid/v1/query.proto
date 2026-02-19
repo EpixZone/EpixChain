@@ -6,6 +6,7 @@ option go_package = "github.com/cosmos/evm/x/xid/types";
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "xid/v1/xid.proto";
 import "xid/v1/genesis.proto";
 
@@ -101,10 +102,12 @@ message QueryListTLDsResponse {
 
 message QueryGetNamesByOwnerRequest {
   string owner = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
 message QueryGetNamesByOwnerResponse {
   repeated NameRecord names = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 message QueryParamsRequest {}

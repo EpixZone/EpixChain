@@ -109,7 +109,7 @@ func (k Keeper) ListTLDs(goCtx context.Context, _ *types.QueryListTLDsRequest) (
 	return &types.QueryListTLDsResponse{Tlds: tlds}, nil
 }
 
-// GetNamesByOwner returns all names owned by an address
+// GetNamesByOwner returns names owned by an address with pagination
 func (k Keeper) GetNamesByOwner(goCtx context.Context, req *types.QueryGetNamesByOwnerRequest) (*types.QueryGetNamesByOwnerResponse, error) {
 	if req == nil {
 		return nil, errorsmod.Wrap(types.ErrInvalidName, "empty request")
@@ -122,8 +122,12 @@ func (k Keeper) GetNamesByOwner(goCtx context.Context, req *types.QueryGetNamesB
 		return nil, err
 	}
 
-	names := k.GetNamesByOwnerAddr(ctx, addr)
-	return &types.QueryGetNamesByOwnerResponse{Names: names}, nil
+	names, pageRes, err := k.GetNamesByOwnerPaginated(ctx, addr, req.Pagination)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryGetNamesByOwnerResponse{Names: names, Pagination: pageRes}, nil
 }
 
 // Params returns the module parameters
