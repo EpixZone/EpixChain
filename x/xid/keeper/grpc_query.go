@@ -5,8 +5,11 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/evm/x/xid/types"
 )
+
+const maxPageSize uint64 = 10
 
 var _ types.QueryServer = Keeper{}
 
@@ -122,7 +125,14 @@ func (k Keeper) GetNamesByOwner(goCtx context.Context, req *types.QueryGetNamesB
 		return nil, err
 	}
 
-	names, pageRes, err := k.GetNamesByOwnerPaginated(ctx, addr, req.Pagination)
+	pageReq := req.Pagination
+	if pageReq == nil {
+		pageReq = &query.PageRequest{Limit: maxPageSize}
+	} else if pageReq.Limit == 0 || pageReq.Limit > maxPageSize {
+		pageReq.Limit = maxPageSize
+	}
+
+	names, pageRes, err := k.GetNamesByOwnerPaginated(ctx, addr, pageReq)
 	if err != nil {
 		return nil, err
 	}
