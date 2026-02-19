@@ -34,6 +34,35 @@ type EpixNetPeer struct {
 func (m *EpixNetPeer) Reset()         { *m = EpixNetPeer{} }
 func (m *EpixNetPeer) String() string { return proto.CompactTextString(m) }
 func (*EpixNetPeer) ProtoMessage()    {}
+func (*EpixNetPeer) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9bd3daa00c1847cd, []int{6}
+}
+func (m *EpixNetPeer) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EpixNetPeer) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EpixNetPeer.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EpixNetPeer) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EpixNetPeer.Merge(m, src)
+}
+func (m *EpixNetPeer) XXX_Size() int {
+	return m.Size()
+}
+func (m *EpixNetPeer) XXX_DiscardUnknown() {
+	xxx_messageInfo_EpixNetPeer.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EpixNetPeer proto.InternalMessageInfo
 
 func (m *EpixNetPeer) GetAddress() string {
 	if m != nil {
