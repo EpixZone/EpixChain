@@ -50,6 +50,10 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState *types.GenesisState)
 				panic(err)
 			}
 		}
+
+		if len(entry.EpixnetPeers) > 0 {
+			k.RecomputeAndStoreContentRoot(ctx, entry.Record.Tld, entry.Record.Name)
+		}
 	}
 
 	// Persist owner counts

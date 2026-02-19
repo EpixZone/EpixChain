@@ -625,35 +625,6 @@
         "internalType": "string",
         "name": "tld",
         "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "root",
-        "type": "string"
-      }
-    ],
-    "name": "updateContentRoot",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "success",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "name",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "tld",
-        "type": "string"
       }
     ],
     "name": "getContentRoot",

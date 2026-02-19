@@ -307,7 +307,12 @@ func (p Precompile) SetEpixNetPeer(
 		return nil, err
 	}
 
+	newRoot := p.xidKeeper.RecomputeAndStoreContentRoot(ctx, tld, name)
+
 	if err := p.EmitEpixNetPeerSet(ctx, stateDB, name, tld, peerAddress, label); err != nil {
+		return nil, err
+	}
+	if err := p.EmitContentRootUpdated(ctx, stateDB, name, tld, newRoot); err != nil {
 		return nil, err
 	}
 
@@ -356,71 +361,25 @@ func (p Precompile) RevokeEpixNetPeer(
 		return nil, err
 	}
 
+	newRoot := p.xidKeeper.RecomputeAndStoreContentRoot(ctx, tld, name)
+
 	if err := p.EmitEpixNetPeerRevoked(ctx, stateDB, name, tld, peerAddress); err != nil {
+		return nil, err
+	}
+	if err := p.EmitContentRootUpdated(ctx, stateDB, name, tld, newRoot); err != nil {
 		return nil, err
 	}
 
 	return method.Outputs.Pack(true)
 }
 
-// UpdateContentRoot handles the updateContentRoot(name, tld, root) function.
+// UpdateContentRoot is deprecated — content root is auto-computed from active peers.
 func (p Precompile) UpdateContentRoot(
-	ctx sdk.Context,
-	contract *vm.Contract,
-	stateDB vm.StateDB,
-	method *abi.Method,
-	args []interface{},
+	_ sdk.Context,
+	_ *vm.Contract,
+	_ vm.StateDB,
+	_ *abi.Method,
+	_ []interface{},
 ) ([]byte, error) {
-	if len(args) != 3 {
-		return nil, fmt.Errorf("expected 3 arguments, got %d", len(args))
-	}
-
-	name, ok := args[0].(string)
-	if !ok {
-		return nil, fmt.Errorf("invalid argument type for name: %T", args[0])
-	}
-	tld, ok := args[1].(string)
-	if !ok {
-		return nil, fmt.Errorf("invalid argument type for tld: %T", args[1])
-	}
-	root, ok := args[2].(string)
-	if !ok {
-		return nil, fmt.Errorf("invalid argument type for root: %T", args[2])
-	}
-
-	caller := contract.Caller()
-
-	// Verify ownership
-	record, found := p.xidKeeper.GetNameRecord(ctx, tld, name)
-	if !found {
-		return nil, fmt.Errorf("%s.%s not found", name, tld)
-	}
-
-	callerAddr := sdk.AccAddress(caller.Bytes())
-	if record.Owner != callerAddr.String() {
-		return nil, fmt.Errorf("caller is not the owner of %s.%s", name, tld)
-	}
-
-	// Validate root is 64-char hex string
-	if len(root) != 64 {
-		return nil, fmt.Errorf("root must be 64 hex characters, got %d", len(root))
-	}
-	for _, c := range root {
-		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
-			return nil, fmt.Errorf("root contains non-hex character: %c", c)
-		}
-	}
-
-	contentRoot := types.ContentRoot{
-		Root:      root,
-		UpdatedAt: uint64(ctx.BlockHeight()),
-		Submitter: callerAddr.String(),
-	}
-	p.xidKeeper.SetContentRoot(ctx, tld, name, contentRoot)
-
-	if err := p.EmitContentRootUpdated(ctx, stateDB, name, tld, root); err != nil {
-		return nil, err
-	}
-
-	return method.Outputs.Pack(true)
+	return nil, fmt.Errorf("updateContentRoot is deprecated; content root is auto-computed from active peers")
 }

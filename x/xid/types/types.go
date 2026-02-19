@@ -24,11 +24,10 @@ const (
 	DNSRecordTypeSRV   uint32 = 33
 )
 
-// ContentRoot represents a Merkle root hash for an xID's content tree
+// ContentRoot represents the auto-computed Merkle root of active peers for an xID
 type ContentRoot struct {
 	Root      string `protobuf:"bytes,1,opt,name=root,proto3" json:"root,omitempty"`
 	UpdatedAt uint64 `protobuf:"varint,2,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	Submitter string `protobuf:"bytes,3,opt,name=submitter,proto3" json:"submitter,omitempty"`
 }
 
 func (m *ContentRoot) Reset()         { *m = ContentRoot{} }
@@ -78,13 +77,6 @@ func (m *ContentRoot) GetUpdatedAt() uint64 {
 	return 0
 }
 
-func (m *ContentRoot) GetSubmitter() string {
-	if m != nil {
-		return m.Submitter
-	}
-	return ""
-}
-
 func (m *ContentRoot) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -102,14 +94,6 @@ func (m *ContentRoot) MarshalTo(dAtA []byte) (int, error) {
 
 func (m *ContentRoot) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
-	// field 3: submitter (string)
-	if len(m.Submitter) > 0 {
-		i -= len(m.Submitter)
-		copy(dAtA[i:], m.Submitter)
-		i = encodeVarintTypes(dAtA, i, uint64(len(m.Submitter)))
-		i--
-		dAtA[i] = 0x1a
-	}
 	// field 2: updated_at (uint64, varint)
 	if m.UpdatedAt != 0 {
 		i = encodeVarintTypes(dAtA, i, m.UpdatedAt)
@@ -136,9 +120,6 @@ func (m *ContentRoot) Size() (n int) {
 	}
 	if m.UpdatedAt != 0 {
 		n += 1 + sovTypes(m.UpdatedAt)
-	}
-	if len(m.Submitter) > 0 {
-		n += 1 + len(m.Submitter) + sovTypes(uint64(len(m.Submitter)))
 	}
 	return n
 }
@@ -221,7 +202,7 @@ func (m *ContentRoot) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Submitter = string(dAtA[iNdEx:postIndex])
+			// Skip legacy submitter field (backward compat)
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

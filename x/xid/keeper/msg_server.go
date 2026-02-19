@@ -213,58 +213,29 @@ func (k Keeper) SetEpixNetPeer(goCtx context.Context, msg *types.MsgSetEpixNetPe
 		return nil, err
 	}
 
-	ctx.EventManager().EmitEvents(sdk.Events{
+	newRoot := k.RecomputeAndStoreContentRoot(ctx, msg.Tld, msg.Name)
+
+	events := sdk.Events{
 		sdk.NewEvent(
 			"xid_epixnet_peer_set",
 			sdk.NewAttribute("name", msg.Name+"."+msg.Tld),
 			sdk.NewAttribute("address", msg.Peer.Address),
 			sdk.NewAttribute("label", msg.Peer.Label),
 		),
-	})
+		sdk.NewEvent(
+			"xid_content_root_updated",
+			sdk.NewAttribute("name", msg.Name+"."+msg.Tld),
+			sdk.NewAttribute("root", newRoot),
+		),
+	}
+	ctx.EventManager().EmitEvents(events)
 
 	return &types.MsgSetEpixNetPeerResponse{}, nil
 }
 
-// UpdateContentRoot handles MsgUpdateContentRoot
-func (k Keeper) UpdateContentRoot(goCtx context.Context, msg *types.MsgUpdateContentRoot) (*types.MsgUpdateContentRootResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// Verify name exists and caller is owner
-	record, found := k.GetNameRecord(ctx, msg.Tld, msg.Name)
-	if !found {
-		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", msg.Name, msg.Tld)
-	}
-	if record.Owner != msg.Owner {
-		return nil, errorsmod.Wrapf(types.ErrNotOwner, "sender %s is not the owner", msg.Owner)
-	}
-
-	// Validate root is a 64-char hex string (32 bytes)
-	if len(msg.Root) != 64 {
-		return nil, errorsmod.Wrapf(types.ErrInvalidContentRoot, "root must be 64 hex characters, got %d", len(msg.Root))
-	}
-	for _, c := range msg.Root {
-		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
-			return nil, errorsmod.Wrapf(types.ErrInvalidContentRoot, "root contains non-hex character: %c", c)
-		}
-	}
-
-	contentRoot := types.ContentRoot{
-		Root:      msg.Root,
-		UpdatedAt: uint64(ctx.BlockHeight()),
-		Submitter: msg.Owner,
-	}
-	k.SetContentRoot(ctx, msg.Tld, msg.Name, contentRoot)
-
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			"xid_content_root_updated",
-			sdk.NewAttribute("name", msg.Name+"."+msg.Tld),
-			sdk.NewAttribute("root", msg.Root),
-			sdk.NewAttribute("submitter", msg.Owner),
-		),
-	})
-
-	return &types.MsgUpdateContentRootResponse{}, nil
+// UpdateContentRoot is deprecated — content root is now auto-computed from active peers.
+func (k Keeper) UpdateContentRoot(_ context.Context, _ *types.MsgUpdateContentRoot) (*types.MsgUpdateContentRootResponse, error) {
+	return nil, errorsmod.Wrap(types.ErrInvalidContentRoot, "content root is auto-computed from active peers; manual updates are no longer supported")
 }
 
 // RevokeEpixNetPeer handles MsgRevokeEpixNetPeer
@@ -293,13 +264,21 @@ func (k Keeper) RevokeEpixNetPeer(goCtx context.Context, msg *types.MsgRevokeEpi
 		return nil, err
 	}
 
-	ctx.EventManager().EmitEvents(sdk.Events{
+	newRoot := k.RecomputeAndStoreContentRoot(ctx, msg.Tld, msg.Name)
+
+	events := sdk.Events{
 		sdk.NewEvent(
 			"xid_epixnet_peer_revoked",
 			sdk.NewAttribute("name", msg.Name+"."+msg.Tld),
 			sdk.NewAttribute("address", msg.Address),
 		),
-	})
+		sdk.NewEvent(
+			"xid_content_root_updated",
+			sdk.NewAttribute("name", msg.Name+"."+msg.Tld),
+			sdk.NewAttribute("root", newRoot),
+		),
+	}
+	ctx.EventManager().EmitEvents(events)
 
 	return &types.MsgRevokeEpixNetPeerResponse{}, nil
 }

@@ -30,7 +30,6 @@ const (
 
 	SetEpixNetPeerMethod    = "setEpixNetPeer"
 	RevokeEpixNetPeerMethod = "revokeEpixNetPeer"
-	UpdateContentRootMethod = "updateContentRoot"
 
 	// Queries
 	ResolveMethod            = "resolve"
@@ -133,8 +132,6 @@ func (p Precompile) Execute(ctx sdk.Context, stateDB vm.StateDB, contract *vm.Co
 		bz, err = p.SetEpixNetPeer(ctx, contract, stateDB, method, args)
 	case RevokeEpixNetPeerMethod:
 		bz, err = p.RevokeEpixNetPeer(ctx, contract, stateDB, method, args)
-	case UpdateContentRootMethod:
-		bz, err = p.UpdateContentRoot(ctx, contract, stateDB, method, args)
 
 	// Queries
 	case ResolveMethod:
@@ -163,7 +160,7 @@ func (p Precompile) Execute(ctx sdk.Context, stateDB vm.StateDB, contract *vm.Co
 // IsTransaction checks if the given method is a state-changing transaction
 func (Precompile) IsTransaction(method *abi.Method) bool {
 	switch method.Name {
-	case RegisterMethod, TransferNameMethod, UpdateProfileMethod, SetDNSRecordMethod, DeleteDNSRecordMethod, SetEpixNetPeerMethod, RevokeEpixNetPeerMethod, UpdateContentRootMethod:
+	case RegisterMethod, TransferNameMethod, UpdateProfileMethod, SetDNSRecordMethod, DeleteDNSRecordMethod, SetEpixNetPeerMethod, RevokeEpixNetPeerMethod:
 		return true
 	default:
 		return false
