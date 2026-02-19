@@ -132,9 +132,18 @@ func (k Keeper) GetNamesByOwner(goCtx context.Context, req *types.QueryGetNamesB
 		pageReq.Limit = maxPageSize
 	}
 
+	// Disable CountTotal in Paginate — we use a stored counter instead
+	wantTotal := pageReq.CountTotal
+	pageReq.CountTotal = false
+
 	names, pageRes, err := k.GetNamesByOwnerPaginated(ctx, addr, pageReq)
 	if err != nil {
 		return nil, err
+	}
+
+	// Supply the total from the O(1) stored counter
+	if wantTotal {
+		pageRes.Total = k.GetOwnerCount(ctx, addr)
 	}
 
 	return &types.QueryGetNamesByOwnerResponse{Names: names, Pagination: pageRes}, nil

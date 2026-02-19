@@ -98,6 +98,9 @@ func (k Keeper) RegisterNameRecord(ctx sdk.Context, ownerAddr sdk.AccAddress, tl
 	// Set owner index for reverse lookups
 	k.SetOwnerIndex(ctx, ownerAddr, tld, name)
 
+	// Increment owner's name count
+	k.IncrementOwnerCount(ctx, ownerAddr)
+
 	// Emit event
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -138,6 +141,10 @@ func (k Keeper) TransferNameRecord(ctx sdk.Context, currentOwner, newOwner sdk.A
 	// Update owner index
 	k.DeleteOwnerIndex(ctx, currentOwner, tld, name)
 	k.SetOwnerIndex(ctx, newOwner, tld, name)
+
+	// Update owner counts
+	k.DecrementOwnerCount(ctx, currentOwner)
+	k.IncrementOwnerCount(ctx, newOwner)
 
 	// Update the name record
 	record.Owner = newOwner.String()

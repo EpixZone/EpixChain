@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/binary"
 	"encoding/json"
 
 	"cosmossdk.io/store/prefix"
@@ -107,6 +108,41 @@ func (k Keeper) GetNamesByOwnerAddr(ctx sdk.Context, owner sdk.AccAddress) []typ
 	}
 
 	return records
+}
+
+// ---------------------------------------------------------------------------
+// Owner Count (O(1) counter per owner)
+// ---------------------------------------------------------------------------
+
+// GetOwnerCount returns the number of names owned by an address.
+func (k Keeper) GetOwnerCount(ctx sdk.Context, owner sdk.AccAddress) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.OwnerCountKey(owner.Bytes()))
+	if bz == nil {
+		return 0
+	}
+	return binary.BigEndian.Uint64(bz)
+}
+
+// SetOwnerCount sets the name count for an owner.
+func (k Keeper) SetOwnerCount(ctx sdk.Context, owner sdk.AccAddress, count uint64) {
+	store := ctx.KVStore(k.storeKey)
+	bz := make([]byte, 8)
+	binary.BigEndian.PutUint64(bz, count)
+	store.Set(types.OwnerCountKey(owner.Bytes()), bz)
+}
+
+// IncrementOwnerCount atomically increments the owner's name count by 1.
+func (k Keeper) IncrementOwnerCount(ctx sdk.Context, owner sdk.AccAddress) {
+	k.SetOwnerCount(ctx, owner, k.GetOwnerCount(ctx, owner)+1)
+}
+
+// DecrementOwnerCount atomically decrements the owner's name count by 1.
+func (k Keeper) DecrementOwnerCount(ctx sdk.Context, owner sdk.AccAddress) {
+	count := k.GetOwnerCount(ctx, owner)
+	if count > 0 {
+		k.SetOwnerCount(ctx, owner, count-1)
+	}
 }
 
 // GetNamesByOwnerPaginated returns a paginated list of name records owned by an address.

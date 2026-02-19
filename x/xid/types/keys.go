@@ -35,6 +35,7 @@ const (
 	prefixDNSRecord
 	prefixTLDConfig
 	prefixParams
+	prefixOwnerCount
 )
 
 // KVStore key prefixes
@@ -45,6 +46,7 @@ var (
 	KeyPrefixDNSRecord  = []byte{prefixDNSRecord}
 	KeyPrefixTLDConfig  = []byte{prefixTLDConfig}
 	KeyPrefixParams     = []byte{prefixParams}
+	KeyPrefixOwnerCount = []byte{prefixOwnerCount}
 )
 
 // NameRecordKey returns the store key for a name record: [prefix][len(tld)][tld][name]
@@ -126,6 +128,14 @@ func TLDConfigKey(tld string) []byte {
 	key := make([]byte, 0, 1+len(tld))
 	key = append(key, prefixTLDConfig)
 	key = append(key, []byte(tld)...)
+	return key
+}
+
+// OwnerCountKey returns the store key for an owner's name count: [prefix][owner_bytes(20)]
+func OwnerCountKey(owner []byte) []byte {
+	key := make([]byte, 0, 1+20)
+	key = append(key, prefixOwnerCount)
+	key = append(key, padOrTruncate(owner, 20)...)
 	return key
 }
 
