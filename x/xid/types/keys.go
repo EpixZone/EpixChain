@@ -43,6 +43,7 @@ const (
 	prefixTLDFeesBurned
 	prefixEpixNetPeer
 	prefixEpixNetPeerReverse
+	prefixContentRoot
 )
 
 // KVStore key prefixes
@@ -201,6 +202,18 @@ func EpixNetPeerReverseKey(address string) []byte {
 	key := make([]byte, 0, 1+8)
 	key = append(key, prefixEpixNetPeerReverse)
 	key = append(key, addrHash[:8]...)
+	return key
+}
+
+// ContentRootKey returns the store key for a content root: [prefix][len(tld)][tld][name]
+func ContentRootKey(tld, name string) []byte {
+	tldBytes := []byte(tld)
+	nameBytes := []byte(name)
+	key := make([]byte, 0, 1+1+len(tldBytes)+len(nameBytes))
+	key = append(key, prefixContentRoot)
+	key = append(key, byte(len(tldBytes)))
+	key = append(key, tldBytes...)
+	key = append(key, nameBytes...)
 	return key
 }
 

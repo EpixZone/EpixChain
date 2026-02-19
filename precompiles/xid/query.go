@@ -184,13 +184,45 @@ func (p Precompile) GetEpixNetPeers(
 	addresses := make([]string, len(peers))
 	labels := make([]string, len(peers))
 	addedAts := make([]uint64, len(peers))
+	actives := make([]bool, len(peers))
+	revokedAts := make([]uint64, len(peers))
 	for i, peer := range peers {
 		addresses[i] = peer.Address
 		labels[i] = peer.Label
 		addedAts[i] = peer.AddedAt
+		actives[i] = peer.Active
+		revokedAts[i] = peer.RevokedAt
 	}
 
-	return method.Outputs.Pack(addresses, labels, addedAts)
+	return method.Outputs.Pack(addresses, labels, addedAts, actives, revokedAts)
+}
+
+// GetContentRoot handles the getContentRoot(name, tld) view function.
+// Returns the content root hash and the block height when it was last updated.
+func (p Precompile) GetContentRoot(
+	ctx sdk.Context,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	if len(args) != 2 {
+		return nil, fmt.Errorf("expected 2 arguments, got %d", len(args))
+	}
+
+	name, ok := args[0].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid argument type for name: %T", args[0])
+	}
+	tld, ok := args[1].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid argument type for tld: %T", args[1])
+	}
+
+	root, found := p.xidKeeper.GetContentRoot(ctx, tld, name)
+	if !found {
+		return method.Outputs.Pack("", uint64(0))
+	}
+
+	return method.Outputs.Pack(root.Root, root.UpdatedAt)
 }
 
 // ensure big.Int is used

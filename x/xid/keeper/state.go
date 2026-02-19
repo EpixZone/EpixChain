@@ -411,6 +411,8 @@ func (k Keeper) SetEpixNetPeerEntry(ctx sdk.Context, tld, name string, peer type
 	}
 
 	peer.AddedAt = uint64(ctx.BlockHeight())
+	peer.Active = true
+	peer.RevokedAt = 0
 	bz, _ := json.Marshal(peer)
 	store.Set(types.EpixNetPeerKey(tld, name, peer.Address), bz)
 
@@ -436,11 +438,27 @@ func (k Keeper) GetEpixNetPeerEntry(ctx sdk.Context, tld, name, address string) 
 	return peer, true
 }
 
-// DeleteEpixNetPeerEntry removes an EpixNet peer from the store
-func (k Keeper) DeleteEpixNetPeerEntry(ctx sdk.Context, tld, name, address string) {
+// RevokeEpixNetPeerEntry marks a peer as revoked (inactive) without removing it from the store.
+// The reverse index is preserved so the address cannot be re-used on a different xID.
+func (k Keeper) RevokeEpixNetPeerEntry(ctx sdk.Context, tld, name, address string) error {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.EpixNetPeerKey(tld, name, address))
-	store.Delete(types.EpixNetPeerReverseKey(address))
+	key := types.EpixNetPeerKey(tld, name, address)
+	bz := store.Get(key)
+	if bz == nil {
+		return types.ErrEpixNetPeerNotFound.Wrapf("peer %s not found for %s.%s", address, name, tld)
+	}
+
+	var peer types.EpixNetPeer
+	if err := json.Unmarshal(bz, &peer); err != nil {
+		return err
+	}
+
+	peer.Active = false
+	peer.RevokedAt = uint64(ctx.BlockHeight())
+
+	updated, _ := json.Marshal(peer)
+	store.Set(key, updated)
+	return nil
 }
 
 // GetEpixNetPeerOwner returns the tld and name that a peer address is linked to.
@@ -473,6 +491,31 @@ func (k Keeper) GetAllEpixNetPeers(ctx sdk.Context, tld, name string) []types.Ep
 		peers = append(peers, peer)
 	}
 	return peers
+}
+
+// ---------------------------------------------------------------------------
+// Content Root
+// ---------------------------------------------------------------------------
+
+// SetContentRoot stores a content root for a name
+func (k Keeper) SetContentRoot(ctx sdk.Context, tld, name string, root types.ContentRoot) {
+	store := ctx.KVStore(k.storeKey)
+	bz, _ := json.Marshal(root)
+	store.Set(types.ContentRootKey(tld, name), bz)
+}
+
+// GetContentRoot retrieves the content root for a name
+func (k Keeper) GetContentRoot(ctx sdk.Context, tld, name string) (types.ContentRoot, bool) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.ContentRootKey(tld, name))
+	if bz == nil {
+		return types.ContentRoot{}, false
+	}
+	var root types.ContentRoot
+	if err := json.Unmarshal(bz, &root); err != nil {
+		return types.ContentRoot{}, false
+	}
+	return root, true
 }
 
 // ---------------------------------------------------------------------------

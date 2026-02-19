@@ -314,8 +314,8 @@ func (p Precompile) SetEpixNetPeer(
 	return method.Outputs.Pack(true)
 }
 
-// DeleteEpixNetPeer handles the deleteEpixNetPeer(name, tld, peerAddress) function.
-func (p Precompile) DeleteEpixNetPeer(
+// RevokeEpixNetPeer handles the revokeEpixNetPeer(name, tld, peerAddress) function.
+func (p Precompile) RevokeEpixNetPeer(
 	ctx sdk.Context,
 	contract *vm.Contract,
 	stateDB vm.StateDB,
@@ -352,9 +352,73 @@ func (p Precompile) DeleteEpixNetPeer(
 		return nil, fmt.Errorf("caller is not the owner of %s.%s", name, tld)
 	}
 
-	p.xidKeeper.DeleteEpixNetPeerEntry(ctx, tld, name, peerAddress)
+	if err := p.xidKeeper.RevokeEpixNetPeerEntry(ctx, tld, name, peerAddress); err != nil {
+		return nil, err
+	}
 
-	if err := p.EmitEpixNetPeerDeleted(ctx, stateDB, name, tld, peerAddress); err != nil {
+	if err := p.EmitEpixNetPeerRevoked(ctx, stateDB, name, tld, peerAddress); err != nil {
+		return nil, err
+	}
+
+	return method.Outputs.Pack(true)
+}
+
+// UpdateContentRoot handles the updateContentRoot(name, tld, root) function.
+func (p Precompile) UpdateContentRoot(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	if len(args) != 3 {
+		return nil, fmt.Errorf("expected 3 arguments, got %d", len(args))
+	}
+
+	name, ok := args[0].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid argument type for name: %T", args[0])
+	}
+	tld, ok := args[1].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid argument type for tld: %T", args[1])
+	}
+	root, ok := args[2].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid argument type for root: %T", args[2])
+	}
+
+	caller := contract.Caller()
+
+	// Verify ownership
+	record, found := p.xidKeeper.GetNameRecord(ctx, tld, name)
+	if !found {
+		return nil, fmt.Errorf("%s.%s not found", name, tld)
+	}
+
+	callerAddr := sdk.AccAddress(caller.Bytes())
+	if record.Owner != callerAddr.String() {
+		return nil, fmt.Errorf("caller is not the owner of %s.%s", name, tld)
+	}
+
+	// Validate root is 64-char hex string
+	if len(root) != 64 {
+		return nil, fmt.Errorf("root must be 64 hex characters, got %d", len(root))
+	}
+	for _, c := range root {
+		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+			return nil, fmt.Errorf("root contains non-hex character: %c", c)
+		}
+	}
+
+	contentRoot := types.ContentRoot{
+		Root:      root,
+		UpdatedAt: uint64(ctx.BlockHeight()),
+		Submitter: callerAddr.String(),
+	}
+	p.xidKeeper.SetContentRoot(ctx, tld, name, contentRoot)
+
+	if err := p.EmitContentRootUpdated(ctx, stateDB, name, tld, root); err != nil {
 		return nil, err
 	}
 

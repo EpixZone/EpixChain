@@ -24,18 +24,240 @@ const (
 	DNSRecordTypeSRV   uint32 = 33
 )
 
+// ContentRoot represents a Merkle root hash for an xID's content tree
+type ContentRoot struct {
+	Root      string `protobuf:"bytes,1,opt,name=root,proto3" json:"root,omitempty"`
+	UpdatedAt uint64 `protobuf:"varint,2,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Submitter string `protobuf:"bytes,3,opt,name=submitter,proto3" json:"submitter,omitempty"`
+}
+
+func (m *ContentRoot) Reset()         { *m = ContentRoot{} }
+func (m *ContentRoot) String() string { return proto.CompactTextString(m) }
+func (*ContentRoot) ProtoMessage()    {}
+func (*ContentRoot) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9bd3daa00c1847cd, []int{6}
+}
+func (m *ContentRoot) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ContentRoot) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ContentRoot.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ContentRoot) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ContentRoot.Merge(m, src)
+}
+func (m *ContentRoot) XXX_Size() int {
+	return m.Size()
+}
+func (m *ContentRoot) XXX_DiscardUnknown() {
+	xxx_messageInfo_ContentRoot.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ContentRoot proto.InternalMessageInfo
+
+func (m *ContentRoot) GetRoot() string {
+	if m != nil {
+		return m.Root
+	}
+	return ""
+}
+
+func (m *ContentRoot) GetUpdatedAt() uint64 {
+	if m != nil {
+		return m.UpdatedAt
+	}
+	return 0
+}
+
+func (m *ContentRoot) GetSubmitter() string {
+	if m != nil {
+		return m.Submitter
+	}
+	return ""
+}
+
+func (m *ContentRoot) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ContentRoot) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ContentRoot) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	// field 3: submitter (string)
+	if len(m.Submitter) > 0 {
+		i -= len(m.Submitter)
+		copy(dAtA[i:], m.Submitter)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.Submitter)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	// field 2: updated_at (uint64, varint)
+	if m.UpdatedAt != 0 {
+		i = encodeVarintTypes(dAtA, i, m.UpdatedAt)
+		i--
+		dAtA[i] = 0x10
+	}
+	// field 1: root (string)
+	if len(m.Root) > 0 {
+		i -= len(m.Root)
+		copy(dAtA[i:], m.Root)
+		i = encodeVarintTypes(dAtA, i, uint64(len(m.Root)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ContentRoot) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	if len(m.Root) > 0 {
+		n += 1 + len(m.Root) + sovTypes(uint64(len(m.Root)))
+	}
+	if m.UpdatedAt != 0 {
+		n += 1 + sovTypes(m.UpdatedAt)
+	}
+	if len(m.Submitter) > 0 {
+		n += 1 + len(m.Submitter) + sovTypes(uint64(len(m.Submitter)))
+	}
+	return n
+}
+
+func (m *ContentRoot) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		switch fieldNum {
+		case 1: // root
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Root", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := iNdEx + int(stringLen)
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Root = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2: // updated_at
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field UpdatedAt", wireType)
+			}
+			m.UpdatedAt = 0
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.UpdatedAt |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3: // submitter
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Submitter", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			postIndex := iNdEx + int(stringLen)
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Submitter = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTypes(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return fmt.Errorf("proto: negative skip found during unmarshaling")
+			}
+			if iNdEx+skippy > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
 // EpixNetPeer represents an EpixNet peer address attached to a name
 type EpixNetPeer struct {
-	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
-	Label   string `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
-	AddedAt uint64 `protobuf:"varint,3,opt,name=added_at,json=addedAt,proto3" json:"added_at,omitempty"`
+	Address   string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	Label     string `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
+	AddedAt   uint64 `protobuf:"varint,3,opt,name=added_at,json=addedAt,proto3" json:"added_at,omitempty"`
+	Active    bool   `protobuf:"varint,4,opt,name=active,proto3" json:"active,omitempty"`
+	RevokedAt uint64 `protobuf:"varint,5,opt,name=revoked_at,json=revokedAt,proto3" json:"revoked_at,omitempty"`
 }
 
 func (m *EpixNetPeer) Reset()         { *m = EpixNetPeer{} }
 func (m *EpixNetPeer) String() string { return proto.CompactTextString(m) }
 func (*EpixNetPeer) ProtoMessage()    {}
 func (*EpixNetPeer) Descriptor() ([]byte, []int) {
-	return fileDescriptor_9bd3daa00c1847cd, []int{6}
+	return fileDescriptor_9bd3daa00c1847cd, []int{7}
 }
 func (m *EpixNetPeer) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -85,6 +307,20 @@ func (m *EpixNetPeer) GetAddedAt() uint64 {
 	return 0
 }
 
+func (m *EpixNetPeer) GetActive() bool {
+	if m != nil {
+		return m.Active
+	}
+	return false
+}
+
+func (m *EpixNetPeer) GetRevokedAt() uint64 {
+	if m != nil {
+		return m.RevokedAt
+	}
+	return 0
+}
+
 func (m *EpixNetPeer) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -102,6 +338,19 @@ func (m *EpixNetPeer) MarshalTo(dAtA []byte) (int, error) {
 
 func (m *EpixNetPeer) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
+	// field 5: revoked_at (uint64, varint)
+	if m.RevokedAt != 0 {
+		i = encodeVarintTypes(dAtA, i, m.RevokedAt)
+		i--
+		dAtA[i] = 0x28
+	}
+	// field 4: active (bool, varint)
+	if m.Active {
+		i--
+		dAtA[i] = 1
+		i--
+		dAtA[i] = 0x20
+	}
 	// field 3: added_at (uint64, varint)
 	if m.AddedAt != 0 {
 		i = encodeVarintTypes(dAtA, i, m.AddedAt)
@@ -139,6 +388,12 @@ func (m *EpixNetPeer) Size() (n int) {
 	}
 	if m.AddedAt != 0 {
 		n += 1 + sovTypes(m.AddedAt)
+	}
+	if m.Active {
+		n += 2
+	}
+	if m.RevokedAt != 0 {
+		n += 1 + sovTypes(m.RevokedAt)
 	}
 	return n
 }
@@ -219,6 +474,39 @@ func (m *EpixNetPeer) Unmarshal(dAtA []byte) error {
 				b := dAtA[iNdEx]
 				iNdEx++
 				m.AddedAt |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4: // active
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Active", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Active = v != 0
+		case 5: // revoked_at
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RevokedAt", wireType)
+			}
+			m.RevokedAt = 0
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.RevokedAt |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -331,5 +619,6 @@ func skipTypes(dAtA []byte) (n int, err error) {
 }
 
 func init() {
+	proto.RegisterType((*ContentRoot)(nil), "xid.v1.ContentRoot")
 	proto.RegisterType((*EpixNetPeer)(nil), "xid.v1.EpixNetPeer")
 }

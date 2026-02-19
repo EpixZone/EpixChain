@@ -20,4 +20,5 @@ var (
 	ErrInvalidPriceTier    = errorsmod.Register(ModuleName, 15, "invalid price tier configuration")
 	ErrEpixNetPeerNotFound      = errorsmod.Register(ModuleName, 16, "EpixNet peer not found")
 	ErrEpixNetPeerAlreadyLinked = errorsmod.Register(ModuleName, 17, "EpixNet peer address is already linked to another xID")
+	ErrInvalidContentRoot       = errorsmod.Register(ModuleName, 18, "invalid content root")
 )

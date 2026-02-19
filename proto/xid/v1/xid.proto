@@ -66,10 +66,24 @@ message DNSRecord {
   uint32 ttl = 3;
 }
 
+// ContentRoot represents a Merkle root hash for an xID's content tree.
+message ContentRoot {
+  // root is the 64-char hex-encoded 32-byte Merkle root hash
+  string root = 1;
+  // updated_at is the block height when this root was last updated
+  uint64 updated_at = 2;
+  // submitter is the bech32 address of who submitted this root
+  string submitter = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
 // EpixNetPeer represents an EpixNet peer address attached to a name.
 message EpixNetPeer {
   string address = 1;
   string label = 2;
   // added_at is the block height when this peer was added
   uint64 added_at = 3;
+  // active indicates whether this peer is currently authorized
+  bool active = 4;
+  // revoked_at is the block height when this peer was revoked (0 if active)
+  uint64 revoked_at = 5;
 }

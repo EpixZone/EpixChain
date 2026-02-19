@@ -225,8 +225,8 @@ func (k Keeper) SetEpixNetPeer(goCtx context.Context, msg *types.MsgSetEpixNetPe
 	return &types.MsgSetEpixNetPeerResponse{}, nil
 }
 
-// DeleteEpixNetPeer handles MsgDeleteEpixNetPeer
-func (k Keeper) DeleteEpixNetPeer(goCtx context.Context, msg *types.MsgDeleteEpixNetPeer) (*types.MsgDeleteEpixNetPeerResponse, error) {
+// UpdateContentRoot handles MsgUpdateContentRoot
+func (k Keeper) UpdateContentRoot(goCtx context.Context, msg *types.MsgUpdateContentRoot) (*types.MsgUpdateContentRootResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Verify name exists and caller is owner
@@ -238,20 +238,68 @@ func (k Keeper) DeleteEpixNetPeer(goCtx context.Context, msg *types.MsgDeleteEpi
 		return nil, errorsmod.Wrapf(types.ErrNotOwner, "sender %s is not the owner", msg.Owner)
 	}
 
-	// Verify the peer exists
-	if _, found := k.GetEpixNetPeerEntry(ctx, msg.Tld, msg.Name, msg.Address); !found {
-		return nil, errorsmod.Wrapf(types.ErrEpixNetPeerNotFound, "peer %s not found for %s.%s", msg.Address, msg.Name, msg.Tld)
+	// Validate root is a 64-char hex string (32 bytes)
+	if len(msg.Root) != 64 {
+		return nil, errorsmod.Wrapf(types.ErrInvalidContentRoot, "root must be 64 hex characters, got %d", len(msg.Root))
+	}
+	for _, c := range msg.Root {
+		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+			return nil, errorsmod.Wrapf(types.ErrInvalidContentRoot, "root contains non-hex character: %c", c)
+		}
 	}
 
-	k.DeleteEpixNetPeerEntry(ctx, msg.Tld, msg.Name, msg.Address)
+	contentRoot := types.ContentRoot{
+		Root:      msg.Root,
+		UpdatedAt: uint64(ctx.BlockHeight()),
+		Submitter: msg.Owner,
+	}
+	k.SetContentRoot(ctx, msg.Tld, msg.Name, contentRoot)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			"xid_epixnet_peer_deleted",
+			"xid_content_root_updated",
+			sdk.NewAttribute("name", msg.Name+"."+msg.Tld),
+			sdk.NewAttribute("root", msg.Root),
+			sdk.NewAttribute("submitter", msg.Owner),
+		),
+	})
+
+	return &types.MsgUpdateContentRootResponse{}, nil
+}
+
+// RevokeEpixNetPeer handles MsgRevokeEpixNetPeer
+func (k Keeper) RevokeEpixNetPeer(goCtx context.Context, msg *types.MsgRevokeEpixNetPeer) (*types.MsgRevokeEpixNetPeerResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Verify name exists and caller is owner
+	record, found := k.GetNameRecord(ctx, msg.Tld, msg.Name)
+	if !found {
+		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", msg.Name, msg.Tld)
+	}
+	if record.Owner != msg.Owner {
+		return nil, errorsmod.Wrapf(types.ErrNotOwner, "sender %s is not the owner", msg.Owner)
+	}
+
+	// Verify the peer exists and is currently active
+	peer, found := k.GetEpixNetPeerEntry(ctx, msg.Tld, msg.Name, msg.Address)
+	if !found {
+		return nil, errorsmod.Wrapf(types.ErrEpixNetPeerNotFound, "peer %s not found for %s.%s", msg.Address, msg.Name, msg.Tld)
+	}
+	if !peer.Active {
+		return nil, errorsmod.Wrapf(types.ErrEpixNetPeerNotFound, "peer %s is already revoked for %s.%s", msg.Address, msg.Name, msg.Tld)
+	}
+
+	if err := k.RevokeEpixNetPeerEntry(ctx, msg.Tld, msg.Name, msg.Address); err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			"xid_epixnet_peer_revoked",
 			sdk.NewAttribute("name", msg.Name+"."+msg.Tld),
 			sdk.NewAttribute("address", msg.Address),
 		),
 	})
 
-	return &types.MsgDeleteEpixNetPeerResponse{}, nil
+	return &types.MsgRevokeEpixNetPeerResponse{}, nil
 }

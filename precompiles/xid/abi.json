@@ -479,7 +479,7 @@
         "type": "string"
       }
     ],
-    "name": "EpixNetPeerDeleted",
+    "name": "EpixNetPeerRevoked",
     "type": "event"
   },
   {
@@ -534,7 +534,7 @@
         "type": "string"
       }
     ],
-    "name": "deleteEpixNetPeer",
+    "name": "revokeEpixNetPeer",
     "outputs": [
       {
         "internalType": "bool",
@@ -574,6 +574,99 @@
         "internalType": "uint64[]",
         "name": "addedAts",
         "type": "uint64[]"
+      },
+      {
+        "internalType": "bool[]",
+        "name": "actives",
+        "type": "bool[]"
+      },
+      {
+        "internalType": "uint64[]",
+        "name": "revokedAts",
+        "type": "uint64[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "tld",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "root",
+        "type": "string"
+      }
+    ],
+    "name": "ContentRootUpdated",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "tld",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "root",
+        "type": "string"
+      }
+    ],
+    "name": "updateContentRoot",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "success",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "tld",
+        "type": "string"
+      }
+    ],
+    "name": "getContentRoot",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "root",
+        "type": "string"
+      },
+      {
+        "internalType": "uint64",
+        "name": "updatedAt",
+        "type": "uint64"
       }
     ],
     "stateMutability": "view",
