@@ -137,15 +137,20 @@ func (app EVMD) RegisterUpgradeHandlers() {
 		upgradeInfo.Name == UpgradeName_v0_5_3 ||
 		upgradeInfo.Name == UpgradeName_v0_5_4) &&
 		!app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-		added := []string{}
-		if app.topHoldersEnabled {
-			added = append(added, "topholders")
-		}
-		storeUpgrades := storetypes.StoreUpgrades{
-			Added: added,
-		}
+		storeUpgrades := storetypes.StoreUpgrades{}
 		// configure store loader that checks if version == upgradeHeight and applies store upgrades
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
+	}
+
+	// If topholders is enabled, ensure its store exists. This handles nodes that
+	// enable topholders after already passing the upgrade height — the store loader
+	// will add the missing store on the next startup without requiring a new upgrade.
+	if app.topHoldersEnabled {
+		app.SetStoreLoader(func(ms storetypes.CommitMultiStore) error {
+			return ms.LoadLatestVersionAndUpgrade(&storetypes.StoreUpgrades{
+				Added: []string{"topholders"},
+			})
+		})
 	}
 }
 
