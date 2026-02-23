@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
 	"github.com/ethereum/go-ethereum/common"
@@ -259,16 +258,9 @@ func NewExampleApp(
 		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey, precisebanktypes.StoreKey, epixminttypes.StoreKey,
 	}
 
-	// Conditionally add TopHolders store key if enabled AND this is a fresh node
-	// For existing nodes, we'll run TopHolders in memory-only mode to avoid store version mismatch
+	// Conditionally add TopHolders store key if enabled
 	if topHoldersEnabled {
-		// Check if this is a fresh node by looking for existing database
-		dbPath := filepath.Join(cast.ToString(appOpts.Get(flags.FlagHome)), "data", "application.db")
-		if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-			// Fresh node - safe to add store key
-			storeKeys = append(storeKeys, topholderstypes.StoreKey)
-		}
-		// For existing nodes, we'll skip adding the store key and run in memory-only mode
+		storeKeys = append(storeKeys, topholderstypes.StoreKey)
 	}
 
 	keys := storetypes.NewKVStoreKeys(storeKeys...)
@@ -493,24 +485,10 @@ func NewExampleApp(
 	// Set up TopHolders keeper (only if enabled in config)
 	app.topHoldersEnabled = topHoldersEnabled
 	if topHoldersEnabled {
-		var storeKey storetypes.StoreKey
-		var memKey storetypes.StoreKey
-
-		// Check if store key exists (for new nodes) or use nil (for existing nodes)
-		if key, exists := keys[topholderstypes.StoreKey]; exists {
-			storeKey = key
-			memKey = key // Use same key for simplicity
-		} else {
-			// For backward compatibility with existing nodes, use nil store keys
-			storeKey = nil
-			memKey = nil
-			logger.Info("TopHolders module running in memory-only mode for backward compatibility")
-		}
-
 		app.TopHoldersKeeper = topholderskeeper.NewKeeper(
 			appCodec,
-			storeKey,
-			memKey,
+			keys[topholderstypes.StoreKey],
+			keys[topholderstypes.StoreKey],
 			authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 			app.BankKeeper,
 			app.StakingKeeper,

@@ -131,14 +131,18 @@ func (app EVMD) RegisterUpgradeHandlers() {
 		panic(err)
 	}
 
-	// Handle v0.5.1, v0.5.2, and v0.5.3 upgrades
+	// Handle store upgrades for each version
 	if (upgradeInfo.Name == UpgradeName_v0_5_1 ||
 		upgradeInfo.Name == UpgradeName_v0_5_2 ||
 		upgradeInfo.Name == UpgradeName_v0_5_3 ||
 		upgradeInfo.Name == UpgradeName_v0_5_4) &&
 		!app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		added := []string{}
+		if app.topHoldersEnabled {
+			added = append(added, "topholders")
+		}
 		storeUpgrades := storetypes.StoreUpgrades{
-			Added: []string{},
+			Added: added,
 		}
 		// configure store loader that checks if version == upgradeHeight and applies store upgrades
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
