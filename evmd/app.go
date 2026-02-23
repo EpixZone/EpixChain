@@ -257,12 +257,7 @@ func NewExampleApp(
 		// Cosmos EVM store keys
 		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey, precisebanktypes.StoreKey, epixminttypes.StoreKey,
 	}
-
-	// Conditionally add TopHolders store key if enabled
-	if topHoldersEnabled {
-		storeKeys = append(storeKeys, topholderstypes.StoreKey)
-	}
-
+	
 	keys := storetypes.NewKVStoreKeys(storeKeys...)
 	oKeys := storetypes.NewObjectStoreKeys(banktypes.ObjectStoreKey, evmtypes.ObjectKey)
 
@@ -482,13 +477,15 @@ func NewExampleApp(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	// Set up TopHolders keeper (only if enabled in config)
+	// Set up TopHolders keeper in memory-only mode (nil store keys).
+	// Cache is held in a global variable and rebuilt each block from BeginBlocker.
+	// This avoids affecting the app hash so RPC nodes can enable it independently.
 	app.topHoldersEnabled = topHoldersEnabled
 	if topHoldersEnabled {
 		app.TopHoldersKeeper = topholderskeeper.NewKeeper(
 			appCodec,
-			keys[topholderstypes.StoreKey],
-			keys[topholderstypes.StoreKey],
+			nil, // storeKey: nil = memory-only mode
+			nil, // memKey: nil = memory-only mode
 			authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 			app.BankKeeper,
 			app.StakingKeeper,
