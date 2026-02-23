@@ -199,7 +199,7 @@ func (k *Keeper) UpdateCache(ctx context.Context) error {
 	// Step 6: Create and store the cache
 	cache := types.NewTopHoldersCache(
 		holders,
-		time.Now().Unix(),
+		sdkCtx.BlockTime().Unix(),
 		sdkCtx.BlockHeight(),
 	)
 
