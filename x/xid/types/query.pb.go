@@ -1112,6 +1112,12 @@ type QueryClient interface {
 	GetStats(ctx context.Context, in *QueryGetStatsRequest, opts ...grpc.CallOption) (*QueryGetStatsResponse, error)
 	// GetEpixNetPeers returns all EpixNet peers for a name.
 	GetEpixNetPeers(ctx context.Context, in *QueryGetEpixNetPeersRequest, opts ...grpc.CallOption) (*QueryGetEpixNetPeersResponse, error)
+	// QueryStateDigest returns the current xID state digest.
+	QueryStateDigest(ctx context.Context, in *QueryStateDigestRequest, opts ...grpc.CallOption) (*QueryStateDigestResponse, error)
+	// QueryAttestations returns attestations for a digest.
+	QueryAttestations(ctx context.Context, in *QueryAttestationsRequest, opts ...grpc.CallOption) (*QueryAttestationsResponse, error)
+	// QueryStateSnapshot returns a paginated snapshot of all domain data.
+	QueryStateSnapshot(ctx context.Context, in *QueryStateSnapshotRequest, opts ...grpc.CallOption) (*QueryStateSnapshotResponse, error)
 }
 
 type queryClient struct {
@@ -1224,6 +1230,33 @@ func (c *queryClient) GetStats(ctx context.Context, in *QueryGetStatsRequest, op
 func (c *queryClient) GetEpixNetPeers(ctx context.Context, in *QueryGetEpixNetPeersRequest, opts ...grpc.CallOption) (*QueryGetEpixNetPeersResponse, error) {
 	out := new(QueryGetEpixNetPeersResponse)
 	err := c.cc.Invoke(ctx, "/xid.v1.Query/GetEpixNetPeers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) QueryStateDigest(ctx context.Context, in *QueryStateDigestRequest, opts ...grpc.CallOption) (*QueryStateDigestResponse, error) {
+	out := new(QueryStateDigestResponse)
+	err := c.cc.Invoke(ctx, "/xid.v1.Query/QueryStateDigest", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) QueryAttestations(ctx context.Context, in *QueryAttestationsRequest, opts ...grpc.CallOption) (*QueryAttestationsResponse, error) {
+	out := new(QueryAttestationsResponse)
+	err := c.cc.Invoke(ctx, "/xid.v1.Query/QueryAttestations", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) QueryStateSnapshot(ctx context.Context, in *QueryStateSnapshotRequest, opts ...grpc.CallOption) (*QueryStateSnapshotResponse, error) {
+	out := new(QueryStateSnapshotResponse)
+	err := c.cc.Invoke(ctx, "/xid.v1.Query/QueryStateSnapshot", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
