@@ -864,88 +864,67 @@ func (m *QueryStateDigestRequest) Unmarshal(dAtA []byte) error                  
 
 // QueryStateDigestResponse is the response for QueryStateDigest.
 type QueryStateDigestResponse struct {
-	Digest   string `json:"digest"`
-	Height   uint64 `json:"height"`
-	NumNames uint64 `json:"num_names"`
+	Digest   string `protobuf:"bytes,1,opt,name=digest,proto3" json:"digest,omitempty"`
+	Height   uint64 `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+	NumNames uint64 `protobuf:"varint,3,opt,name=num_names,json=numNames,proto3" json:"num_names,omitempty"`
 }
 
 func (m *QueryStateDigestResponse) Reset()         { *m = QueryStateDigestResponse{} }
 func (m *QueryStateDigestResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryStateDigestResponse) ProtoMessage()    {}
-func (m *QueryStateDigestResponse) Marshal() (dAtA []byte, err error)             { return nil, nil }
-func (m *QueryStateDigestResponse) MarshalTo(dAtA []byte) (int, error)            { return 0, nil }
-func (m *QueryStateDigestResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
-func (m *QueryStateDigestResponse) Size() int                                     { return 0 }
-func (m *QueryStateDigestResponse) Unmarshal(dAtA []byte) error                   { return nil }
 
 // QueryAttestationsRequest is the request for QueryAttestations.
 type QueryAttestationsRequest struct {
-	Digest string `json:"digest,omitempty"`
+	Digest string `protobuf:"bytes,1,opt,name=digest,proto3" json:"digest,omitempty"`
 }
 
 func (m *QueryAttestationsRequest) Reset()         { *m = QueryAttestationsRequest{} }
 func (m *QueryAttestationsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryAttestationsRequest) ProtoMessage()    {}
-func (m *QueryAttestationsRequest) Marshal() (dAtA []byte, err error)             { return nil, nil }
-func (m *QueryAttestationsRequest) MarshalTo(dAtA []byte) (int, error)            { return 0, nil }
-func (m *QueryAttestationsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
-func (m *QueryAttestationsRequest) Size() int                                     { return 0 }
-func (m *QueryAttestationsRequest) Unmarshal(dAtA []byte) error                   { return nil }
 
 // QueryAttestationsResponse is the response for QueryAttestations.
 type QueryAttestationsResponse struct {
-	Attestations []Attestation `json:"attestations"`
-	Finalized    bool          `json:"finalized"`
+	Attestations []Attestation `protobuf:"bytes,1,rep,name=attestations,proto3" json:"attestations"`
+	Finalized    bool          `protobuf:"varint,2,opt,name=finalized,proto3" json:"finalized,omitempty"`
 }
 
 func (m *QueryAttestationsResponse) Reset()         { *m = QueryAttestationsResponse{} }
 func (m *QueryAttestationsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryAttestationsResponse) ProtoMessage()    {}
-func (m *QueryAttestationsResponse) Marshal() (dAtA []byte, err error)             { return nil, nil }
-func (m *QueryAttestationsResponse) MarshalTo(dAtA []byte) (int, error)            { return 0, nil }
-func (m *QueryAttestationsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
-func (m *QueryAttestationsResponse) Size() int                                     { return 0 }
-func (m *QueryAttestationsResponse) Unmarshal(dAtA []byte) error                   { return nil }
 
 // QueryStateSnapshotRequest is the request for QueryStateSnapshot.
 type QueryStateSnapshotRequest struct {
-	Pagination *query.PageRequest `json:"pagination,omitempty"`
+	Pagination *query.PageRequest `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
 func (m *QueryStateSnapshotRequest) Reset()         { *m = QueryStateSnapshotRequest{} }
 func (m *QueryStateSnapshotRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryStateSnapshotRequest) ProtoMessage()    {}
-func (m *QueryStateSnapshotRequest) Marshal() (dAtA []byte, err error)             { return nil, nil }
-func (m *QueryStateSnapshotRequest) MarshalTo(dAtA []byte) (int, error)            { return 0, nil }
-func (m *QueryStateSnapshotRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
-func (m *QueryStateSnapshotRequest) Size() int                                     { return 0 }
-func (m *QueryStateSnapshotRequest) Unmarshal(dAtA []byte) error                   { return nil }
 
 // DomainSnapshot contains all data for a single domain.
 type DomainSnapshot struct {
-	Record      NameRecord    `json:"record"`
-	Profile     *Profile      `json:"profile,omitempty"`
-	DnsRecords  []DNSRecord   `json:"dns_records,omitempty"`
-	Peers       []EpixNetPeer `json:"peers,omitempty"`
-	ContentRoot string        `json:"content_root,omitempty"`
+	Record      NameRecord    `protobuf:"bytes,1,opt,name=record,proto3" json:"record"`
+	Profile     *Profile      `protobuf:"bytes,2,opt,name=profile,proto3" json:"profile,omitempty"`
+	DnsRecords  []DNSRecord   `protobuf:"bytes,3,rep,name=dns_records,json=dnsRecords,proto3" json:"dns_records,omitempty"`
+	Peers       []EpixNetPeer `protobuf:"bytes,4,rep,name=peers,proto3" json:"peers,omitempty"`
+	ContentRoot string        `protobuf:"bytes,5,opt,name=content_root,json=contentRoot,proto3" json:"content_root,omitempty"`
 }
+
+func (m *DomainSnapshot) Reset()         { *m = DomainSnapshot{} }
+func (m *DomainSnapshot) String() string { return proto.CompactTextString(m) }
+func (*DomainSnapshot) ProtoMessage()    {}
 
 // QueryStateSnapshotResponse is the response for QueryStateSnapshot.
 type QueryStateSnapshotResponse struct {
-	Domains    []DomainSnapshot    `json:"domains"`
-	Digest     string              `json:"digest"`
-	Height     uint64              `json:"height"`
-	Pagination *query.PageResponse `json:"pagination,omitempty"`
+	Domains    []DomainSnapshot    `protobuf:"bytes,1,rep,name=domains,proto3" json:"domains"`
+	Digest     string              `protobuf:"bytes,2,opt,name=digest,proto3" json:"digest,omitempty"`
+	Height     uint64              `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
+	Pagination *query.PageResponse `protobuf:"bytes,4,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
 func (m *QueryStateSnapshotResponse) Reset()         { *m = QueryStateSnapshotResponse{} }
 func (m *QueryStateSnapshotResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryStateSnapshotResponse) ProtoMessage()    {}
-func (m *QueryStateSnapshotResponse) Marshal() (dAtA []byte, err error)             { return nil, nil }
-func (m *QueryStateSnapshotResponse) MarshalTo(dAtA []byte) (int, error)            { return 0, nil }
-func (m *QueryStateSnapshotResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
-func (m *QueryStateSnapshotResponse) Size() int                                     { return 0 }
-func (m *QueryStateSnapshotResponse) Unmarshal(dAtA []byte) error                   { return nil }
 
 func init() {
 	proto.RegisterType((*QueryResolveNameRequest)(nil), "xid.v1.QueryResolveNameRequest")
