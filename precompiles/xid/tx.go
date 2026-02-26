@@ -43,6 +43,8 @@ func (p Precompile) Register(
 		return nil, err
 	}
 
+	p.xidKeeper.RecomputeAndStoreStateDigest(ctx)
+
 	// Emit EVM event
 	if err := p.EmitNameRegistered(ctx, stateDB, caller, name, tld); err != nil {
 		return nil, err
@@ -83,6 +85,8 @@ func (p Precompile) TransferName(
 	if err := p.xidKeeper.TransferNameRecord(ctx, callerAddr, newOwner, tld, name); err != nil {
 		return nil, err
 	}
+
+	p.xidKeeper.RecomputeAndStoreStateDigest(ctx)
 
 	// Emit EVM event
 	if err := p.EmitNameTransferred(ctx, stateDB, caller, newOwnerAddr, name, tld); err != nil {
@@ -139,6 +143,8 @@ func (p Precompile) UpdateProfile(
 		Bio:    bio,
 	}
 	p.xidKeeper.SetProfileRecord(ctx, tld, name, profile)
+
+	p.xidKeeper.RecomputeAndStoreStateDigest(ctx)
 
 	// Emit EVM event
 	if err := p.EmitProfileUpdated(ctx, stateDB, caller, name, tld); err != nil {
@@ -201,6 +207,8 @@ func (p Precompile) SetDNSRecord(
 	}
 	p.xidKeeper.SetDNSRecordEntry(ctx, tld, name, dnsRecord)
 
+	p.xidKeeper.RecomputeAndStoreStateDigest(ctx)
+
 	// Emit EVM event
 	if err := p.EmitDNSRecordSet(ctx, stateDB, name, tld, recordType, value); err != nil {
 		return nil, err
@@ -248,6 +256,8 @@ func (p Precompile) DeleteDNSRecord(
 	}
 
 	p.xidKeeper.DeleteDNSRecordEntry(ctx, tld, name, uint32(recordType))
+
+	p.xidKeeper.RecomputeAndStoreStateDigest(ctx)
 
 	// Emit EVM event
 	if err := p.EmitDNSRecordDeleted(ctx, stateDB, name, tld, recordType); err != nil {
@@ -308,6 +318,7 @@ func (p Precompile) SetEpixNetPeer(
 	}
 
 	newRoot := p.xidKeeper.RecomputeAndStoreContentRoot(ctx, tld, name)
+	p.xidKeeper.RecomputeAndStoreStateDigest(ctx)
 
 	if err := p.EmitEpixNetPeerSet(ctx, stateDB, name, tld, peerAddress, label); err != nil {
 		return nil, err
@@ -362,6 +373,7 @@ func (p Precompile) RevokeEpixNetPeer(
 	}
 
 	newRoot := p.xidKeeper.RecomputeAndStoreContentRoot(ctx, tld, name)
+	p.xidKeeper.RecomputeAndStoreStateDigest(ctx)
 
 	if err := p.EmitEpixNetPeerRevoked(ctx, stateDB, name, tld, peerAddress); err != nil {
 		return nil, err
