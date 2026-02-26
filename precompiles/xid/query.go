@@ -255,5 +255,48 @@ func (p Precompile) ReverseResolveBech32(
 	return method.Outputs.Pack(names[0].Name, names[0].Tld)
 }
 
+// GetStateDigest handles the getStateDigest() view function.
+// Returns the current state digest, block height, and number of names.
+func (p Precompile) GetStateDigest(
+	ctx sdk.Context,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	digest, found := p.xidKeeper.GetStateDigest(ctx)
+	if !found {
+		return method.Outputs.Pack("", uint64(0), uint64(0))
+	}
+
+	return method.Outputs.Pack(digest.Digest, digest.Height, digest.NumNames)
+}
+
+// GetAttestations handles the getAttestations() view function.
+// Returns all attestations for the current digest.
+func (p Precompile) GetAttestations(
+	ctx sdk.Context,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	digest, found := p.xidKeeper.GetStateDigest(ctx)
+	if !found {
+		return method.Outputs.Pack([]string{}, []string{}, []uint64{}, false)
+	}
+
+	attestations := p.xidKeeper.GetAttestations(ctx, digest.Digest)
+	finalized := p.xidKeeper.IsDigestFinalized(ctx, digest.Digest)
+
+	validators := make([]string, len(attestations))
+	signatures := make([]string, len(attestations))
+	heights := make([]uint64, len(attestations))
+
+	for i, att := range attestations {
+		validators[i] = att.ValidatorAddr
+		signatures[i] = att.Signature
+		heights[i] = att.Height
+	}
+
+	return method.Outputs.Pack(validators, signatures, heights, finalized)
+}
+
 // ensure big.Int is used
 var _ = (*big.Int)(nil)

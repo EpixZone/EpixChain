@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -24,6 +25,8 @@ func (k Keeper) RegisterName(goCtx context.Context, msg *types.MsgRegisterName) 
 		return nil, err
 	}
 
+	k.RecomputeAndStoreStateDigest(ctx)
+
 	return &types.MsgRegisterNameResponse{}, nil
 }
 
@@ -45,6 +48,8 @@ func (k Keeper) TransferName(goCtx context.Context, msg *types.MsgTransferName) 
 		return nil, err
 	}
 
+	k.RecomputeAndStoreStateDigest(ctx)
+
 	return &types.MsgTransferNameResponse{}, nil
 }
 
@@ -62,6 +67,7 @@ func (k Keeper) UpdateProfile(goCtx context.Context, msg *types.MsgUpdateProfile
 	}
 
 	k.SetProfileRecord(ctx, msg.Tld, msg.Name, msg.Profile)
+	k.RecomputeAndStoreStateDigest(ctx)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -89,6 +95,7 @@ func (k Keeper) SetDNSRecord(goCtx context.Context, msg *types.MsgSetDNSRecord) 
 	}
 
 	k.SetDNSRecordEntry(ctx, msg.Tld, msg.Name, msg.Record)
+	k.RecomputeAndStoreStateDigest(ctx)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -120,6 +127,7 @@ func (k Keeper) DeleteDNSRecord(goCtx context.Context, msg *types.MsgDeleteDNSRe
 	}
 
 	k.DeleteDNSRecordEntry(ctx, msg.Tld, msg.Name, msg.RecordType)
+	k.RecomputeAndStoreStateDigest(ctx)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -214,6 +222,7 @@ func (k Keeper) SetEpixNetPeer(goCtx context.Context, msg *types.MsgSetEpixNetPe
 	}
 
 	newRoot := k.RecomputeAndStoreContentRoot(ctx, msg.Tld, msg.Name)
+	k.RecomputeAndStoreStateDigest(ctx)
 
 	events := sdk.Events{
 		sdk.NewEvent(
@@ -265,6 +274,7 @@ func (k Keeper) RevokeEpixNetPeer(goCtx context.Context, msg *types.MsgRevokeEpi
 	}
 
 	newRoot := k.RecomputeAndStoreContentRoot(ctx, msg.Tld, msg.Name)
+	k.RecomputeAndStoreStateDigest(ctx)
 
 	events := sdk.Events{
 		sdk.NewEvent(
@@ -281,4 +291,28 @@ func (k Keeper) RevokeEpixNetPeer(goCtx context.Context, msg *types.MsgRevokeEpi
 	ctx.EventManager().EmitEvents(events)
 
 	return &types.MsgRevokeEpixNetPeerResponse{}, nil
+}
+
+// AttestStateDigest handles MsgAttestStateDigest
+func (k Keeper) AttestStateDigest(goCtx context.Context, msg *types.MsgAttestStateDigest) (*types.MsgAttestStateDigestResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if err := k.SubmitAttestation(ctx, msg); err != nil {
+		return nil, err
+	}
+
+	count := k.GetAttestationCount(ctx, msg.Digest)
+	finalized := k.IsDigestFinalized(ctx, msg.Digest)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			"xid_attestation_submitted",
+			sdk.NewAttribute("validator", msg.Signer),
+			sdk.NewAttribute("digest", msg.Digest),
+			sdk.NewAttribute("count", fmt.Sprintf("%d", count)),
+			sdk.NewAttribute("finalized", fmt.Sprintf("%t", finalized)),
+		),
+	})
+
+	return &types.MsgAttestStateDigestResponse{}, nil
 }

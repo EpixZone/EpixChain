@@ -7,10 +7,35 @@ import (
 )
 
 const (
-	DefaultFeeDenom      = "aepix"
-	DefaultMinNameLength = 1
-	DefaultMaxNameLength = 64
+	DefaultFeeDenom             = "aepix"
+	DefaultMinNameLength        = 1
+	DefaultMaxNameLength        = 64
+	DefaultAttestationThreshold = uint64(1)
+	DefaultAttestationEnabled   = true
 )
+
+// AttestationConfig holds governance-adjustable attestation parameters.
+// Stored separately from proto-generated Params to avoid modifying generated code.
+type AttestationConfig struct {
+	Threshold uint64 `json:"threshold"` // min validators needed to finalize
+	Enabled   bool   `json:"enabled"`   // whether attestation system is active
+}
+
+// DefaultAttestationConfig returns the default attestation config
+func DefaultAttestationConfig() AttestationConfig {
+	return AttestationConfig{
+		Threshold: DefaultAttestationThreshold,
+		Enabled:   DefaultAttestationEnabled,
+	}
+}
+
+// Validate performs basic validation
+func (c AttestationConfig) Validate() error {
+	if c.Threshold == 0 {
+		return fmt.Errorf("attestation threshold must be greater than 0")
+	}
+	return nil
+}
 
 // DefaultParams returns the default module parameters
 func DefaultParams() Params {

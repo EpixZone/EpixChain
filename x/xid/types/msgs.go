@@ -6,14 +6,15 @@ import (
 
 // Msg type URLs
 const (
-	TypeMsgRegisterName    = "register_name"
-	TypeMsgTransferName    = "transfer_name"
-	TypeMsgUpdateProfile   = "update_profile"
-	TypeMsgSetDNSRecord    = "set_dns_record"
-	TypeMsgDeleteDNSRecord = "delete_dns_record"
-	TypeMsgCreateTLD       = "create_tld"
-	TypeMsgUpdateTLDConfig = "update_tld_config"
-	TypeMsgUpdateParams    = "update_params"
+	TypeMsgRegisterName       = "register_name"
+	TypeMsgTransferName       = "transfer_name"
+	TypeMsgUpdateProfile      = "update_profile"
+	TypeMsgSetDNSRecord       = "set_dns_record"
+	TypeMsgDeleteDNSRecord    = "delete_dns_record"
+	TypeMsgCreateTLD          = "create_tld"
+	TypeMsgUpdateTLDConfig    = "update_tld_config"
+	TypeMsgUpdateParams       = "update_params"
+	TypeMsgAttestStateDigest  = "attest_state_digest"
 )
 
 // GetSigners returns the expected signers for MsgRegisterName.
@@ -153,4 +154,24 @@ func (msg *MsgUpdateParams) ValidateBasic() error {
 		return err
 	}
 	return msg.Params.Validate()
+}
+
+// GetSigners returns the expected signers for MsgAttestStateDigest.
+func (msg *MsgAttestStateDigest) GetSigners() []sdk.AccAddress {
+	signer, _ := sdk.AccAddressFromBech32(msg.Signer)
+	return []sdk.AccAddress{signer}
+}
+
+// ValidateBasic performs stateless validation for MsgAttestStateDigest.
+func (msg *MsgAttestStateDigest) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Signer); err != nil {
+		return err
+	}
+	if len(msg.Digest) != 64 {
+		return ErrInvalidAttestation.Wrap("digest must be a 64-character hex SHA-256 hash")
+	}
+	if msg.Signature == "" {
+		return ErrInvalidAttestation.Wrap("signature cannot be empty")
+	}
+	return nil
 }

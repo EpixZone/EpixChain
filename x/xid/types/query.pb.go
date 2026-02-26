@@ -850,6 +850,103 @@ func (m *QueryGetRegistrationFeeResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryGetRegistrationFeeResponse proto.InternalMessageInfo
 
+// QueryStateDigestRequest is the request for QueryStateDigest.
+type QueryStateDigestRequest struct{}
+
+func (m *QueryStateDigestRequest) Reset()         { *m = QueryStateDigestRequest{} }
+func (m *QueryStateDigestRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryStateDigestRequest) ProtoMessage()    {}
+func (m *QueryStateDigestRequest) Marshal() (dAtA []byte, err error)             { return nil, nil }
+func (m *QueryStateDigestRequest) MarshalTo(dAtA []byte) (int, error)            { return 0, nil }
+func (m *QueryStateDigestRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
+func (m *QueryStateDigestRequest) Size() int                                     { return 0 }
+func (m *QueryStateDigestRequest) Unmarshal(dAtA []byte) error                   { return nil }
+
+// QueryStateDigestResponse is the response for QueryStateDigest.
+type QueryStateDigestResponse struct {
+	Digest   string `json:"digest"`
+	Height   uint64 `json:"height"`
+	NumNames uint64 `json:"num_names"`
+}
+
+func (m *QueryStateDigestResponse) Reset()         { *m = QueryStateDigestResponse{} }
+func (m *QueryStateDigestResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryStateDigestResponse) ProtoMessage()    {}
+func (m *QueryStateDigestResponse) Marshal() (dAtA []byte, err error)             { return nil, nil }
+func (m *QueryStateDigestResponse) MarshalTo(dAtA []byte) (int, error)            { return 0, nil }
+func (m *QueryStateDigestResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
+func (m *QueryStateDigestResponse) Size() int                                     { return 0 }
+func (m *QueryStateDigestResponse) Unmarshal(dAtA []byte) error                   { return nil }
+
+// QueryAttestationsRequest is the request for QueryAttestations.
+type QueryAttestationsRequest struct {
+	Digest string `json:"digest,omitempty"`
+}
+
+func (m *QueryAttestationsRequest) Reset()         { *m = QueryAttestationsRequest{} }
+func (m *QueryAttestationsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryAttestationsRequest) ProtoMessage()    {}
+func (m *QueryAttestationsRequest) Marshal() (dAtA []byte, err error)             { return nil, nil }
+func (m *QueryAttestationsRequest) MarshalTo(dAtA []byte) (int, error)            { return 0, nil }
+func (m *QueryAttestationsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
+func (m *QueryAttestationsRequest) Size() int                                     { return 0 }
+func (m *QueryAttestationsRequest) Unmarshal(dAtA []byte) error                   { return nil }
+
+// QueryAttestationsResponse is the response for QueryAttestations.
+type QueryAttestationsResponse struct {
+	Attestations []Attestation `json:"attestations"`
+	Finalized    bool          `json:"finalized"`
+}
+
+func (m *QueryAttestationsResponse) Reset()         { *m = QueryAttestationsResponse{} }
+func (m *QueryAttestationsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryAttestationsResponse) ProtoMessage()    {}
+func (m *QueryAttestationsResponse) Marshal() (dAtA []byte, err error)             { return nil, nil }
+func (m *QueryAttestationsResponse) MarshalTo(dAtA []byte) (int, error)            { return 0, nil }
+func (m *QueryAttestationsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
+func (m *QueryAttestationsResponse) Size() int                                     { return 0 }
+func (m *QueryAttestationsResponse) Unmarshal(dAtA []byte) error                   { return nil }
+
+// QueryStateSnapshotRequest is the request for QueryStateSnapshot.
+type QueryStateSnapshotRequest struct {
+	Pagination *query.PageRequest `json:"pagination,omitempty"`
+}
+
+func (m *QueryStateSnapshotRequest) Reset()         { *m = QueryStateSnapshotRequest{} }
+func (m *QueryStateSnapshotRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryStateSnapshotRequest) ProtoMessage()    {}
+func (m *QueryStateSnapshotRequest) Marshal() (dAtA []byte, err error)             { return nil, nil }
+func (m *QueryStateSnapshotRequest) MarshalTo(dAtA []byte) (int, error)            { return 0, nil }
+func (m *QueryStateSnapshotRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
+func (m *QueryStateSnapshotRequest) Size() int                                     { return 0 }
+func (m *QueryStateSnapshotRequest) Unmarshal(dAtA []byte) error                   { return nil }
+
+// DomainSnapshot contains all data for a single domain.
+type DomainSnapshot struct {
+	Record      NameRecord    `json:"record"`
+	Profile     *Profile      `json:"profile,omitempty"`
+	DnsRecords  []DNSRecord   `json:"dns_records,omitempty"`
+	Peers       []EpixNetPeer `json:"peers,omitempty"`
+	ContentRoot string        `json:"content_root,omitempty"`
+}
+
+// QueryStateSnapshotResponse is the response for QueryStateSnapshot.
+type QueryStateSnapshotResponse struct {
+	Domains    []DomainSnapshot    `json:"domains"`
+	Digest     string              `json:"digest"`
+	Height     uint64              `json:"height"`
+	Pagination *query.PageResponse `json:"pagination,omitempty"`
+}
+
+func (m *QueryStateSnapshotResponse) Reset()         { *m = QueryStateSnapshotResponse{} }
+func (m *QueryStateSnapshotResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryStateSnapshotResponse) ProtoMessage()    {}
+func (m *QueryStateSnapshotResponse) Marshal() (dAtA []byte, err error)             { return nil, nil }
+func (m *QueryStateSnapshotResponse) MarshalTo(dAtA []byte) (int, error)            { return 0, nil }
+func (m *QueryStateSnapshotResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
+func (m *QueryStateSnapshotResponse) Size() int                                     { return 0 }
+func (m *QueryStateSnapshotResponse) Unmarshal(dAtA []byte) error                   { return nil }
+
 func init() {
 	proto.RegisterType((*QueryResolveNameRequest)(nil), "xid.v1.QueryResolveNameRequest")
 	proto.RegisterType((*QueryResolveNameResponse)(nil), "xid.v1.QueryResolveNameResponse")
@@ -869,6 +966,12 @@ func init() {
 	proto.RegisterType((*QueryParamsResponse)(nil), "xid.v1.QueryParamsResponse")
 	proto.RegisterType((*QueryGetRegistrationFeeRequest)(nil), "xid.v1.QueryGetRegistrationFeeRequest")
 	proto.RegisterType((*QueryGetRegistrationFeeResponse)(nil), "xid.v1.QueryGetRegistrationFeeResponse")
+	proto.RegisterType((*QueryStateDigestRequest)(nil), "xid.v1.QueryStateDigestRequest")
+	proto.RegisterType((*QueryStateDigestResponse)(nil), "xid.v1.QueryStateDigestResponse")
+	proto.RegisterType((*QueryAttestationsRequest)(nil), "xid.v1.QueryAttestationsRequest")
+	proto.RegisterType((*QueryAttestationsResponse)(nil), "xid.v1.QueryAttestationsResponse")
+	proto.RegisterType((*QueryStateSnapshotRequest)(nil), "xid.v1.QueryStateSnapshotRequest")
+	proto.RegisterType((*QueryStateSnapshotResponse)(nil), "xid.v1.QueryStateSnapshotResponse")
 }
 
 func init() { proto.RegisterFile("xid/v1/query.proto", fileDescriptor_839d3594e88c5f8f) }
@@ -1135,6 +1238,12 @@ type QueryServer interface {
 	GetStats(context.Context, *QueryGetStatsRequest) (*QueryGetStatsResponse, error)
 	// GetEpixNetPeers returns all EpixNet peers for a name.
 	GetEpixNetPeers(context.Context, *QueryGetEpixNetPeersRequest) (*QueryGetEpixNetPeersResponse, error)
+	// QueryStateDigest returns the current xID state digest.
+	QueryStateDigest(context.Context, *QueryStateDigestRequest) (*QueryStateDigestResponse, error)
+	// QueryAttestations returns attestations for a digest.
+	QueryAttestations(context.Context, *QueryAttestationsRequest) (*QueryAttestationsResponse, error)
+	// QueryStateSnapshot returns a paginated snapshot of all domain data.
+	QueryStateSnapshot(context.Context, *QueryStateSnapshotRequest) (*QueryStateSnapshotResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -1176,6 +1285,15 @@ func (*UnimplementedQueryServer) GetStats(ctx context.Context, req *QueryGetStat
 }
 func (*UnimplementedQueryServer) GetEpixNetPeers(ctx context.Context, req *QueryGetEpixNetPeersRequest) (*QueryGetEpixNetPeersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEpixNetPeers not implemented")
+}
+func (*UnimplementedQueryServer) QueryStateDigest(ctx context.Context, req *QueryStateDigestRequest) (*QueryStateDigestResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryStateDigest not implemented")
+}
+func (*UnimplementedQueryServer) QueryAttestations(ctx context.Context, req *QueryAttestationsRequest) (*QueryAttestationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryAttestations not implemented")
+}
+func (*UnimplementedQueryServer) QueryStateSnapshot(ctx context.Context, req *QueryStateSnapshotRequest) (*QueryStateSnapshotResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryStateSnapshot not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -1398,6 +1516,60 @@ func _Query_GetEpixNetPeers_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_QueryStateDigest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryStateDigestRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).QueryStateDigest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/xid.v1.Query/QueryStateDigest",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).QueryStateDigest(ctx, req.(*QueryStateDigestRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_QueryAttestations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryAttestationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).QueryAttestations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/xid.v1.Query/QueryAttestations",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).QueryAttestations(ctx, req.(*QueryAttestationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_QueryStateSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryStateSnapshotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).QueryStateSnapshot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/xid.v1.Query/QueryStateSnapshot",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).QueryStateSnapshot(ctx, req.(*QueryStateSnapshotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var Query_serviceDesc = _Query_serviceDesc
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "xid.v1.Query",
@@ -1450,6 +1622,18 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetEpixNetPeers",
 			Handler:    _Query_GetEpixNetPeers_Handler,
+		},
+		{
+			MethodName: "QueryStateDigest",
+			Handler:    _Query_QueryStateDigest_Handler,
+		},
+		{
+			MethodName: "QueryAttestations",
+			Handler:    _Query_QueryAttestations_Handler,
+		},
+		{
+			MethodName: "QueryStateSnapshot",
+			Handler:    _Query_QueryStateSnapshot_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

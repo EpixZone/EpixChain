@@ -531,6 +531,7 @@ func NewExampleApp(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		app.PreciseBankKeeper,
 		app.AccountKeeper,
+		app.StakingKeeper,
 	)
 
 	// Set up EVM keeper

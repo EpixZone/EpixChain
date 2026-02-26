@@ -16,6 +16,7 @@ type Keeper struct {
 	authority     string
 	bankKeeper    types.BankKeeper
 	accountKeeper types.AccountKeeper
+	stakingKeeper types.StakingKeeper
 }
 
 // NewKeeper creates a new xID keeper
@@ -25,6 +26,7 @@ func NewKeeper(
 	authority string,
 	bankKeeper types.BankKeeper,
 	accountKeeper types.AccountKeeper,
+	stakingKeeper types.StakingKeeper,
 ) Keeper {
 	return Keeper{
 		storeKey:      storeKey,
@@ -32,6 +34,7 @@ func NewKeeper(
 		authority:     authority,
 		bankKeeper:    bankKeeper,
 		accountKeeper: accountKeeper,
+		stakingKeeper: stakingKeeper,
 	}
 }
 

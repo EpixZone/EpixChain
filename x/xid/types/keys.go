@@ -44,6 +44,10 @@ const (
 	prefixEpixNetPeer
 	prefixEpixNetPeerReverse
 	prefixContentRoot
+	prefixStateDigest
+	prefixAttestation
+	prefixAttestationCount
+	prefixAttestationConfig
 )
 
 // KVStore key prefixes
@@ -215,6 +219,48 @@ func ContentRootKey(tld, name string) []byte {
 	key = append(key, tldBytes...)
 	key = append(key, nameBytes...)
 	return key
+}
+
+// StateDigestKey returns the store key for the current state digest: [prefix]
+func StateDigestKey() []byte {
+	return []byte{prefixStateDigest}
+}
+
+// AttestationKey returns the store key for a validator attestation:
+// [prefix][sha256(digest)[:8]][sha256(valAddr)[:8]]
+func AttestationKey(digest, validatorAddr string) []byte {
+	digestHash := sha256.Sum256([]byte(digest))
+	addrHash := sha256.Sum256([]byte(validatorAddr))
+	key := make([]byte, 0, 1+8+8)
+	key = append(key, prefixAttestation)
+	key = append(key, digestHash[:8]...)
+	key = append(key, addrHash[:8]...)
+	return key
+}
+
+// AttestationPrefix returns the prefix for iterating all attestations for a digest:
+// [prefix][sha256(digest)[:8]]
+func AttestationPrefix(digest string) []byte {
+	digestHash := sha256.Sum256([]byte(digest))
+	key := make([]byte, 0, 1+8)
+	key = append(key, prefixAttestation)
+	key = append(key, digestHash[:8]...)
+	return key
+}
+
+// AttestationCountKey returns the store key for an attestation count:
+// [prefix][sha256(digest)[:8]]
+func AttestationCountKey(digest string) []byte {
+	digestHash := sha256.Sum256([]byte(digest))
+	key := make([]byte, 0, 1+8)
+	key = append(key, prefixAttestationCount)
+	key = append(key, digestHash[:8]...)
+	return key
+}
+
+// AttestationConfigKey returns the store key for attestation config: [prefix]
+func AttestationConfigKey() []byte {
+	return []byte{prefixAttestationConfig}
 }
 
 // padOrTruncate ensures the byte slice is exactly the desired length

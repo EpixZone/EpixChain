@@ -1118,6 +1118,36 @@ func (m *MsgUpdateContentRootResponse) MarshalToSizedBuffer(dAtA []byte) (int, e
 func (m *MsgUpdateContentRootResponse) Size() int { return 0 }
 func (m *MsgUpdateContentRootResponse) Unmarshal(dAtA []byte) error { return nil }
 
+// MsgAttestStateDigest allows a validator to attest to the current xID state digest.
+type MsgAttestStateDigest struct {
+	Signer    string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
+	Digest    string `protobuf:"bytes,2,opt,name=digest,proto3" json:"digest,omitempty"`
+	Signature string `protobuf:"bytes,3,opt,name=signature,proto3" json:"signature,omitempty"`
+}
+
+func (m *MsgAttestStateDigest) Reset()         { *m = MsgAttestStateDigest{} }
+func (m *MsgAttestStateDigest) String() string { return proto.CompactTextString(m) }
+func (*MsgAttestStateDigest) ProtoMessage()    {}
+func (m *MsgAttestStateDigest) GetSigner() string    { if m != nil { return m.Signer }; return "" }
+func (m *MsgAttestStateDigest) GetDigest() string    { if m != nil { return m.Digest }; return "" }
+func (m *MsgAttestStateDigest) GetSignature() string { if m != nil { return m.Signature }; return "" }
+func (m *MsgAttestStateDigest) Marshal() (dAtA []byte, err error) { return nil, nil }
+func (m *MsgAttestStateDigest) MarshalTo(dAtA []byte) (int, error) { return 0, nil }
+func (m *MsgAttestStateDigest) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
+func (m *MsgAttestStateDigest) Size() int { return 0 }
+func (m *MsgAttestStateDigest) Unmarshal(dAtA []byte) error { return nil }
+
+type MsgAttestStateDigestResponse struct{}
+
+func (m *MsgAttestStateDigestResponse) Reset()         { *m = MsgAttestStateDigestResponse{} }
+func (m *MsgAttestStateDigestResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgAttestStateDigestResponse) ProtoMessage()    {}
+func (m *MsgAttestStateDigestResponse) Marshal() (dAtA []byte, err error) { return nil, nil }
+func (m *MsgAttestStateDigestResponse) MarshalTo(dAtA []byte) (int, error) { return 0, nil }
+func (m *MsgAttestStateDigestResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
+func (m *MsgAttestStateDigestResponse) Size() int { return 0 }
+func (m *MsgAttestStateDigestResponse) Unmarshal(dAtA []byte) error { return nil }
+
 func init() {
 	proto.RegisterType((*MsgRegisterName)(nil), "xid.v1.MsgRegisterName")
 	proto.RegisterType((*MsgRegisterNameResponse)(nil), "xid.v1.MsgRegisterNameResponse")
@@ -1141,6 +1171,8 @@ func init() {
 	proto.RegisterType((*MsgRevokeEpixNetPeerResponse)(nil), "xid.v1.MsgRevokeEpixNetPeerResponse")
 	proto.RegisterType((*MsgUpdateContentRoot)(nil), "xid.v1.MsgUpdateContentRoot")
 	proto.RegisterType((*MsgUpdateContentRootResponse)(nil), "xid.v1.MsgUpdateContentRootResponse")
+	proto.RegisterType((*MsgAttestStateDigest)(nil), "xid.v1.MsgAttestStateDigest")
+	proto.RegisterType((*MsgAttestStateDigestResponse)(nil), "xid.v1.MsgAttestStateDigestResponse")
 }
 
 func init() { proto.RegisterFile("xid/v1/tx.proto", fileDescriptor_aacf6221724f4840) }
@@ -1240,6 +1272,8 @@ type MsgClient interface {
 	SetEpixNetPeer(ctx context.Context, in *MsgSetEpixNetPeer, opts ...grpc.CallOption) (*MsgSetEpixNetPeerResponse, error)
 	// RevokeEpixNetPeer revokes an EpixNet peer for a name.
 	RevokeEpixNetPeer(ctx context.Context, in *MsgRevokeEpixNetPeer, opts ...grpc.CallOption) (*MsgRevokeEpixNetPeerResponse, error)
+	// AttestStateDigest allows a validator to attest to the current xID state digest.
+	AttestStateDigest(ctx context.Context, in *MsgAttestStateDigest, opts ...grpc.CallOption) (*MsgAttestStateDigestResponse, error)
 }
 
 type msgClient struct {
@@ -1349,6 +1383,15 @@ func (c *msgClient) UpdateContentRoot(ctx context.Context, in *MsgUpdateContentR
 	return out, nil
 }
 
+func (c *msgClient) AttestStateDigest(ctx context.Context, in *MsgAttestStateDigest, opts ...grpc.CallOption) (*MsgAttestStateDigestResponse, error) {
+	out := new(MsgAttestStateDigestResponse)
+	err := c.cc.Invoke(ctx, "/xid.v1.Msg/AttestStateDigest", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// RegisterName registers a new name under a TLD.
@@ -1373,6 +1416,8 @@ type MsgServer interface {
 	RevokeEpixNetPeer(context.Context, *MsgRevokeEpixNetPeer) (*MsgRevokeEpixNetPeerResponse, error)
 	// UpdateContentRoot updates the Merkle content root for a name.
 	UpdateContentRoot(context.Context, *MsgUpdateContentRoot) (*MsgUpdateContentRootResponse, error)
+	// AttestStateDigest allows a validator to attest to the current xID state digest.
+	AttestStateDigest(context.Context, *MsgAttestStateDigest) (*MsgAttestStateDigestResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -1411,6 +1456,9 @@ func (*UnimplementedMsgServer) RevokeEpixNetPeer(ctx context.Context, req *MsgRe
 }
 func (*UnimplementedMsgServer) UpdateContentRoot(ctx context.Context, req *MsgUpdateContentRoot) (*MsgUpdateContentRootResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateContentRoot not implemented")
+}
+func (*UnimplementedMsgServer) AttestStateDigest(ctx context.Context, req *MsgAttestStateDigest) (*MsgAttestStateDigestResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AttestStateDigest not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -1615,6 +1663,24 @@ func _Msg_UpdateContentRoot_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_AttestStateDigest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgAttestStateDigest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).AttestStateDigest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/xid.v1.Msg/AttestStateDigest",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).AttestStateDigest(ctx, req.(*MsgAttestStateDigest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var Msg_serviceDesc = _Msg_serviceDesc
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "xid.v1.Msg",
@@ -1663,6 +1729,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateContentRoot",
 			Handler:    _Msg_UpdateContentRoot_Handler,
+		},
+		{
+			MethodName: "AttestStateDigest",
+			Handler:    _Msg_AttestStateDigest_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

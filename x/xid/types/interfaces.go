@@ -4,6 +4,7 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 // BankKeeper defines the expected bank module interface
@@ -19,4 +20,9 @@ type BankKeeper interface {
 type AccountKeeper interface {
 	GetModuleAddress(moduleName string) sdk.AccAddress
 	GetAccount(ctx context.Context, addr sdk.AccAddress) sdk.AccountI
+}
+
+// StakingKeeper defines the expected staking module interface
+type StakingKeeper interface {
+	GetAllValidators(ctx context.Context) ([]stakingtypes.Validator, error)
 }

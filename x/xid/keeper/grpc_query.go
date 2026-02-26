@@ -221,6 +221,106 @@ func (k Keeper) GetEpixNetPeers(goCtx context.Context, req *types.QueryGetEpixNe
 	return &types.QueryGetEpixNetPeersResponse{Peers: peers}, nil
 }
 
+// QueryStateDigest returns the current xID state digest
+func (k Keeper) QueryStateDigest(goCtx context.Context, _ *types.QueryStateDigestRequest) (*types.QueryStateDigestResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	digest, found := k.GetStateDigest(ctx)
+	if !found {
+		return &types.QueryStateDigestResponse{}, nil
+	}
+
+	return &types.QueryStateDigestResponse{
+		Digest:   digest.Digest,
+		Height:   digest.Height,
+		NumNames: digest.NumNames,
+	}, nil
+}
+
+// QueryAttestations returns attestations for a given digest
+func (k Keeper) QueryAttestations(goCtx context.Context, req *types.QueryAttestationsRequest) (*types.QueryAttestationsResponse, error) {
+	if req == nil {
+		return nil, errorsmod.Wrap(types.ErrInvalidAttestation, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// If no digest specified, use the current one
+	digest := req.Digest
+	if digest == "" {
+		sd, found := k.GetStateDigest(ctx)
+		if !found {
+			return &types.QueryAttestationsResponse{}, nil
+		}
+		digest = sd.Digest
+	}
+
+	attestations := k.GetAttestations(ctx, digest)
+	finalized := k.IsDigestFinalized(ctx, digest)
+
+	return &types.QueryAttestationsResponse{
+		Attestations: attestations,
+		Finalized:    finalized,
+	}, nil
+}
+
+// QueryStateSnapshot returns a paginated snapshot of all domain data
+func (k Keeper) QueryStateSnapshot(goCtx context.Context, req *types.QueryStateSnapshotRequest) (*types.QueryStateSnapshotResponse, error) {
+	if req == nil {
+		return nil, errorsmod.Wrap(types.ErrInvalidName, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	pageReq := req.Pagination
+	if pageReq == nil {
+		pageReq = &query.PageRequest{Limit: maxPageSize}
+	} else if pageReq.Limit == 0 || pageReq.Limit > maxPageSize {
+		pageReq.Limit = maxPageSize
+	}
+
+	names, pageRes, err := k.GetAllNamesPaginated(ctx, pageReq)
+	if err != nil {
+		return nil, err
+	}
+
+	var domains []types.DomainSnapshot
+	for _, record := range names {
+		snap := types.DomainSnapshot{
+			Record: record,
+		}
+
+		if profile, found := k.GetProfileRecord(ctx, record.Tld, record.Name); found {
+			snap.Profile = &profile
+		}
+
+		dns := k.GetAllDNSRecords(ctx, record.Tld, record.Name)
+		if len(dns) > 0 {
+			snap.DnsRecords = dns
+		}
+
+		peers := k.GetAllEpixNetPeers(ctx, record.Tld, record.Name)
+		if len(peers) > 0 {
+			snap.Peers = peers
+		}
+
+		if cr, found := k.GetContentRoot(ctx, record.Tld, record.Name); found && cr.Root != "" {
+			snap.ContentRoot = cr.Root
+		}
+
+		domains = append(domains, snap)
+	}
+
+	digest, _ := k.GetStateDigest(ctx)
+
+	return &types.QueryStateSnapshotResponse{
+		Domains:    domains,
+		Digest:     digest.Digest,
+		Height:     digest.Height,
+		Pagination: pageRes,
+	}, nil
+}
+
 // GetStats returns xID module statistics
 func (k Keeper) GetStats(goCtx context.Context, _ *types.QueryGetStatsRequest) (*types.QueryGetStatsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)

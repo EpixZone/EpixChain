@@ -373,6 +373,43 @@ func (p Precompile) RevokeEpixNetPeer(
 	return method.Outputs.Pack(true)
 }
 
+// AttestStateDigest handles the attestStateDigest(digest, signature) function.
+func (p Precompile) AttestStateDigest(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	if len(args) != 2 {
+		return nil, fmt.Errorf("expected 2 arguments, got %d", len(args))
+	}
+
+	digest, ok := args[0].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid argument type for digest: %T", args[0])
+	}
+	signature, ok := args[1].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid argument type for signature: %T", args[1])
+	}
+
+	caller := contract.Caller()
+	callerAddr := sdk.AccAddress(caller.Bytes())
+
+	msg := &types.MsgAttestStateDigest{
+		Signer:    callerAddr.String(),
+		Digest:    digest,
+		Signature: signature,
+	}
+
+	if err := p.xidKeeper.SubmitAttestation(ctx, msg); err != nil {
+		return nil, err
+	}
+
+	return method.Outputs.Pack(true)
+}
+
 // UpdateContentRoot is deprecated — content root is auto-computed from active peers.
 func (p Precompile) UpdateContentRoot(
 	_ sdk.Context,

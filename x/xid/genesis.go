@@ -69,6 +69,9 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState *types.GenesisState)
 	for tld, count := range tldCounts {
 		k.SetTLDNameCount(ctx, tld, count)
 	}
+
+	// Compute initial state digest
+	k.RecomputeAndStoreStateDigest(ctx)
 }
 
 // ExportGenesis returns the xid module's exported genesis state.
