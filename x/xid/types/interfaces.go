@@ -25,4 +25,5 @@ type AccountKeeper interface {
 // StakingKeeper defines the expected staking module interface
 type StakingKeeper interface {
 	GetAllValidators(ctx context.Context) ([]stakingtypes.Validator, error)
+	GetValidatorByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (stakingtypes.Validator, error)
 }

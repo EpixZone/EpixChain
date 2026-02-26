@@ -25,10 +25,11 @@ import (
 const ConsensusVersion = 1
 
 var (
-	_ module.AppModule      = AppModule{}
-	_ module.AppModuleBasic = AppModuleBasic{}
-	_ module.HasABCIGenesis = AppModule{}
-	_ appmodule.AppModule   = AppModule{}
+	_ module.AppModule           = AppModule{}
+	_ module.AppModuleBasic      = AppModuleBasic{}
+	_ module.HasABCIGenesis      = AppModule{}
+	_ appmodule.AppModule        = AppModule{}
+	_ appmodule.HasBeginBlocker  = AppModule{}
 )
 
 // ----------------------------------------------------------------------------
@@ -146,6 +147,12 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, _ codec.JSONCodec) json.RawMe
 		panic(err)
 	}
 	return bz
+}
+
+// BeginBlock implements appmodule.HasBeginBlocker.
+func (am AppModule) BeginBlock(ctx context.Context) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	return am.keeper.BeginBlock(sdkCtx)
 }
 
 // IsAppModule implements the appmodule.AppModule interface
