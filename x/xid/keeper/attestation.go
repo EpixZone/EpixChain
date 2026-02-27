@@ -131,13 +131,43 @@ func (k Keeper) IncrementAttestationCount(ctx sdk.Context, digest string) {
 	store.Set(types.AttestationCountKey(digest), bz)
 }
 
-// IsDigestFinalized checks if a digest has reached the attestation threshold.
+// IsDigestFinalized checks if a digest has been attested by >= 2/3 of bonded validators.
+// If config.Threshold is set (non-zero), it is used as an override instead.
 func (k Keeper) IsDigestFinalized(ctx sdk.Context, digest string) bool {
 	config := k.GetAttestationConfig(ctx)
-	if !config.Enabled || config.Threshold == 0 {
+	if !config.Enabled {
 		return false
 	}
-	return k.GetAttestationCount(ctx, digest) >= config.Threshold
+
+	count := k.GetAttestationCount(ctx, digest)
+
+	// Use explicit threshold override if set
+	if config.Threshold > 0 {
+		return count >= config.Threshold
+	}
+
+	// Default: require 2/3+ of bonded validators
+	bondedCount := k.countBondedValidators(ctx)
+	if bondedCount == 0 {
+		return false
+	}
+	// 2/3 threshold: count * 3 > bondedCount * 2 (avoids floating point)
+	return count*3 > bondedCount*2
+}
+
+// countBondedValidators returns the number of bonded validators.
+func (k Keeper) countBondedValidators(ctx sdk.Context) uint64 {
+	validators, err := k.stakingKeeper.GetAllValidators(ctx)
+	if err != nil {
+		return 0
+	}
+	var bonded uint64
+	for _, val := range validators {
+		if val.GetStatus() == stakingtypes.Bonded {
+			bonded++
+		}
+	}
+	return bonded
 }
 
 // ClearAttestationsForDigest removes all attestations and the count for a digest.
