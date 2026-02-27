@@ -21,7 +21,8 @@ const (
 	DNSRecordTypeTXT   uint32 = 16
 	DNSRecordTypeMX    uint32 = 15
 	DNSRecordTypeNS    uint32 = 2
-	DNSRecordTypeSRV   uint32 = 33
+	DNSRecordTypeSRV      uint32 = 33
+	DNSRecordTypeEpixNet  uint32 = 65280 // Private-use range (RFC 6895) for EpixNet peer discovery
 )
 
 // ContentRoot represents the auto-computed Merkle root of active peers for an xID
