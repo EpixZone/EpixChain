@@ -1203,6 +1203,8 @@ func init() {
 	proto.RegisterType((*MsgUpdateContentRootResponse)(nil), "xid.v1.MsgUpdateContentRootResponse")
 	proto.RegisterType((*MsgAttestStateDigest)(nil), "xid.v1.MsgAttestStateDigest")
 	proto.RegisterType((*MsgAttestStateDigestResponse)(nil), "xid.v1.MsgAttestStateDigestResponse")
+	proto.RegisterType((*MsgSetPrimaryName)(nil), "xid.v1.MsgSetPrimaryName")
+	proto.RegisterType((*MsgSetPrimaryNameResponse)(nil), "xid.v1.MsgSetPrimaryNameResponse")
 }
 
 func init() { proto.RegisterFile("xid/v1/tx.proto", fileDescriptor_aacf6221724f4840) }
