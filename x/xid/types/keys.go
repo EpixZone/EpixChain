@@ -48,6 +48,7 @@ const (
 	prefixAttestation
 	prefixAttestationCount
 	prefixAttestationConfig
+	prefixPrimaryName
 )
 
 // KVStore key prefixes
@@ -261,6 +262,14 @@ func AttestationCountKey(digest string) []byte {
 // AttestationConfigKey returns the store key for attestation config: [prefix]
 func AttestationConfigKey() []byte {
 	return []byte{prefixAttestationConfig}
+}
+
+// PrimaryNameKey returns the store key for an owner's primary name: [prefix][owner_bytes(20)]
+func PrimaryNameKey(owner []byte) []byte {
+	key := make([]byte, 0, 1+20)
+	key = append(key, prefixPrimaryName)
+	key = append(key, padOrTruncate(owner, 20)...)
+	return key
 }
 
 // padOrTruncate ensures the byte slice is exactly the desired length

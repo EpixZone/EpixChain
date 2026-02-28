@@ -519,6 +519,43 @@ func (k Keeper) GetContentRoot(ctx sdk.Context, tld, name string) (types.Content
 }
 
 // ---------------------------------------------------------------------------
+// Primary Name
+// ---------------------------------------------------------------------------
+
+type primaryNameEntry struct {
+	Tld  string `json:"tld"`
+	Name string `json:"name"`
+}
+
+// SetPrimaryNameEntry stores the primary name for an owner address
+func (k Keeper) SetPrimaryNameEntry(ctx sdk.Context, owner sdk.AccAddress, tld, name string) {
+	store := ctx.KVStore(k.storeKey)
+	entry := primaryNameEntry{Tld: tld, Name: name}
+	bz, _ := json.Marshal(entry)
+	store.Set(types.PrimaryNameKey(owner.Bytes()), bz)
+}
+
+// GetPrimaryNameEntry retrieves the primary name for an owner address
+func (k Keeper) GetPrimaryNameEntry(ctx sdk.Context, owner sdk.AccAddress) (tld, name string, found bool) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.PrimaryNameKey(owner.Bytes()))
+	if bz == nil {
+		return "", "", false
+	}
+	var entry primaryNameEntry
+	if err := json.Unmarshal(bz, &entry); err != nil {
+		return "", "", false
+	}
+	return entry.Tld, entry.Name, true
+}
+
+// DeletePrimaryNameEntry removes the primary name mapping for an owner
+func (k Keeper) DeletePrimaryNameEntry(ctx sdk.Context, owner sdk.AccAddress) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.PrimaryNameKey(owner.Bytes()))
+}
+
+// ---------------------------------------------------------------------------
 // TLD Config
 // ---------------------------------------------------------------------------
 

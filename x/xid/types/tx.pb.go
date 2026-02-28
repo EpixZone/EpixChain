@@ -879,6 +879,36 @@ func (m *MsgRevokeEpixNetPeerResponse) MarshalToSizedBuffer(dAtA []byte) (int, e
 func (m *MsgRevokeEpixNetPeerResponse) Size() int { return 0 }
 func (m *MsgRevokeEpixNetPeerResponse) Unmarshal(dAtA []byte) error { return nil }
 
+// MsgSetPrimaryName sets the primary name for an owner address.
+type MsgSetPrimaryName struct {
+	Owner string `protobuf:"bytes,1,opt,name=owner,proto3" json:"owner,omitempty"`
+	Name  string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Tld   string `protobuf:"bytes,3,opt,name=tld,proto3" json:"tld,omitempty"`
+}
+
+func (m *MsgSetPrimaryName) Reset()         { *m = MsgSetPrimaryName{} }
+func (m *MsgSetPrimaryName) String() string { return proto.CompactTextString(m) }
+func (*MsgSetPrimaryName) ProtoMessage()    {}
+func (m *MsgSetPrimaryName) GetOwner() string { if m != nil { return m.Owner }; return "" }
+func (m *MsgSetPrimaryName) GetName() string  { if m != nil { return m.Name }; return "" }
+func (m *MsgSetPrimaryName) GetTld() string   { if m != nil { return m.Tld }; return "" }
+func (m *MsgSetPrimaryName) Marshal() (dAtA []byte, err error) { return nil, nil }
+func (m *MsgSetPrimaryName) MarshalTo(dAtA []byte) (int, error) { return 0, nil }
+func (m *MsgSetPrimaryName) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
+func (m *MsgSetPrimaryName) Size() int { return 0 }
+func (m *MsgSetPrimaryName) Unmarshal(dAtA []byte) error { return nil }
+
+type MsgSetPrimaryNameResponse struct{}
+
+func (m *MsgSetPrimaryNameResponse) Reset()         { *m = MsgSetPrimaryNameResponse{} }
+func (m *MsgSetPrimaryNameResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgSetPrimaryNameResponse) ProtoMessage()    {}
+func (m *MsgSetPrimaryNameResponse) Marshal() (dAtA []byte, err error) { return nil, nil }
+func (m *MsgSetPrimaryNameResponse) MarshalTo(dAtA []byte) (int, error) { return 0, nil }
+func (m *MsgSetPrimaryNameResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) { return 0, nil }
+func (m *MsgSetPrimaryNameResponse) Size() int { return 0 }
+func (m *MsgSetPrimaryNameResponse) Unmarshal(dAtA []byte) error { return nil }
+
 // MsgUpdateContentRoot updates the Merkle content root for a name.
 type MsgUpdateContentRoot struct {
 	Owner string `protobuf:"bytes,1,opt,name=owner,proto3" json:"owner,omitempty"`
@@ -1422,6 +1452,8 @@ type MsgServer interface {
 	UpdateContentRoot(context.Context, *MsgUpdateContentRoot) (*MsgUpdateContentRootResponse, error)
 	// AttestStateDigest allows a validator to attest to the current xID state digest.
 	AttestStateDigest(context.Context, *MsgAttestStateDigest) (*MsgAttestStateDigestResponse, error)
+	// SetPrimaryName sets the primary name for an address.
+	SetPrimaryName(context.Context, *MsgSetPrimaryName) (*MsgSetPrimaryNameResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -1463,6 +1495,9 @@ func (*UnimplementedMsgServer) UpdateContentRoot(ctx context.Context, req *MsgUp
 }
 func (*UnimplementedMsgServer) AttestStateDigest(ctx context.Context, req *MsgAttestStateDigest) (*MsgAttestStateDigestResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AttestStateDigest not implemented")
+}
+func (*UnimplementedMsgServer) SetPrimaryName(ctx context.Context, req *MsgSetPrimaryName) (*MsgSetPrimaryNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetPrimaryName not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -1685,6 +1720,24 @@ func _Msg_AttestStateDigest_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_SetPrimaryName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgSetPrimaryName)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).SetPrimaryName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/xid.v1.Msg/SetPrimaryName",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).SetPrimaryName(ctx, req.(*MsgSetPrimaryName))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var Msg_serviceDesc = _Msg_serviceDesc
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "xid.v1.Msg",
@@ -1737,6 +1790,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AttestStateDigest",
 			Handler:    _Msg_AttestStateDigest_Handler,
+		},
+		{
+			MethodName: "SetPrimaryName",
+			Handler:    _Msg_SetPrimaryName_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -422,6 +422,49 @@ func (p Precompile) AttestStateDigest(
 	return method.Outputs.Pack(true)
 }
 
+// SetPrimaryName handles the setPrimaryName(name, tld) function.
+func (p Precompile) SetPrimaryName(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	if len(args) != 2 {
+		return nil, fmt.Errorf("expected 2 arguments, got %d", len(args))
+	}
+
+	name, ok := args[0].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid argument type for name: %T", args[0])
+	}
+	tld, ok := args[1].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid argument type for tld: %T", args[1])
+	}
+
+	caller := contract.Caller()
+	callerAddr := sdk.AccAddress(caller.Bytes())
+
+	// Verify ownership
+	record, found := p.xidKeeper.GetNameRecord(ctx, tld, name)
+	if !found {
+		return nil, fmt.Errorf("%s.%s not found", name, tld)
+	}
+	if record.Owner != callerAddr.String() {
+		return nil, fmt.Errorf("caller is not the owner of %s.%s", name, tld)
+	}
+
+	p.xidKeeper.SetPrimaryNameEntry(ctx, callerAddr, tld, name)
+
+	// Emit EVM event
+	if err := p.EmitPrimaryNameSet(ctx, stateDB, caller, name, tld); err != nil {
+		return nil, err
+	}
+
+	return method.Outputs.Pack(true)
+}
+
 // UpdateContentRoot is deprecated — content root is auto-computed from active peers.
 func (p Precompile) UpdateContentRoot(
 	_ sdk.Context,

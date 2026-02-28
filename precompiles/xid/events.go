@@ -20,6 +20,7 @@ const (
 	EventEpixNetPeerSet      = "EpixNetPeerSet"
 	EventEpixNetPeerRevoked  = "EpixNetPeerRevoked"
 	EventContentRootUpdated  = "ContentRootUpdated"
+	EventPrimaryNameSet      = "PrimaryNameSet"
 )
 
 // EmitNameRegistered emits a NameRegistered event to the EVM state DB.
@@ -230,6 +231,40 @@ func (p Precompile) EmitEpixNetPeerRevoked(
 
 	arguments := event.Inputs.NonIndexed()
 	packed, err := arguments.Pack(name, tld, peerAddress)
+	if err != nil {
+		return err
+	}
+
+	stateDB.AddLog(&ethtypes.Log{
+		Address:     p.Address(),
+		Topics:      topics,
+		Data:        packed,
+		BlockNumber: uint64(ctx.BlockHeight()),
+	})
+
+	return nil
+}
+
+// EmitPrimaryNameSet emits a PrimaryNameSet event to the EVM state DB.
+func (p Precompile) EmitPrimaryNameSet(
+	ctx sdk.Context,
+	stateDB vm.StateDB,
+	owner common.Address,
+	name, tld string,
+) error {
+	event := p.Events[EventPrimaryNameSet]
+
+	topics := make([]common.Hash, 2)
+	topics[0] = event.ID
+
+	ownerTopic, err := cmn.MakeTopic(owner)
+	if err != nil {
+		return err
+	}
+	topics[1] = ownerTopic
+
+	arguments := event.Inputs.NonIndexed()
+	packed, err := arguments.Pack(name, tld)
 	if err != nil {
 		return err
 	}

@@ -98,6 +98,11 @@ func (k Keeper) RegisterNameRecord(ctx sdk.Context, ownerAddr sdk.AccAddress, tl
 	// Set owner index for reverse lookups
 	k.SetOwnerIndex(ctx, ownerAddr, tld, name)
 
+	// Auto-set as primary name if the owner doesn't have one yet
+	if _, _, hasPrimary := k.GetPrimaryNameEntry(ctx, ownerAddr); !hasPrimary {
+		k.SetPrimaryNameEntry(ctx, ownerAddr, tld, name)
+	}
+
 	// Increment counters
 	k.IncrementOwnerCount(ctx, ownerAddr)
 	k.IncrementGlobalNameCount(ctx)
@@ -149,6 +154,16 @@ func (k Keeper) TransferNameRecord(ctx sdk.Context, currentOwner, newOwner sdk.A
 	// Update owner counts
 	k.DecrementOwnerCount(ctx, currentOwner)
 	k.IncrementOwnerCount(ctx, newOwner)
+
+	// If this was the old owner's primary name, clear it
+	if pTld, pName, hasPrimary := k.GetPrimaryNameEntry(ctx, currentOwner); hasPrimary && pTld == tld && pName == name {
+		k.DeletePrimaryNameEntry(ctx, currentOwner)
+	}
+
+	// Auto-set as primary for the new owner if they don't have one
+	if _, _, hasPrimary := k.GetPrimaryNameEntry(ctx, newOwner); !hasPrimary {
+		k.SetPrimaryNameEntry(ctx, newOwner, tld, name)
+	}
 
 	// Update the name record
 	record.Owner = newOwner.String()

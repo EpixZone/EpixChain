@@ -61,14 +61,48 @@ func (p Precompile) ReverseResolve(
 	}
 
 	ownerAddr := sdk.AccAddress(addr.Bytes())
-	names := p.xidKeeper.GetNamesByOwnerAddr(ctx, ownerAddr)
 
+	// Check explicit primary name first
+	if pTld, pName, found := p.xidKeeper.GetPrimaryNameEntry(ctx, ownerAddr); found {
+		if record, exists := p.xidKeeper.GetNameRecord(ctx, pTld, pName); exists && record.Owner == ownerAddr.String() {
+			return method.Outputs.Pack(pName, pTld)
+		}
+	}
+
+	// Fall back to first name from owner index
+	names := p.xidKeeper.GetNamesByOwnerAddr(ctx, ownerAddr)
 	if len(names) == 0 {
 		return method.Outputs.Pack("", "")
 	}
 
-	// Return the first name as primary
 	return method.Outputs.Pack(names[0].Name, names[0].Tld)
+}
+
+// GetPrimaryName handles the getPrimaryName(owner) view function.
+// Returns the explicitly set primary name and TLD for an address.
+func (p Precompile) GetPrimaryName(
+	ctx sdk.Context,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	if len(args) != 1 {
+		return nil, fmt.Errorf("expected 1 argument, got %d", len(args))
+	}
+
+	addr, ok := args[0].(common.Address)
+	if !ok {
+		return nil, fmt.Errorf("invalid argument type for owner: %T", args[0])
+	}
+
+	ownerAddr := sdk.AccAddress(addr.Bytes())
+
+	if pTld, pName, found := p.xidKeeper.GetPrimaryNameEntry(ctx, ownerAddr); found {
+		if record, exists := p.xidKeeper.GetNameRecord(ctx, pTld, pName); exists && record.Owner == ownerAddr.String() {
+			return method.Outputs.Pack(pName, pTld)
+		}
+	}
+
+	return method.Outputs.Pack("", "")
 }
 
 // GetProfile handles the getProfile(name, tld) view function.
@@ -246,8 +280,15 @@ func (p Precompile) ReverseResolveBech32(
 		return nil, fmt.Errorf("invalid bech32 address: %s", bech32Addr)
 	}
 
-	names := p.xidKeeper.GetNamesByOwnerAddr(ctx, ownerAddr)
+	// Check explicit primary name first
+	if pTld, pName, found := p.xidKeeper.GetPrimaryNameEntry(ctx, ownerAddr); found {
+		if record, exists := p.xidKeeper.GetNameRecord(ctx, pTld, pName); exists && record.Owner == ownerAddr.String() {
+			return method.Outputs.Pack(pName, pTld)
+		}
+	}
 
+	// Fall back to first name from owner index
+	names := p.xidKeeper.GetNamesByOwnerAddr(ctx, ownerAddr)
 	if len(names) == 0 {
 		return method.Outputs.Pack("", "")
 	}

@@ -42,12 +42,22 @@ func (k Keeper) ReverseResolve(goCtx context.Context, req *types.QueryReverseRes
 		return nil, err
 	}
 
+	// Check if the owner has an explicit primary name set
+	if pTld, pName, found := k.GetPrimaryNameEntry(ctx, addr); found {
+		// Verify the name still exists and is still owned by this address
+		if record, exists := k.GetNameRecord(ctx, pTld, pName); exists && record.Owner == addr.String() {
+			return &types.QueryReverseResolveResponse{PrimaryName: &record}, nil
+		}
+		// Stale primary — clean it up
+		k.DeletePrimaryNameEntry(ctx, addr)
+	}
+
+	// Fall back to first name from owner index
 	names := k.GetNamesByOwnerAddr(ctx, addr)
 	if len(names) == 0 {
 		return &types.QueryReverseResolveResponse{}, nil
 	}
 
-	// Return the first name as the primary
 	return &types.QueryReverseResolveResponse{PrimaryName: &names[0]}, nil
 }
 

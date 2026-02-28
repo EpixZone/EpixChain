@@ -36,6 +36,8 @@ service Msg {
   rpc RevokeEpixNetPeer(MsgRevokeEpixNetPeer) returns (MsgRevokeEpixNetPeerResponse);
   // UpdateContentRoot updates the Merkle content root for a name.
   rpc UpdateContentRoot(MsgUpdateContentRoot) returns (MsgUpdateContentRootResponse);
+  // SetPrimaryName sets the primary name for an address.
+  rpc SetPrimaryName(MsgSetPrimaryName) returns (MsgSetPrimaryNameResponse);
 }
 
 // MsgRegisterName registers a name under a TLD.
@@ -173,3 +175,15 @@ message MsgUpdateContentRoot {
 }
 
 message MsgUpdateContentRootResponse {}
+
+// MsgSetPrimaryName sets the primary name for an address.
+message MsgSetPrimaryName {
+  option (cosmos.msg.v1.signer) = "owner";
+  option (amino.name) = "cosmos/evm/x/xid/MsgSetPrimaryName";
+
+  string owner = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string name = 2;
+  string tld = 3;
+}
+
+message MsgSetPrimaryNameResponse {}

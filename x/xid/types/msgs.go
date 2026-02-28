@@ -15,6 +15,7 @@ const (
 	TypeMsgUpdateTLDConfig    = "update_tld_config"
 	TypeMsgUpdateParams       = "update_params"
 	TypeMsgAttestStateDigest  = "attest_state_digest"
+	TypeMsgSetPrimaryName     = "set_primary_name"
 )
 
 // GetSigners returns the expected signers for MsgRegisterName.
@@ -154,6 +155,26 @@ func (msg *MsgUpdateParams) ValidateBasic() error {
 		return err
 	}
 	return msg.Params.Validate()
+}
+
+// GetSigners returns the expected signers for MsgSetPrimaryName.
+func (msg *MsgSetPrimaryName) GetSigners() []sdk.AccAddress {
+	signer, _ := sdk.AccAddressFromBech32(msg.Owner)
+	return []sdk.AccAddress{signer}
+}
+
+// ValidateBasic performs stateless validation for MsgSetPrimaryName.
+func (msg *MsgSetPrimaryName) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Owner); err != nil {
+		return err
+	}
+	if err := ValidateName(msg.Name); err != nil {
+		return err
+	}
+	if err := ValidateTLD(msg.Tld); err != nil {
+		return err
+	}
+	return nil
 }
 
 // GetSigners returns the expected signers for MsgAttestStateDigest.

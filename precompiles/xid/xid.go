@@ -31,6 +31,8 @@ const (
 	SetEpixNetPeerMethod    = "setEpixNetPeer"
 	RevokeEpixNetPeerMethod = "revokeEpixNetPeer"
 
+	SetPrimaryNameMethod = "setPrimaryName"
+
 	// Queries
 	ResolveMethod            = "resolve"
 	ReverseResolveMethod     = "reverseResolve"
@@ -43,6 +45,7 @@ const (
 	GetStateDigestMethod            = "getStateDigest"
 	GetAttestationsMethod           = "getAttestations"
 	AttestStateDigestMethod         = "attestStateDigest"
+	GetPrimaryNameMethod            = "getPrimaryName"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}
@@ -137,6 +140,8 @@ func (p Precompile) Execute(ctx sdk.Context, stateDB vm.StateDB, contract *vm.Co
 		bz, err = p.RevokeEpixNetPeer(ctx, contract, stateDB, method, args)
 	case AttestStateDigestMethod:
 		bz, err = p.AttestStateDigest(ctx, contract, stateDB, method, args)
+	case SetPrimaryNameMethod:
+		bz, err = p.SetPrimaryName(ctx, contract, stateDB, method, args)
 
 	// Queries
 	case ResolveMethod:
@@ -159,6 +164,8 @@ func (p Precompile) Execute(ctx sdk.Context, stateDB vm.StateDB, contract *vm.Co
 		bz, err = p.GetStateDigest(ctx, method, args)
 	case GetAttestationsMethod:
 		bz, err = p.GetAttestations(ctx, method, args)
+	case GetPrimaryNameMethod:
+		bz, err = p.GetPrimaryName(ctx, method, args)
 	default:
 		return nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
 	}
@@ -169,7 +176,7 @@ func (p Precompile) Execute(ctx sdk.Context, stateDB vm.StateDB, contract *vm.Co
 // IsTransaction checks if the given method is a state-changing transaction
 func (Precompile) IsTransaction(method *abi.Method) bool {
 	switch method.Name {
-	case RegisterMethod, TransferNameMethod, UpdateProfileMethod, SetDNSRecordMethod, DeleteDNSRecordMethod, SetEpixNetPeerMethod, RevokeEpixNetPeerMethod, AttestStateDigestMethod:
+	case RegisterMethod, TransferNameMethod, UpdateProfileMethod, SetDNSRecordMethod, DeleteDNSRecordMethod, SetEpixNetPeerMethod, RevokeEpixNetPeerMethod, AttestStateDigestMethod, SetPrimaryNameMethod:
 		return true
 	default:
 		return false

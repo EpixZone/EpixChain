@@ -293,6 +293,38 @@ func (k Keeper) RevokeEpixNetPeer(goCtx context.Context, msg *types.MsgRevokeEpi
 	return &types.MsgRevokeEpixNetPeerResponse{}, nil
 }
 
+// SetPrimaryName handles MsgSetPrimaryName
+func (k Keeper) SetPrimaryName(goCtx context.Context, msg *types.MsgSetPrimaryName) (*types.MsgSetPrimaryNameResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	ownerAddr, err := sdk.AccAddressFromBech32(msg.Owner)
+	if err != nil {
+		return nil, err
+	}
+
+	// Verify name exists and caller is owner
+	record, found := k.GetNameRecord(ctx, msg.Tld, msg.Name)
+	if !found {
+		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", msg.Name, msg.Tld)
+	}
+	if record.Owner != msg.Owner {
+		return nil, errorsmod.Wrapf(types.ErrNotOwner, "sender %s is not the owner", msg.Owner)
+	}
+
+	k.SetPrimaryNameEntry(ctx, ownerAddr, msg.Tld, msg.Name)
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			"xid_primary_name_set",
+			sdk.NewAttribute("name", msg.Name),
+			sdk.NewAttribute("tld", msg.Tld),
+			sdk.NewAttribute("owner", msg.Owner),
+		),
+	})
+
+	return &types.MsgSetPrimaryNameResponse{}, nil
+}
+
 // AttestStateDigest handles MsgAttestStateDigest
 func (k Keeper) AttestStateDigest(goCtx context.Context, msg *types.MsgAttestStateDigest) (*types.MsgAttestStateDigestResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
