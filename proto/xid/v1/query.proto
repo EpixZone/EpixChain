@@ -60,6 +60,22 @@ service Query {
   rpc GetEpixNetPeers(QueryGetEpixNetPeersRequest) returns (QueryGetEpixNetPeersResponse) {
     option (google.api.http).get = "/xid/v1/epixnet/{tld}/{name}";
   }
+  // QueryStateDigest returns the current state digest of the xID module.
+  rpc QueryStateDigest(QueryStateDigestRequest) returns (QueryStateDigestResponse) {
+    option (google.api.http).get = "/xid/v1/state_digest";
+  }
+  // QueryAttestations returns validator attestations for a given digest.
+  rpc QueryAttestations(QueryAttestationsRequest) returns (QueryAttestationsResponse) {
+    option (google.api.http).get = "/xid/v1/attestations";
+  }
+  // QueryStateSnapshot returns a paginated snapshot of all domain state.
+  rpc QueryStateSnapshot(QueryStateSnapshotRequest) returns (QueryStateSnapshotResponse) {
+    option (google.api.http).get = "/xid/v1/state_snapshot";
+  }
+  // ResolveWithProof resolves a name and returns a Merkle proof of inclusion.
+  rpc ResolveWithProof(QueryResolveWithProofRequest) returns (QueryResolveWithProofResponse) {
+    option (google.api.http).get = "/xid/v1/resolve_with_proof/{tld}/{name}";
+  }
 }
 
 message QueryResolveNameRequest {
@@ -172,4 +188,69 @@ message QueryGetEpixNetPeersRequest {
 
 message QueryGetEpixNetPeersResponse {
   repeated EpixNetPeer peers = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryStateDigestRequest is the request type for the Query/QueryStateDigest RPC method.
+message QueryStateDigestRequest {}
+
+// QueryStateDigestResponse is the response type for the Query/QueryStateDigest RPC method.
+message QueryStateDigestResponse {
+  string digest = 1;
+  uint64 height = 2;
+  uint64 num_names = 3;
+}
+
+// QueryAttestationsRequest is the request type for the Query/QueryAttestations RPC method.
+message QueryAttestationsRequest {
+  string digest = 1;
+}
+
+// QueryAttestationsResponse is the response type for the Query/QueryAttestations RPC method.
+message QueryAttestationsResponse {
+  repeated Attestation attestations = 1;
+  bool finalized = 2;
+}
+
+// QueryStateSnapshotRequest is the request type for the Query/QueryStateSnapshot RPC method.
+message QueryStateSnapshotRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// DomainSnapshot contains the full state of a single domain.
+message DomainSnapshot {
+  NameRecord record = 1;
+  Profile profile = 2;
+  repeated DNSRecord dns_records = 3;
+  repeated EpixNetPeer peers = 4;
+  string content_root = 5;
+}
+
+// QueryStateSnapshotResponse is the response type for the Query/QueryStateSnapshot RPC method.
+message QueryStateSnapshotResponse {
+  repeated DomainSnapshot domains = 1;
+  string digest = 2;
+  uint64 height = 3;
+  cosmos.base.query.v1beta1.PageResponse pagination = 4;
+}
+
+// MerkleProof contains a Merkle inclusion proof for a single leaf.
+message MerkleProof {
+  uint32 leaf_index = 1;
+  string leaf_hash = 2;
+  repeated string siblings = 3;
+  string root = 4;
+}
+
+// QueryResolveWithProofRequest is the request type for the Query/ResolveWithProof RPC method.
+message QueryResolveWithProofRequest {
+  string tld = 1;
+  string name = 2;
+}
+
+// QueryResolveWithProofResponse is the response type for the Query/ResolveWithProof RPC method.
+message QueryResolveWithProofResponse {
+  DomainSnapshot domain = 1;
+  MerkleProof proof = 2;
+  string root = 3;
+  uint64 height = 4;
 }
