@@ -49,6 +49,9 @@ const (
 	prefixAttestationCount
 	prefixAttestationConfig
 	prefixPrimaryName
+	prefixMerkleNode
+	prefixMerkleLeafIndex
+	prefixMerkleMetadata
 )
 
 // KVStore key prefixes
@@ -270,6 +273,34 @@ func PrimaryNameKey(owner []byte) []byte {
 	key = append(key, prefixPrimaryName)
 	key = append(key, padOrTruncate(owner, 20)...)
 	return key
+}
+
+// MerkleNodeKey returns the store key for a Merkle tree node:
+// [prefix][level_2bytes_bigendian][index_4bytes_bigendian]
+func MerkleNodeKey(level uint16, index uint32) []byte {
+	key := make([]byte, 1+2+4)
+	key[0] = prefixMerkleNode
+	binary.BigEndian.PutUint16(key[1:3], level)
+	binary.BigEndian.PutUint32(key[3:7], index)
+	return key
+}
+
+// MerkleLeafIndexKey returns the store key for a domain's leaf index in the Merkle tree:
+// [prefix][len(tld)][tld][name]
+func MerkleLeafIndexKey(tld, name string) []byte {
+	tldBytes := []byte(tld)
+	nameBytes := []byte(name)
+	key := make([]byte, 0, 1+1+len(tldBytes)+len(nameBytes))
+	key = append(key, prefixMerkleLeafIndex)
+	key = append(key, byte(len(tldBytes)))
+	key = append(key, tldBytes...)
+	key = append(key, nameBytes...)
+	return key
+}
+
+// MerkleMetadataKey returns the store key for Merkle tree metadata: [prefix]
+func MerkleMetadataKey() []byte {
+	return []byte{prefixMerkleMetadata}
 }
 
 // padOrTruncate ensures the byte slice is exactly the desired length

@@ -76,32 +76,11 @@ func (k Keeper) ComputeStateDigest(ctx sdk.Context) (string, uint64) {
 	return hex.EncodeToString(h.Sum(nil)), numNames
 }
 
-// RecomputeAndStoreStateDigest recomputes the state digest and stores it.
-// Returns the digest string. Emits an event.
-// Clears any attestations for the previous digest since they are now stale.
+// RecomputeAndStoreStateDigest rebuilds the Merkle tree from scratch and stores
+// the root as the state digest. This is used for genesis initialization and
+// migration. For incremental updates use UpdateDomainInTree instead.
 func (k Keeper) RecomputeAndStoreStateDigest(ctx sdk.Context) string {
-	// Clear attestations for the old digest — they are stale after a state change
-	if oldDigest, found := k.GetStateDigest(ctx); found {
-		k.ClearAttestationsForDigest(ctx, oldDigest.Digest)
-	}
-
-	digest, numNames := k.ComputeStateDigest(ctx)
-
-	sd := types.StateDigest{
-		Digest:   digest,
-		Height:   uint64(ctx.BlockHeight()),
-		NumNames: numNames,
-	}
-	k.SetStateDigest(ctx, sd)
-
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		"xid_state_digest_updated",
-		sdk.NewAttribute("digest", digest),
-		sdk.NewAttribute("height", fmt.Sprintf("%d", ctx.BlockHeight())),
-		sdk.NewAttribute("num_names", fmt.Sprintf("%d", numNames)),
-	))
-
-	return digest
+	return k.RebuildTree(ctx)
 }
 
 // GetStateDigest retrieves the current state digest.

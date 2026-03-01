@@ -926,6 +926,54 @@ func (m *QueryStateSnapshotResponse) Reset()         { *m = QueryStateSnapshotRe
 func (m *QueryStateSnapshotResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryStateSnapshotResponse) ProtoMessage()    {}
 
+// MerkleProof is a Merkle inclusion proof for a single domain in the global Merkle tree.
+type MerkleProof struct {
+	LeafIndex uint32   `protobuf:"varint,1,opt,name=leaf_index,json=leafIndex,proto3" json:"leaf_index,omitempty"`
+	LeafHash  string   `protobuf:"bytes,2,opt,name=leaf_hash,json=leafHash,proto3" json:"leaf_hash,omitempty"`
+	Siblings  []string `protobuf:"bytes,3,rep,name=siblings,proto3" json:"siblings,omitempty"`
+	Root      string   `protobuf:"bytes,4,opt,name=root,proto3" json:"root,omitempty"`
+}
+
+func (m *MerkleProof) Reset()         { *m = MerkleProof{} }
+func (m *MerkleProof) String() string { return proto.CompactTextString(m) }
+func (*MerkleProof) ProtoMessage()    {}
+
+// QueryResolveWithProofRequest is the request for ResolveWithProof.
+type QueryResolveWithProofRequest struct {
+	Tld  string `protobuf:"bytes,1,opt,name=tld,proto3" json:"tld,omitempty"`
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+}
+
+func (m *QueryResolveWithProofRequest) Reset()         { *m = QueryResolveWithProofRequest{} }
+func (m *QueryResolveWithProofRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryResolveWithProofRequest) ProtoMessage()    {}
+
+func (m *QueryResolveWithProofRequest) GetTld() string {
+	if m != nil {
+		return m.Tld
+	}
+	return ""
+}
+
+func (m *QueryResolveWithProofRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+// QueryResolveWithProofResponse is the response for ResolveWithProof.
+type QueryResolveWithProofResponse struct {
+	Domain DomainSnapshot `protobuf:"bytes,1,opt,name=domain,proto3" json:"domain"`
+	Proof  MerkleProof    `protobuf:"bytes,2,opt,name=proof,proto3" json:"proof"`
+	Root   string         `protobuf:"bytes,3,opt,name=root,proto3" json:"root,omitempty"`
+	Height uint64         `protobuf:"varint,4,opt,name=height,proto3" json:"height,omitempty"`
+}
+
+func (m *QueryResolveWithProofResponse) Reset()         { *m = QueryResolveWithProofResponse{} }
+func (m *QueryResolveWithProofResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryResolveWithProofResponse) ProtoMessage()    {}
+
 func init() {
 	proto.RegisterType((*QueryResolveNameRequest)(nil), "xid.v1.QueryResolveNameRequest")
 	proto.RegisterType((*QueryResolveNameResponse)(nil), "xid.v1.QueryResolveNameResponse")
@@ -951,6 +999,9 @@ func init() {
 	proto.RegisterType((*QueryAttestationsResponse)(nil), "xid.v1.QueryAttestationsResponse")
 	proto.RegisterType((*QueryStateSnapshotRequest)(nil), "xid.v1.QueryStateSnapshotRequest")
 	proto.RegisterType((*QueryStateSnapshotResponse)(nil), "xid.v1.QueryStateSnapshotResponse")
+	proto.RegisterType((*MerkleProof)(nil), "xid.v1.MerkleProof")
+	proto.RegisterType((*QueryResolveWithProofRequest)(nil), "xid.v1.QueryResolveWithProofRequest")
+	proto.RegisterType((*QueryResolveWithProofResponse)(nil), "xid.v1.QueryResolveWithProofResponse")
 }
 
 func init() { proto.RegisterFile("xid/v1/query.proto", fileDescriptor_839d3594e88c5f8f) }
@@ -1097,6 +1148,8 @@ type QueryClient interface {
 	QueryAttestations(ctx context.Context, in *QueryAttestationsRequest, opts ...grpc.CallOption) (*QueryAttestationsResponse, error)
 	// QueryStateSnapshot returns a paginated snapshot of all domain data.
 	QueryStateSnapshot(ctx context.Context, in *QueryStateSnapshotRequest, opts ...grpc.CallOption) (*QueryStateSnapshotResponse, error)
+	// ResolveWithProof resolves a name with a Merkle inclusion proof.
+	ResolveWithProof(ctx context.Context, in *QueryResolveWithProofRequest, opts ...grpc.CallOption) (*QueryResolveWithProofResponse, error)
 }
 
 type queryClient struct {
@@ -1242,6 +1295,15 @@ func (c *queryClient) QueryStateSnapshot(ctx context.Context, in *QueryStateSnap
 	return out, nil
 }
 
+func (c *queryClient) ResolveWithProof(ctx context.Context, in *QueryResolveWithProofRequest, opts ...grpc.CallOption) (*QueryResolveWithProofResponse, error) {
+	out := new(QueryResolveWithProofResponse)
+	err := c.cc.Invoke(ctx, "/xid.v1.Query/ResolveWithProof", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// ResolveName resolves a name.tld to an owner address.
@@ -1274,6 +1336,8 @@ type QueryServer interface {
 	QueryAttestations(context.Context, *QueryAttestationsRequest) (*QueryAttestationsResponse, error)
 	// QueryStateSnapshot returns a paginated snapshot of all domain data.
 	QueryStateSnapshot(context.Context, *QueryStateSnapshotRequest) (*QueryStateSnapshotResponse, error)
+	// ResolveWithProof resolves a name with a Merkle inclusion proof.
+	ResolveWithProof(context.Context, *QueryResolveWithProofRequest) (*QueryResolveWithProofResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -1324,6 +1388,9 @@ func (*UnimplementedQueryServer) QueryAttestations(ctx context.Context, req *Que
 }
 func (*UnimplementedQueryServer) QueryStateSnapshot(ctx context.Context, req *QueryStateSnapshotRequest) (*QueryStateSnapshotResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QueryStateSnapshot not implemented")
+}
+func (*UnimplementedQueryServer) ResolveWithProof(ctx context.Context, req *QueryResolveWithProofRequest) (*QueryResolveWithProofResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResolveWithProof not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -1600,6 +1667,24 @@ func _Query_QueryStateSnapshot_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_ResolveWithProof_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryResolveWithProofRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).ResolveWithProof(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/xid.v1.Query/ResolveWithProof",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).ResolveWithProof(ctx, req.(*QueryResolveWithProofRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var Query_serviceDesc = _Query_serviceDesc
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "xid.v1.Query",
@@ -1664,6 +1749,10 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "QueryStateSnapshot",
 			Handler:    _Query_QueryStateSnapshot_Handler,
+		},
+		{
+			MethodName: "ResolveWithProof",
+			Handler:    _Query_ResolveWithProof_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

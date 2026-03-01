@@ -331,6 +331,65 @@ func (k Keeper) QueryStateSnapshot(goCtx context.Context, req *types.QueryStateS
 	}, nil
 }
 
+// ResolveWithProof resolves a name and returns its full data with a Merkle inclusion proof
+func (k Keeper) ResolveWithProof(goCtx context.Context, req *types.QueryResolveWithProofRequest) (*types.QueryResolveWithProofResponse, error) {
+	if req == nil {
+		return nil, errorsmod.Wrap(types.ErrInvalidName, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// Verify name exists
+	record, found := k.GetNameRecord(ctx, req.Tld, req.Name)
+	if !found {
+		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", req.Name, req.Tld)
+	}
+
+	// Build the domain snapshot
+	snap := types.DomainSnapshot{
+		Record: record,
+	}
+
+	if profile, found := k.GetProfileRecord(ctx, req.Tld, req.Name); found {
+		snap.Profile = &profile
+	}
+
+	dns := k.GetAllDNSRecords(ctx, req.Tld, req.Name)
+	if len(dns) > 0 {
+		snap.DnsRecords = dns
+	}
+
+	peers := k.GetAllEpixNetPeers(ctx, req.Tld, req.Name)
+	if len(peers) > 0 {
+		snap.Peers = peers
+	}
+
+	if cr, found := k.GetContentRoot(ctx, req.Tld, req.Name); found && cr.Root != "" {
+		snap.ContentRoot = cr.Root
+	}
+
+	// Generate Merkle proof
+	proof, err := k.GenerateProof(ctx, req.Tld, req.Name)
+	if err != nil {
+		return nil, errorsmod.Wrap(types.ErrInvalidName, err.Error())
+	}
+
+	// Get the current attested state digest
+	digest, _ := k.GetStateDigest(ctx)
+
+	return &types.QueryResolveWithProofResponse{
+		Domain: snap,
+		Proof: types.MerkleProof{
+			LeafIndex: proof.LeafIndex,
+			LeafHash:  proof.LeafHash,
+			Siblings:  proof.Siblings,
+			Root:      proof.Root,
+		},
+		Root:   digest.Digest,
+		Height: digest.Height,
+	}, nil
+}
+
 // GetStats returns xID module statistics
 func (k Keeper) GetStats(goCtx context.Context, _ *types.QueryGetStatsRequest) (*types.QueryGetStatsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)

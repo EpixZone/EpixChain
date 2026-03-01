@@ -25,7 +25,7 @@ func (k Keeper) RegisterName(goCtx context.Context, msg *types.MsgRegisterName) 
 		return nil, err
 	}
 
-	k.RecomputeAndStoreStateDigest(ctx)
+	k.UpdateDomainInTree(ctx, msg.Tld, msg.Name)
 
 	return &types.MsgRegisterNameResponse{}, nil
 }
@@ -48,7 +48,7 @@ func (k Keeper) TransferName(goCtx context.Context, msg *types.MsgTransferName) 
 		return nil, err
 	}
 
-	k.RecomputeAndStoreStateDigest(ctx)
+	k.UpdateDomainInTree(ctx, msg.Tld, msg.Name)
 
 	return &types.MsgTransferNameResponse{}, nil
 }
@@ -67,7 +67,7 @@ func (k Keeper) UpdateProfile(goCtx context.Context, msg *types.MsgUpdateProfile
 	}
 
 	k.SetProfileRecord(ctx, msg.Tld, msg.Name, msg.Profile)
-	k.RecomputeAndStoreStateDigest(ctx)
+	k.UpdateDomainInTree(ctx, msg.Tld, msg.Name)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -95,7 +95,7 @@ func (k Keeper) SetDNSRecord(goCtx context.Context, msg *types.MsgSetDNSRecord) 
 	}
 
 	k.SetDNSRecordEntry(ctx, msg.Tld, msg.Name, msg.Record)
-	k.RecomputeAndStoreStateDigest(ctx)
+	k.UpdateDomainInTree(ctx, msg.Tld, msg.Name)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -127,7 +127,7 @@ func (k Keeper) DeleteDNSRecord(goCtx context.Context, msg *types.MsgDeleteDNSRe
 	}
 
 	k.DeleteDNSRecordEntry(ctx, msg.Tld, msg.Name, msg.RecordType)
-	k.RecomputeAndStoreStateDigest(ctx)
+	k.UpdateDomainInTree(ctx, msg.Tld, msg.Name)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -222,7 +222,7 @@ func (k Keeper) SetEpixNetPeer(goCtx context.Context, msg *types.MsgSetEpixNetPe
 	}
 
 	newRoot := k.RecomputeAndStoreContentRoot(ctx, msg.Tld, msg.Name)
-	k.RecomputeAndStoreStateDigest(ctx)
+	k.UpdateDomainInTree(ctx, msg.Tld, msg.Name)
 
 	events := sdk.Events{
 		sdk.NewEvent(
@@ -274,7 +274,7 @@ func (k Keeper) RevokeEpixNetPeer(goCtx context.Context, msg *types.MsgRevokeEpi
 	}
 
 	newRoot := k.RecomputeAndStoreContentRoot(ctx, msg.Tld, msg.Name)
-	k.RecomputeAndStoreStateDigest(ctx)
+	k.UpdateDomainInTree(ctx, msg.Tld, msg.Name)
 
 	events := sdk.Events{
 		sdk.NewEvent(
