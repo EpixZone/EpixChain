@@ -1161,6 +1161,8 @@ type QueryClient interface {
 	QueryStateSnapshot(ctx context.Context, in *QueryStateSnapshotRequest, opts ...grpc.CallOption) (*QueryStateSnapshotResponse, error)
 	// ResolveWithProof resolves a name with a Merkle inclusion proof.
 	ResolveWithProof(ctx context.Context, in *QueryResolveWithProofRequest, opts ...grpc.CallOption) (*QueryResolveWithProofResponse, error)
+	// ReverseResolveByPeer finds the xID name associated with an EpixNet peer address.
+	ReverseResolveByPeer(ctx context.Context, in *QueryReverseResolveByPeerRequest, opts ...grpc.CallOption) (*QueryReverseResolveByPeerResponse, error)
 }
 
 type queryClient struct {
@@ -1315,6 +1317,15 @@ func (c *queryClient) ResolveWithProof(ctx context.Context, in *QueryResolveWith
 	return out, nil
 }
 
+func (c *queryClient) ReverseResolveByPeer(ctx context.Context, in *QueryReverseResolveByPeerRequest, opts ...grpc.CallOption) (*QueryReverseResolveByPeerResponse, error) {
+	out := new(QueryReverseResolveByPeerResponse)
+	err := c.cc.Invoke(ctx, "/xid.v1.Query/ReverseResolveByPeer", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// ResolveName resolves a name.tld to an owner address.
@@ -1349,6 +1360,8 @@ type QueryServer interface {
 	QueryStateSnapshot(context.Context, *QueryStateSnapshotRequest) (*QueryStateSnapshotResponse, error)
 	// ResolveWithProof resolves a name with a Merkle inclusion proof.
 	ResolveWithProof(context.Context, *QueryResolveWithProofRequest) (*QueryResolveWithProofResponse, error)
+	// ReverseResolveByPeer finds the xID name associated with an EpixNet peer address.
+	ReverseResolveByPeer(context.Context, *QueryReverseResolveByPeerRequest) (*QueryReverseResolveByPeerResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -1402,6 +1415,9 @@ func (*UnimplementedQueryServer) QueryStateSnapshot(ctx context.Context, req *Qu
 }
 func (*UnimplementedQueryServer) ResolveWithProof(ctx context.Context, req *QueryResolveWithProofRequest) (*QueryResolveWithProofResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResolveWithProof not implemented")
+}
+func (*UnimplementedQueryServer) ReverseResolveByPeer(ctx context.Context, req *QueryReverseResolveByPeerRequest) (*QueryReverseResolveByPeerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReverseResolveByPeer not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -1696,6 +1712,24 @@ func _Query_ResolveWithProof_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_ReverseResolveByPeer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryReverseResolveByPeerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).ReverseResolveByPeer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/xid.v1.Query/ReverseResolveByPeer",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).ReverseResolveByPeer(ctx, req.(*QueryReverseResolveByPeerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var Query_serviceDesc = _Query_serviceDesc
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "xid.v1.Query",
@@ -1764,6 +1798,10 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResolveWithProof",
 			Handler:    _Query_ResolveWithProof_Handler,
+		},
+		{
+			MethodName: "ReverseResolveByPeer",
+			Handler:    _Query_ReverseResolveByPeer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

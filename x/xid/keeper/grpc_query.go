@@ -390,6 +390,32 @@ func (k Keeper) ResolveWithProof(goCtx context.Context, req *types.QueryResolveW
 	}, nil
 }
 
+// ReverseResolveByPeer finds the xID name associated with an EpixNet peer address
+func (k Keeper) ReverseResolveByPeer(goCtx context.Context, req *types.QueryReverseResolveByPeerRequest) (*types.QueryReverseResolveByPeerResponse, error) {
+	if req == nil {
+		return nil, errorsmod.Wrap(types.ErrInvalidName, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	tld, name, found := k.GetEpixNetPeerOwner(ctx, req.Address)
+	if !found {
+		return &types.QueryReverseResolveByPeerResponse{}, nil
+	}
+
+	record, recordFound := k.GetNameRecord(ctx, tld, name)
+	if !recordFound {
+		return &types.QueryReverseResolveByPeerResponse{}, nil
+	}
+
+	peer, peerFound := k.GetEpixNetPeerEntry(ctx, tld, name, req.Address)
+	if !peerFound {
+		return &types.QueryReverseResolveByPeerResponse{NameRecord: &record}, nil
+	}
+
+	return &types.QueryReverseResolveByPeerResponse{NameRecord: &record, Peer: &peer}, nil
+}
+
 // GetStats returns xID module statistics
 func (k Keeper) GetStats(goCtx context.Context, _ *types.QueryGetStatsRequest) (*types.QueryGetStatsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)

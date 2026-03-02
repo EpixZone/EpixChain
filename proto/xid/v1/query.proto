@@ -76,6 +76,10 @@ service Query {
   rpc ResolveWithProof(QueryResolveWithProofRequest) returns (QueryResolveWithProofResponse) {
     option (google.api.http).get = "/xid/v1/resolve_with_proof/{tld}/{name}";
   }
+  // ReverseResolveByPeer finds the xID name associated with an EpixNet peer address.
+  rpc ReverseResolveByPeer(QueryReverseResolveByPeerRequest) returns (QueryReverseResolveByPeerResponse) {
+    option (google.api.http).get = "/xid/v1/reverse_peer/{address}";
+  }
 }
 
 message QueryResolveNameRequest {
@@ -253,4 +257,17 @@ message QueryResolveWithProofResponse {
   MerkleProof proof = 2;
   string root = 3;
   uint64 height = 4;
+}
+
+// QueryReverseResolveByPeerRequest is the request type for the Query/ReverseResolveByPeer RPC method.
+message QueryReverseResolveByPeerRequest {
+  string address = 1;
+}
+
+// QueryReverseResolveByPeerResponse is the response type for the Query/ReverseResolveByPeer RPC method.
+message QueryReverseResolveByPeerResponse {
+  // name_record is the xID name associated with this peer address, if any.
+  NameRecord name_record = 1;
+  // peer contains the peer entry details including active/revoked status.
+  EpixNetPeer peer = 2;
 }
