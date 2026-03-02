@@ -46,6 +46,7 @@ const (
 	GetAttestationsMethod           = "getAttestations"
 	AttestStateDigestMethod         = "attestStateDigest"
 	GetPrimaryNameMethod            = "getPrimaryName"
+	ReverseResolveByPeerMethod      = "reverseResolveByPeer"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}
@@ -166,6 +167,8 @@ func (p Precompile) Execute(ctx sdk.Context, stateDB vm.StateDB, contract *vm.Co
 		bz, err = p.GetAttestations(ctx, method, args)
 	case GetPrimaryNameMethod:
 		bz, err = p.GetPrimaryName(ctx, method, args)
+	case ReverseResolveByPeerMethod:
+		bz, err = p.ReverseResolveByPeer(ctx, method, args)
 	default:
 		return nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
 	}

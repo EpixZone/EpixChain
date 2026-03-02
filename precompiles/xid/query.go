@@ -339,5 +339,33 @@ func (p Precompile) GetAttestations(
 	return method.Outputs.Pack(validators, signatures, heights, finalized)
 }
 
+// ReverseResolveByPeer handles the reverseResolveByPeer(peerAddress) view function.
+// Looks up the xID name associated with an EpixNet peer address.
+func (p Precompile) ReverseResolveByPeer(
+	ctx sdk.Context,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	if len(args) != 1 {
+		return nil, fmt.Errorf("expected 1 argument, got %d", len(args))
+	}
+
+	peerAddress, ok := args[0].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid argument type for peerAddress: %T", args[0])
+	}
+
+	tld, name, found := p.xidKeeper.GetEpixNetPeerOwner(ctx, peerAddress)
+	if !found {
+		return method.Outputs.Pack("", "", false)
+	}
+
+	if !p.xidKeeper.HasNameRecord(ctx, tld, name) {
+		return method.Outputs.Pack("", "", false)
+	}
+
+	return method.Outputs.Pack(name, tld, true)
+}
+
 // ensure big.Int is used
 var _ = (*big.Int)(nil)
