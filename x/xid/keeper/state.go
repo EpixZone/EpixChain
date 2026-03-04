@@ -413,6 +413,7 @@ func (k Keeper) SetLinkedIdentityEntry(ctx sdk.Context, tld, name string, identi
 	identity.AddedAt = uint64(ctx.BlockHeight())
 	identity.Active = true
 	identity.RevokedAt = 0
+	identity.RevokedAtTime = 0
 	bz, _ := json.Marshal(identity)
 	store.Set(types.LinkedIdentityKey(tld, name, identity.Address), bz)
 
