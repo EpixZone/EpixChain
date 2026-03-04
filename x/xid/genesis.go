@@ -45,13 +45,13 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState *types.GenesisState)
 			k.SetDNSRecordEntry(ctx, entry.Record.Tld, entry.Record.Name, dns)
 		}
 
-		for _, peer := range entry.EpixnetPeers {
-			if err := k.SetEpixNetPeerEntry(ctx, entry.Record.Tld, entry.Record.Name, peer); err != nil {
+		for _, identity := range entry.LinkedIdentities {
+			if err := k.SetLinkedIdentityEntry(ctx, entry.Record.Tld, entry.Record.Name, identity); err != nil {
 				panic(err)
 			}
 		}
 
-		if len(entry.EpixnetPeers) > 0 {
+		if len(entry.LinkedIdentities) > 0 {
 			k.RecomputeAndStoreContentRoot(ctx, entry.Record.Tld, entry.Record.Name)
 		}
 	}
@@ -84,7 +84,7 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 		entry := types.NameEntry{
 			Record:       record,
 			DnsRecords:   k.GetAllDNSRecords(ctx, record.Tld, record.Name),
-			EpixnetPeers: k.GetAllEpixNetPeers(ctx, record.Tld, record.Name),
+			LinkedIdentities: k.GetAllLinkedIdentities(ctx, record.Tld, record.Name),
 		}
 
 		profile, found := k.GetProfileRecord(ctx, record.Tld, record.Name)

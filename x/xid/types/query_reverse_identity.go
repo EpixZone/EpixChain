@@ -13,25 +13,25 @@ var _ = fmt.Errorf
 var _ = math_bits.Len64
 
 // ---------------------------------------------------------------------------
-// QueryReverseResolveByPeerRequest
+// QueryReverseResolveByIdentityRequest
 // ---------------------------------------------------------------------------
 
-type QueryReverseResolveByPeerRequest struct {
+type QueryReverseResolveByIdentityRequest struct {
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 }
 
-func (m *QueryReverseResolveByPeerRequest) Reset()         { *m = QueryReverseResolveByPeerRequest{} }
-func (m *QueryReverseResolveByPeerRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryReverseResolveByPeerRequest) ProtoMessage()    {}
+func (m *QueryReverseResolveByIdentityRequest) Reset()         { *m = QueryReverseResolveByIdentityRequest{} }
+func (m *QueryReverseResolveByIdentityRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryReverseResolveByIdentityRequest) ProtoMessage()    {}
 
-func (m *QueryReverseResolveByPeerRequest) GetAddress() string {
+func (m *QueryReverseResolveByIdentityRequest) GetAddress() string {
 	if m != nil {
 		return m.Address
 	}
 	return ""
 }
 
-func (m *QueryReverseResolveByPeerRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryReverseResolveByIdentityRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -41,35 +41,35 @@ func (m *QueryReverseResolveByPeerRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryReverseResolveByPeerRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryReverseResolveByIdentityRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryReverseResolveByPeerRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryReverseResolveByIdentityRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	// field 1: address (string)
 	if len(m.Address) > 0 {
 		i -= len(m.Address)
 		copy(dAtA[i:], m.Address)
-		i = encodeVarintReversePeer(dAtA, i, uint64(len(m.Address)))
+		i = encodeVarintReverseIdentity(dAtA, i, uint64(len(m.Address)))
 		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryReverseResolveByPeerRequest) Size() (n int) {
+func (m *QueryReverseResolveByIdentityRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	if len(m.Address) > 0 {
-		n += 1 + len(m.Address) + sovReversePeer(uint64(len(m.Address)))
+		n += 1 + len(m.Address) + sovReverseIdentity(uint64(len(m.Address)))
 	}
 	return n
 }
 
-func (m *QueryReverseResolveByPeerRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryReverseResolveByIdentityRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -113,7 +113,7 @@ func (m *QueryReverseResolveByPeerRequest) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
-			skippy, err := skipReversePeer(dAtA[iNdEx:])
+			skippy, err := skipReverseIdentity(dAtA[iNdEx:])
 			if err != nil {
 				return err
 			}
@@ -133,33 +133,33 @@ func (m *QueryReverseResolveByPeerRequest) Unmarshal(dAtA []byte) error {
 }
 
 // ---------------------------------------------------------------------------
-// QueryReverseResolveByPeerResponse
+// QueryReverseResolveByIdentityResponse
 // ---------------------------------------------------------------------------
 
-type QueryReverseResolveByPeerResponse struct {
-	NameRecord *NameRecord   `protobuf:"bytes,1,opt,name=name_record,json=nameRecord,proto3" json:"name_record,omitempty"`
-	Peer       *EpixNetPeer  `protobuf:"bytes,2,opt,name=peer,proto3" json:"peer,omitempty"`
+type QueryReverseResolveByIdentityResponse struct {
+	NameRecord *NameRecord      `protobuf:"bytes,1,opt,name=name_record,json=nameRecord,proto3" json:"name_record,omitempty"`
+	Identity   *LinkedIdentity  `protobuf:"bytes,2,opt,name=identity,proto3" json:"identity,omitempty"`
 }
 
-func (m *QueryReverseResolveByPeerResponse) Reset()         { *m = QueryReverseResolveByPeerResponse{} }
-func (m *QueryReverseResolveByPeerResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryReverseResolveByPeerResponse) ProtoMessage()    {}
+func (m *QueryReverseResolveByIdentityResponse) Reset()         { *m = QueryReverseResolveByIdentityResponse{} }
+func (m *QueryReverseResolveByIdentityResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryReverseResolveByIdentityResponse) ProtoMessage()    {}
 
-func (m *QueryReverseResolveByPeerResponse) GetNameRecord() *NameRecord {
+func (m *QueryReverseResolveByIdentityResponse) GetNameRecord() *NameRecord {
 	if m != nil {
 		return m.NameRecord
 	}
 	return nil
 }
 
-func (m *QueryReverseResolveByPeerResponse) GetPeer() *EpixNetPeer {
+func (m *QueryReverseResolveByIdentityResponse) GetIdentity() *LinkedIdentity {
 	if m != nil {
-		return m.Peer
+		return m.Identity
 	}
 	return nil
 }
 
-func (m *QueryReverseResolveByPeerResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryReverseResolveByIdentityResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -169,22 +169,22 @@ func (m *QueryReverseResolveByPeerResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryReverseResolveByPeerResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryReverseResolveByIdentityResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryReverseResolveByPeerResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryReverseResolveByIdentityResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
-	// field 2: peer (message)
-	if m.Peer != nil {
+	// field 2: identity (message)
+	if m.Identity != nil {
 		{
-			size, err := m.Peer.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.Identity.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
 			i -= size
-			i = encodeVarintReversePeer(dAtA, i, uint64(size))
+			i = encodeVarintReverseIdentity(dAtA, i, uint64(size))
 		}
 		i--
 		dAtA[i] = 0x12
@@ -197,7 +197,7 @@ func (m *QueryReverseResolveByPeerResponse) MarshalToSizedBuffer(dAtA []byte) (i
 				return 0, err
 			}
 			i -= size
-			i = encodeVarintReversePeer(dAtA, i, uint64(size))
+			i = encodeVarintReverseIdentity(dAtA, i, uint64(size))
 		}
 		i--
 		dAtA[i] = 0xa
@@ -205,22 +205,22 @@ func (m *QueryReverseResolveByPeerResponse) MarshalToSizedBuffer(dAtA []byte) (i
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryReverseResolveByPeerResponse) Size() (n int) {
+func (m *QueryReverseResolveByIdentityResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	if m.NameRecord != nil {
 		l := m.NameRecord.Size()
-		n += 1 + l + sovReversePeer(uint64(l))
+		n += 1 + l + sovReverseIdentity(uint64(l))
 	}
-	if m.Peer != nil {
-		l := m.Peer.Size()
-		n += 1 + l + sovReversePeer(uint64(l))
+	if m.Identity != nil {
+		l := m.Identity.Size()
+		n += 1 + l + sovReverseIdentity(uint64(l))
 	}
 	return n
 }
 
-func (m *QueryReverseResolveByPeerResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryReverseResolveByIdentityResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -270,9 +270,9 @@ func (m *QueryReverseResolveByPeerResponse) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 2: // peer
+		case 2: // identity
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Peer", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Identity", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -293,16 +293,16 @@ func (m *QueryReverseResolveByPeerResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Peer == nil {
-				m.Peer = &EpixNetPeer{}
+			if m.Identity == nil {
+				m.Identity = &LinkedIdentity{}
 			}
-			if err := m.Peer.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Identity.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
-			skippy, err := skipReversePeer(dAtA[iNdEx:])
+			skippy, err := skipReverseIdentity(dAtA[iNdEx:])
 			if err != nil {
 				return err
 			}
@@ -325,8 +325,8 @@ func (m *QueryReverseResolveByPeerResponse) Unmarshal(dAtA []byte) error {
 // Helper functions
 // ---------------------------------------------------------------------------
 
-func encodeVarintReversePeer(dAtA []byte, offset int, v uint64) int {
-	offset -= sovReversePeer(v)
+func encodeVarintReverseIdentity(dAtA []byte, offset int, v uint64) int {
+	offset -= sovReverseIdentity(v)
 	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
@@ -337,11 +337,11 @@ func encodeVarintReversePeer(dAtA []byte, offset int, v uint64) int {
 	return base
 }
 
-func sovReversePeer(x uint64) (n int) {
+func sovReverseIdentity(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
 
-func skipReversePeer(dAtA []byte) (n int, err error) {
+func skipReverseIdentity(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
 	depth := 0
@@ -412,6 +412,6 @@ func skipReversePeer(dAtA []byte) (n int, err error) {
 }
 
 func init() {
-	proto.RegisterType((*QueryReverseResolveByPeerRequest)(nil), "xid.v1.QueryReverseResolveByPeerRequest")
-	proto.RegisterType((*QueryReverseResolveByPeerResponse)(nil), "xid.v1.QueryReverseResolveByPeerResponse")
+	proto.RegisterType((*QueryReverseResolveByIdentityRequest)(nil), "xid.v1.QueryReverseResolveByIdentityRequest")
+	proto.RegisterType((*QueryReverseResolveByIdentityResponse)(nil), "xid.v1.QueryReverseResolveByIdentityResponse")
 }

@@ -22,10 +22,10 @@ const (
 	DNSRecordTypeMX    uint32 = 15
 	DNSRecordTypeNS    uint32 = 2
 	DNSRecordTypeSRV      uint32 = 33
-	DNSRecordTypeEpixNet  uint32 = 65280 // Private-use range (RFC 6895) for EpixNet peer discovery
+	DNSRecordTypeEpixNet  uint32 = 65280 // Private-use range (RFC 6895) for linked identity discovery
 )
 
-// ContentRoot represents the auto-computed Merkle root of active peers for an xID
+// ContentRoot represents the auto-computed Merkle root of active linked identities for an xID
 type ContentRoot struct {
 	Root      string `protobuf:"bytes,1,opt,name=root,proto3" json:"root,omitempty"`
 	UpdatedAt uint64 `protobuf:"varint,2,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
@@ -226,8 +226,8 @@ func (m *ContentRoot) Unmarshal(dAtA []byte) error {
 	return nil
 }
 
-// EpixNetPeer represents an EpixNet peer address attached to a name
-type EpixNetPeer struct {
+// LinkedIdentity represents a linked identity address attached to a name
+type LinkedIdentity struct {
 	Address   string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 	Label     string `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
 	AddedAt   uint64 `protobuf:"varint,3,opt,name=added_at,json=addedAt,proto3" json:"added_at,omitempty"`
@@ -235,18 +235,18 @@ type EpixNetPeer struct {
 	RevokedAt uint64 `protobuf:"varint,5,opt,name=revoked_at,json=revokedAt,proto3" json:"revoked_at,omitempty"`
 }
 
-func (m *EpixNetPeer) Reset()         { *m = EpixNetPeer{} }
-func (m *EpixNetPeer) String() string { return proto.CompactTextString(m) }
-func (*EpixNetPeer) ProtoMessage()    {}
-func (*EpixNetPeer) Descriptor() ([]byte, []int) {
+func (m *LinkedIdentity) Reset()         { *m = LinkedIdentity{} }
+func (m *LinkedIdentity) String() string { return proto.CompactTextString(m) }
+func (*LinkedIdentity) ProtoMessage()    {}
+func (*LinkedIdentity) Descriptor() ([]byte, []int) {
 	return fileDescriptor_9bd3daa00c1847cd, []int{7}
 }
-func (m *EpixNetPeer) XXX_Unmarshal(b []byte) error {
+func (m *LinkedIdentity) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *EpixNetPeer) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *LinkedIdentity) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_EpixNetPeer.Marshal(b, m, deterministic)
+		return xxx_messageInfo_LinkedIdentity.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -256,54 +256,54 @@ func (m *EpixNetPeer) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return b[:n], nil
 	}
 }
-func (m *EpixNetPeer) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EpixNetPeer.Merge(m, src)
+func (m *LinkedIdentity) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LinkedIdentity.Merge(m, src)
 }
-func (m *EpixNetPeer) XXX_Size() int {
+func (m *LinkedIdentity) XXX_Size() int {
 	return m.Size()
 }
-func (m *EpixNetPeer) XXX_DiscardUnknown() {
-	xxx_messageInfo_EpixNetPeer.DiscardUnknown(m)
+func (m *LinkedIdentity) XXX_DiscardUnknown() {
+	xxx_messageInfo_LinkedIdentity.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_EpixNetPeer proto.InternalMessageInfo
+var xxx_messageInfo_LinkedIdentity proto.InternalMessageInfo
 
-func (m *EpixNetPeer) GetAddress() string {
+func (m *LinkedIdentity) GetAddress() string {
 	if m != nil {
 		return m.Address
 	}
 	return ""
 }
 
-func (m *EpixNetPeer) GetLabel() string {
+func (m *LinkedIdentity) GetLabel() string {
 	if m != nil {
 		return m.Label
 	}
 	return ""
 }
 
-func (m *EpixNetPeer) GetAddedAt() uint64 {
+func (m *LinkedIdentity) GetAddedAt() uint64 {
 	if m != nil {
 		return m.AddedAt
 	}
 	return 0
 }
 
-func (m *EpixNetPeer) GetActive() bool {
+func (m *LinkedIdentity) GetActive() bool {
 	if m != nil {
 		return m.Active
 	}
 	return false
 }
 
-func (m *EpixNetPeer) GetRevokedAt() uint64 {
+func (m *LinkedIdentity) GetRevokedAt() uint64 {
 	if m != nil {
 		return m.RevokedAt
 	}
 	return 0
 }
 
-func (m *EpixNetPeer) Marshal() (dAtA []byte, err error) {
+func (m *LinkedIdentity) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -313,12 +313,12 @@ func (m *EpixNetPeer) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *EpixNetPeer) MarshalTo(dAtA []byte) (int, error) {
+func (m *LinkedIdentity) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *EpixNetPeer) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *LinkedIdentity) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	// field 5: revoked_at (uint64, varint)
 	if m.RevokedAt != 0 {
@@ -358,7 +358,7 @@ func (m *EpixNetPeer) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *EpixNetPeer) Size() (n int) {
+func (m *LinkedIdentity) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -380,7 +380,7 @@ func (m *EpixNetPeer) Size() (n int) {
 	return n
 }
 
-func (m *EpixNetPeer) Unmarshal(dAtA []byte) error {
+func (m *LinkedIdentity) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1068,7 +1068,7 @@ func (m *Attestation) Unmarshal(dAtA []byte) error {
 
 func init() {
 	proto.RegisterType((*ContentRoot)(nil), "xid.v1.ContentRoot")
-	proto.RegisterType((*EpixNetPeer)(nil), "xid.v1.EpixNetPeer")
+	proto.RegisterType((*LinkedIdentity)(nil), "xid.v1.LinkedIdentity")
 	proto.RegisterType((*StateDigest)(nil), "xid.v1.StateDigest")
 	proto.RegisterType((*Attestation)(nil), "xid.v1.Attestation")
 }

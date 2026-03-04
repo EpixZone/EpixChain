@@ -25,8 +25,8 @@ func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgCreateTLD{}, "cosmos/evm/x/xid/MsgCreateTLD", nil)
 	cdc.RegisterConcrete(&MsgUpdateTLDConfig{}, "cosmos/evm/x/xid/MsgUpdateTLDConfig", nil)
 	cdc.RegisterConcrete(&MsgUpdateParams{}, "cosmos/evm/x/xid/MsgUpdateParams", nil)
-	cdc.RegisterConcrete(&MsgSetEpixNetPeer{}, "cosmos/evm/x/xid/MsgSetEpixNetPeer", nil)
-	cdc.RegisterConcrete(&MsgRevokeEpixNetPeer{}, "cosmos/evm/x/xid/MsgRevokeEpixNetPeer", nil)
+	cdc.RegisterConcrete(&MsgLinkIdentity{}, "cosmos/evm/x/xid/MsgLinkIdentity", nil)
+	cdc.RegisterConcrete(&MsgUnlinkIdentity{}, "cosmos/evm/x/xid/MsgUnlinkIdentity", nil)
 	cdc.RegisterConcrete(&MsgUpdateContentRoot{}, "cosmos/evm/x/xid/MsgUpdateContentRoot", nil)
 	cdc.RegisterConcrete(&MsgAttestStateDigest{}, "cosmos/evm/x/xid/MsgAttestStateDigest", nil)
 	cdc.RegisterConcrete(&MsgSetPrimaryName{}, "cosmos/evm/x/xid/MsgSetPrimaryName", nil)
@@ -43,8 +43,8 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgCreateTLD{},
 		&MsgUpdateTLDConfig{},
 		&MsgUpdateParams{},
-		&MsgSetEpixNetPeer{},
-		&MsgRevokeEpixNetPeer{},
+		&MsgLinkIdentity{},
+		&MsgUnlinkIdentity{},
 		&MsgUpdateContentRoot{},
 		&MsgAttestStateDigest{},
 		&MsgSetPrimaryName{},

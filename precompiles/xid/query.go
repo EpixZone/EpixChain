@@ -193,9 +193,9 @@ func (p Precompile) GetRegistrationFee(
 	return method.Outputs.Pack(fee.Amount.BigInt())
 }
 
-// GetEpixNetPeers handles the getEpixNetPeers(name, tld) view function.
-// Returns arrays of peer addresses and labels.
-func (p Precompile) GetEpixNetPeers(
+// GetLinkedIdentities handles the getLinkedIdentities(name, tld) view function.
+// Returns arrays of identity addresses and labels.
+func (p Precompile) GetLinkedIdentities(
 	ctx sdk.Context,
 	method *abi.Method,
 	args []interface{},
@@ -213,19 +213,19 @@ func (p Precompile) GetEpixNetPeers(
 		return nil, fmt.Errorf("invalid argument type for tld: %T", args[1])
 	}
 
-	peers := p.xidKeeper.GetAllEpixNetPeers(ctx, tld, name)
+	identities := p.xidKeeper.GetAllLinkedIdentities(ctx, tld, name)
 
-	addresses := make([]string, len(peers))
-	labels := make([]string, len(peers))
-	addedAts := make([]uint64, len(peers))
-	actives := make([]bool, len(peers))
-	revokedAts := make([]uint64, len(peers))
-	for i, peer := range peers {
-		addresses[i] = peer.Address
-		labels[i] = peer.Label
-		addedAts[i] = peer.AddedAt
-		actives[i] = peer.Active
-		revokedAts[i] = peer.RevokedAt
+	addresses := make([]string, len(identities))
+	labels := make([]string, len(identities))
+	addedAts := make([]uint64, len(identities))
+	actives := make([]bool, len(identities))
+	revokedAts := make([]uint64, len(identities))
+	for i, identity := range identities {
+		addresses[i] = identity.Address
+		labels[i] = identity.Label
+		addedAts[i] = identity.AddedAt
+		actives[i] = identity.Active
+		revokedAts[i] = identity.RevokedAt
 	}
 
 	return method.Outputs.Pack(addresses, labels, addedAts, actives, revokedAts)
@@ -339,9 +339,9 @@ func (p Precompile) GetAttestations(
 	return method.Outputs.Pack(validators, signatures, heights, finalized)
 }
 
-// ReverseResolveByPeer handles the reverseResolveByPeer(peerAddress) view function.
-// Looks up the xID name associated with an EpixNet peer address.
-func (p Precompile) ReverseResolveByPeer(
+// ReverseResolveByIdentity handles the reverseResolveByIdentity(identityAddress) view function.
+// Looks up the xID name associated with a linked identity address.
+func (p Precompile) ReverseResolveByIdentity(
 	ctx sdk.Context,
 	method *abi.Method,
 	args []interface{},
@@ -350,12 +350,12 @@ func (p Precompile) ReverseResolveByPeer(
 		return nil, fmt.Errorf("expected 1 argument, got %d", len(args))
 	}
 
-	peerAddress, ok := args[0].(string)
+	identityAddress, ok := args[0].(string)
 	if !ok {
-		return nil, fmt.Errorf("invalid argument type for peerAddress: %T", args[0])
+		return nil, fmt.Errorf("invalid argument type for identityAddress: %T", args[0])
 	}
 
-	tld, name, found := p.xidKeeper.GetEpixNetPeerOwner(ctx, peerAddress)
+	tld, name, found := p.xidKeeper.GetLinkedIdentityOwner(ctx, identityAddress)
 	if !found {
 		return method.Outputs.Pack("", "", false)
 	}

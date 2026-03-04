@@ -10,16 +10,16 @@ import (
 	"github.com/cosmos/evm/x/xid/types"
 )
 
-// ComputePeerMerkleRoot computes a SHA-256 Merkle root from the active peers
-// of a given name. Returns an empty string if there are no active peers.
-// Peers are sorted lexicographically by address for determinism.
+// ComputePeerMerkleRoot computes a SHA-256 Merkle root from the active linked
+// identities of a given name. Returns an empty string if there are no active
+// identities. Identities are sorted lexicographically by address for determinism.
 func (k Keeper) ComputePeerMerkleRoot(ctx sdk.Context, tld, name string) string {
-	peers := k.GetAllEpixNetPeers(ctx, tld, name)
+	identities := k.GetAllLinkedIdentities(ctx, tld, name)
 
 	var addresses []string
-	for _, p := range peers {
-		if p.Active {
-			addresses = append(addresses, p.Address)
+	for _, id := range identities {
+		if id.Active {
+			addresses = append(addresses, id.Address)
 		}
 	}
 
@@ -51,7 +51,7 @@ func (k Keeper) ComputePeerMerkleRoot(ctx sdk.Context, tld, name string) string 
 		hashes = next
 	}
 
-	// Mix in the xID name as a domain separator so identical peer sets
+	// Mix in the xID name as a domain separator so identical identity sets
 	// under different names produce distinct roots.
 	domain := sha256.Sum256([]byte(name + "." + tld))
 	final := sha256.Sum256(append(domain[:], hashes[0]...))
@@ -60,7 +60,7 @@ func (k Keeper) ComputePeerMerkleRoot(ctx sdk.Context, tld, name string) string 
 }
 
 // RecomputeAndStoreContentRoot recomputes the Merkle root for a name's active
-// peers and stores it. Returns the new root string.
+// linked identities and stores it. Returns the new root string.
 func (k Keeper) RecomputeAndStoreContentRoot(ctx sdk.Context, tld, name string) string {
 	root := k.ComputePeerMerkleRoot(ctx, tld, name)
 	contentRoot := types.ContentRoot{

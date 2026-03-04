@@ -136,9 +136,9 @@ func (k Keeper) computeLeafHash(ctx sdk.Context, tld, name string) [32]byte {
 		entry.DNS = dns
 	}
 
-	peers := k.GetAllEpixNetPeers(ctx, tld, name)
-	if len(peers) > 0 {
-		entry.Peers = peers
+	identities := k.GetAllLinkedIdentities(ctx, tld, name)
+	if len(identities) > 0 {
+		entry.Identities = identities
 	}
 
 	if cr, found := k.GetContentRoot(ctx, tld, name); found && cr.Root != "" {

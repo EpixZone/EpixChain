@@ -444,7 +444,7 @@
       {
         "indexed": false,
         "internalType": "string",
-        "name": "peerAddress",
+        "name": "identityAddress",
         "type": "string"
       },
       {
@@ -454,7 +454,7 @@
         "type": "string"
       }
     ],
-    "name": "EpixNetPeerSet",
+    "name": "IdentityLinked",
     "type": "event"
   },
   {
@@ -475,11 +475,11 @@
       {
         "indexed": false,
         "internalType": "string",
-        "name": "peerAddress",
+        "name": "identityAddress",
         "type": "string"
       }
     ],
-    "name": "EpixNetPeerRevoked",
+    "name": "IdentityUnlinked",
     "type": "event"
   },
   {
@@ -496,7 +496,7 @@
       },
       {
         "internalType": "string",
-        "name": "peerAddress",
+        "name": "identityAddress",
         "type": "string"
       },
       {
@@ -505,7 +505,7 @@
         "type": "string"
       }
     ],
-    "name": "setEpixNetPeer",
+    "name": "linkIdentity",
     "outputs": [
       {
         "internalType": "bool",
@@ -530,11 +530,11 @@
       },
       {
         "internalType": "string",
-        "name": "peerAddress",
+        "name": "identityAddress",
         "type": "string"
       }
     ],
-    "name": "revokeEpixNetPeer",
+    "name": "unlinkIdentity",
     "outputs": [
       {
         "internalType": "bool",
@@ -558,7 +558,7 @@
         "type": "string"
       }
     ],
-    "name": "getEpixNetPeers",
+    "name": "getLinkedIdentities",
     "outputs": [
       {
         "internalType": "string[]",
@@ -819,11 +819,11 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "peerAddress",
+        "name": "identityAddress",
         "type": "string"
       }
     ],
-    "name": "reverseResolveByPeer",
+    "name": "reverseResolveByIdentity",
     "outputs": [
       {
         "internalType": "string",

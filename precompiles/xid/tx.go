@@ -267,8 +267,8 @@ func (p Precompile) DeleteDNSRecord(
 	return method.Outputs.Pack(true)
 }
 
-// SetEpixNetPeer handles the setEpixNetPeer(name, tld, peerAddress, label) function.
-func (p Precompile) SetEpixNetPeer(
+// LinkIdentity handles the linkIdentity(name, tld, identityAddress, label) function.
+func (p Precompile) LinkIdentity(
 	ctx sdk.Context,
 	contract *vm.Contract,
 	stateDB vm.StateDB,
@@ -287,9 +287,9 @@ func (p Precompile) SetEpixNetPeer(
 	if !ok {
 		return nil, fmt.Errorf("invalid argument type for tld: %T", args[1])
 	}
-	peerAddress, ok := args[2].(string)
+	identityAddress, ok := args[2].(string)
 	if !ok {
-		return nil, fmt.Errorf("invalid argument type for peerAddress: %T", args[2])
+		return nil, fmt.Errorf("invalid argument type for identityAddress: %T", args[2])
 	}
 	label, ok := args[3].(string)
 	if !ok {
@@ -309,18 +309,18 @@ func (p Precompile) SetEpixNetPeer(
 		return nil, fmt.Errorf("caller is not the owner of %s.%s", name, tld)
 	}
 
-	peer := types.EpixNetPeer{
-		Address: peerAddress,
+	identity := types.LinkedIdentity{
+		Address: identityAddress,
 		Label:   label,
 	}
-	if err := p.xidKeeper.SetEpixNetPeerEntry(ctx, tld, name, peer); err != nil {
+	if err := p.xidKeeper.SetLinkedIdentityEntry(ctx, tld, name, identity); err != nil {
 		return nil, err
 	}
 
 	newRoot := p.xidKeeper.RecomputeAndStoreContentRoot(ctx, tld, name)
 	p.xidKeeper.RecomputeAndStoreStateDigest(ctx)
 
-	if err := p.EmitEpixNetPeerSet(ctx, stateDB, name, tld, peerAddress, label); err != nil {
+	if err := p.EmitIdentityLinked(ctx, stateDB, name, tld, identityAddress, label); err != nil {
 		return nil, err
 	}
 	if err := p.EmitContentRootUpdated(ctx, stateDB, name, tld, newRoot); err != nil {
@@ -330,8 +330,8 @@ func (p Precompile) SetEpixNetPeer(
 	return method.Outputs.Pack(true)
 }
 
-// RevokeEpixNetPeer handles the revokeEpixNetPeer(name, tld, peerAddress) function.
-func (p Precompile) RevokeEpixNetPeer(
+// UnlinkIdentity handles the unlinkIdentity(name, tld, identityAddress) function.
+func (p Precompile) UnlinkIdentity(
 	ctx sdk.Context,
 	contract *vm.Contract,
 	stateDB vm.StateDB,
@@ -350,9 +350,9 @@ func (p Precompile) RevokeEpixNetPeer(
 	if !ok {
 		return nil, fmt.Errorf("invalid argument type for tld: %T", args[1])
 	}
-	peerAddress, ok := args[2].(string)
+	identityAddress, ok := args[2].(string)
 	if !ok {
-		return nil, fmt.Errorf("invalid argument type for peerAddress: %T", args[2])
+		return nil, fmt.Errorf("invalid argument type for identityAddress: %T", args[2])
 	}
 
 	caller := contract.Caller()
@@ -368,14 +368,14 @@ func (p Precompile) RevokeEpixNetPeer(
 		return nil, fmt.Errorf("caller is not the owner of %s.%s", name, tld)
 	}
 
-	if err := p.xidKeeper.RevokeEpixNetPeerEntry(ctx, tld, name, peerAddress); err != nil {
+	if err := p.xidKeeper.RevokeLinkedIdentityEntry(ctx, tld, name, identityAddress); err != nil {
 		return nil, err
 	}
 
 	newRoot := p.xidKeeper.RecomputeAndStoreContentRoot(ctx, tld, name)
 	p.xidKeeper.RecomputeAndStoreStateDigest(ctx)
 
-	if err := p.EmitEpixNetPeerRevoked(ctx, stateDB, name, tld, peerAddress); err != nil {
+	if err := p.EmitIdentityUnlinked(ctx, stateDB, name, tld, identityAddress); err != nil {
 		return nil, err
 	}
 	if err := p.EmitContentRootUpdated(ctx, stateDB, name, tld, newRoot); err != nil {
@@ -465,7 +465,7 @@ func (p Precompile) SetPrimaryName(
 	return method.Outputs.Pack(true)
 }
 
-// UpdateContentRoot is deprecated — content root is auto-computed from active peers.
+// UpdateContentRoot is deprecated — content root is auto-computed from active linked identities.
 func (p Precompile) UpdateContentRoot(
 	_ sdk.Context,
 	_ *vm.Contract,
@@ -473,5 +473,5 @@ func (p Precompile) UpdateContentRoot(
 	_ *abi.Method,
 	_ []interface{},
 ) ([]byte, error) {
-	return nil, fmt.Errorf("updateContentRoot is deprecated; content root is auto-computed from active peers")
+	return nil, fmt.Errorf("updateContentRoot is deprecated; content root is auto-computed from active linked identities")
 }

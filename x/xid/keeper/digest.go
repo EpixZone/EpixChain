@@ -18,7 +18,7 @@ type domainDigestEntry struct {
 	Owner       string              `json:"owner"`
 	Profile     *types.Profile      `json:"profile,omitempty"`
 	DNS         []types.DNSRecord   `json:"dns,omitempty"`
-	Peers       []types.EpixNetPeer `json:"peers,omitempty"`
+	Identities  []types.LinkedIdentity `json:"identities,omitempty"`
 	ContentRoot string              `json:"content_root,omitempty"`
 }
 
@@ -46,9 +46,9 @@ func (k Keeper) ComputeStateDigest(ctx sdk.Context) (string, uint64) {
 			entry.DNS = dns
 		}
 
-		peers := k.GetAllEpixNetPeers(ctx, record.Tld, record.Name)
-		if len(peers) > 0 {
-			entry.Peers = peers
+		identities := k.GetAllLinkedIdentities(ctx, record.Tld, record.Name)
+		if len(identities) > 0 {
+			entry.Identities = identities
 		}
 
 		if cr, found := k.GetContentRoot(ctx, record.Tld, record.Name); found && cr.Root != "" {

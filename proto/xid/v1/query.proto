@@ -56,9 +56,9 @@ service Query {
   rpc GetStats(QueryGetStatsRequest) returns (QueryGetStatsResponse) {
     option (google.api.http).get = "/xid/v1/stats";
   }
-  // GetEpixNetPeers returns all EpixNet peers for a name.
-  rpc GetEpixNetPeers(QueryGetEpixNetPeersRequest) returns (QueryGetEpixNetPeersResponse) {
-    option (google.api.http).get = "/xid/v1/epixnet/{tld}/{name}";
+  // GetLinkedIdentities returns all linked identities for a name.
+  rpc GetLinkedIdentities(QueryGetLinkedIdentitiesRequest) returns (QueryGetLinkedIdentitiesResponse) {
+    option (google.api.http).get = "/xid/v1/identities/{tld}/{name}";
   }
   // QueryStateDigest returns the current state digest of the xID module.
   rpc QueryStateDigest(QueryStateDigestRequest) returns (QueryStateDigestResponse) {
@@ -76,9 +76,9 @@ service Query {
   rpc ResolveWithProof(QueryResolveWithProofRequest) returns (QueryResolveWithProofResponse) {
     option (google.api.http).get = "/xid/v1/resolve_with_proof/{tld}/{name}";
   }
-  // ReverseResolveByPeer finds the xID name associated with an EpixNet peer address.
-  rpc ReverseResolveByPeer(QueryReverseResolveByPeerRequest) returns (QueryReverseResolveByPeerResponse) {
-    option (google.api.http).get = "/xid/v1/reverse_peer/{address}";
+  // ReverseResolveByIdentity finds the xID name associated with a linked identity address.
+  rpc ReverseResolveByIdentity(QueryReverseResolveByIdentityRequest) returns (QueryReverseResolveByIdentityResponse) {
+    option (google.api.http).get = "/xid/v1/reverse_identity/{address}";
   }
 }
 
@@ -185,13 +185,13 @@ message QueryGetStatsResponse {
   repeated TLDStats tld_stats = 3 [(gogoproto.nullable) = false];
 }
 
-message QueryGetEpixNetPeersRequest {
+message QueryGetLinkedIdentitiesRequest {
   string name = 1;
   string tld = 2;
 }
 
-message QueryGetEpixNetPeersResponse {
-  repeated EpixNetPeer peers = 1 [(gogoproto.nullable) = false];
+message QueryGetLinkedIdentitiesResponse {
+  repeated LinkedIdentity identities = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryStateDigestRequest is the request type for the Query/QueryStateDigest RPC method.
@@ -225,7 +225,7 @@ message DomainSnapshot {
   NameRecord record = 1;
   Profile profile = 2;
   repeated DNSRecord dns_records = 3;
-  repeated EpixNetPeer peers = 4;
+  repeated LinkedIdentity identities = 4;
   string content_root = 5;
 }
 
@@ -259,15 +259,15 @@ message QueryResolveWithProofResponse {
   uint64 height = 4;
 }
 
-// QueryReverseResolveByPeerRequest is the request type for the Query/ReverseResolveByPeer RPC method.
-message QueryReverseResolveByPeerRequest {
+// QueryReverseResolveByIdentityRequest is the request type for the Query/ReverseResolveByIdentity RPC method.
+message QueryReverseResolveByIdentityRequest {
   string address = 1;
 }
 
-// QueryReverseResolveByPeerResponse is the response type for the Query/ReverseResolveByPeer RPC method.
-message QueryReverseResolveByPeerResponse {
-  // name_record is the xID name associated with this peer address, if any.
+// QueryReverseResolveByIdentityResponse is the response type for the Query/ReverseResolveByIdentity RPC method.
+message QueryReverseResolveByIdentityResponse {
+  // name_record is the xID name associated with this identity address, if any.
   NameRecord name_record = 1;
-  // peer contains the peer entry details including active/revoked status.
-  EpixNetPeer peer = 2;
+  // identity contains the linked identity entry details including active/revoked status.
+  LinkedIdentity identity = 2;
 }

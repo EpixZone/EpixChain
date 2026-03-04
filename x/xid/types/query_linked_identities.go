@@ -13,33 +13,33 @@ var _ = fmt.Errorf
 var _ = math_bits.Len64
 
 // ---------------------------------------------------------------------------
-// QueryGetEpixNetPeersRequest
+// QueryGetLinkedIdentitiesRequest
 // ---------------------------------------------------------------------------
 
-type QueryGetEpixNetPeersRequest struct {
+type QueryGetLinkedIdentitiesRequest struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Tld  string `protobuf:"bytes,2,opt,name=tld,proto3" json:"tld,omitempty"`
 }
 
-func (m *QueryGetEpixNetPeersRequest) Reset()         { *m = QueryGetEpixNetPeersRequest{} }
-func (m *QueryGetEpixNetPeersRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryGetEpixNetPeersRequest) ProtoMessage()    {}
+func (m *QueryGetLinkedIdentitiesRequest) Reset()         { *m = QueryGetLinkedIdentitiesRequest{} }
+func (m *QueryGetLinkedIdentitiesRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryGetLinkedIdentitiesRequest) ProtoMessage()    {}
 
-func (m *QueryGetEpixNetPeersRequest) GetName() string {
+func (m *QueryGetLinkedIdentitiesRequest) GetName() string {
 	if m != nil {
 		return m.Name
 	}
 	return ""
 }
 
-func (m *QueryGetEpixNetPeersRequest) GetTld() string {
+func (m *QueryGetLinkedIdentitiesRequest) GetTld() string {
 	if m != nil {
 		return m.Tld
 	}
 	return ""
 }
 
-func (m *QueryGetEpixNetPeersRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryGetLinkedIdentitiesRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -49,18 +49,18 @@ func (m *QueryGetEpixNetPeersRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryGetEpixNetPeersRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryGetLinkedIdentitiesRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryGetEpixNetPeersRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryGetLinkedIdentitiesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	// field 2: tld (string)
 	if len(m.Tld) > 0 {
 		i -= len(m.Tld)
 		copy(dAtA[i:], m.Tld)
-		i = encodeVarintEpixNetPeers(dAtA, i, uint64(len(m.Tld)))
+		i = encodeVarintLinkedIdentities(dAtA, i, uint64(len(m.Tld)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -68,27 +68,27 @@ func (m *QueryGetEpixNetPeersRequest) MarshalToSizedBuffer(dAtA []byte) (int, er
 	if len(m.Name) > 0 {
 		i -= len(m.Name)
 		copy(dAtA[i:], m.Name)
-		i = encodeVarintEpixNetPeers(dAtA, i, uint64(len(m.Name)))
+		i = encodeVarintLinkedIdentities(dAtA, i, uint64(len(m.Name)))
 		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryGetEpixNetPeersRequest) Size() (n int) {
+func (m *QueryGetLinkedIdentitiesRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	if len(m.Name) > 0 {
-		n += 1 + len(m.Name) + sovEpixNetPeers(uint64(len(m.Name)))
+		n += 1 + len(m.Name) + sovLinkedIdentities(uint64(len(m.Name)))
 	}
 	if len(m.Tld) > 0 {
-		n += 1 + len(m.Tld) + sovEpixNetPeers(uint64(len(m.Tld)))
+		n += 1 + len(m.Tld) + sovLinkedIdentities(uint64(len(m.Tld)))
 	}
 	return n
 }
 
-func (m *QueryGetEpixNetPeersRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryGetLinkedIdentitiesRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -154,7 +154,7 @@ func (m *QueryGetEpixNetPeersRequest) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
-			skippy, err := skipEpixNetPeers(dAtA[iNdEx:])
+			skippy, err := skipLinkedIdentities(dAtA[iNdEx:])
 			if err != nil {
 				return err
 			}
@@ -174,25 +174,25 @@ func (m *QueryGetEpixNetPeersRequest) Unmarshal(dAtA []byte) error {
 }
 
 // ---------------------------------------------------------------------------
-// QueryGetEpixNetPeersResponse
+// QueryGetLinkedIdentitiesResponse
 // ---------------------------------------------------------------------------
 
-type QueryGetEpixNetPeersResponse struct {
-	Peers []EpixNetPeer `protobuf:"bytes,1,rep,name=peers,proto3" json:"peers"`
+type QueryGetLinkedIdentitiesResponse struct {
+	Identities []LinkedIdentity `protobuf:"bytes,1,rep,name=identities,proto3" json:"identities"`
 }
 
-func (m *QueryGetEpixNetPeersResponse) Reset()         { *m = QueryGetEpixNetPeersResponse{} }
-func (m *QueryGetEpixNetPeersResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryGetEpixNetPeersResponse) ProtoMessage()    {}
+func (m *QueryGetLinkedIdentitiesResponse) Reset()         { *m = QueryGetLinkedIdentitiesResponse{} }
+func (m *QueryGetLinkedIdentitiesResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryGetLinkedIdentitiesResponse) ProtoMessage()    {}
 
-func (m *QueryGetEpixNetPeersResponse) GetPeers() []EpixNetPeer {
+func (m *QueryGetLinkedIdentitiesResponse) GetIdentities() []LinkedIdentity {
 	if m != nil {
-		return m.Peers
+		return m.Identities
 	}
 	return nil
 }
 
-func (m *QueryGetEpixNetPeersResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryGetLinkedIdentitiesResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -202,23 +202,23 @@ func (m *QueryGetEpixNetPeersResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryGetEpixNetPeersResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryGetLinkedIdentitiesResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryGetEpixNetPeersResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryGetLinkedIdentitiesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
-	// field 1: peers (repeated message)
-	if len(m.Peers) > 0 {
-		for iNdEx := len(m.Peers) - 1; iNdEx >= 0; iNdEx-- {
+	// field 1: identities (repeated message)
+	if len(m.Identities) > 0 {
+		for iNdEx := len(m.Identities) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.Peers[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.Identities[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
 				i -= size
-				i = encodeVarintEpixNetPeers(dAtA, i, uint64(size))
+				i = encodeVarintLinkedIdentities(dAtA, i, uint64(size))
 			}
 			i--
 			dAtA[i] = 0xa
@@ -227,20 +227,20 @@ func (m *QueryGetEpixNetPeersResponse) MarshalToSizedBuffer(dAtA []byte) (int, e
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryGetEpixNetPeersResponse) Size() (n int) {
+func (m *QueryGetLinkedIdentitiesResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
-	if len(m.Peers) > 0 {
-		for _, e := range m.Peers {
+	if len(m.Identities) > 0 {
+		for _, e := range m.Identities {
 			l := e.Size()
-			n += 1 + l + sovEpixNetPeers(uint64(l))
+			n += 1 + l + sovLinkedIdentities(uint64(l))
 		}
 	}
 	return n
 }
 
-func (m *QueryGetEpixNetPeersResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryGetLinkedIdentitiesResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -260,9 +260,9 @@ func (m *QueryGetEpixNetPeersResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		switch fieldNum {
-		case 1: // peers
+		case 1: // identities
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Peers", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Identities", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -283,14 +283,14 @@ func (m *QueryGetEpixNetPeersResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Peers = append(m.Peers, EpixNetPeer{})
-			if err := m.Peers[len(m.Peers)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.Identities = append(m.Identities, LinkedIdentity{})
+			if err := m.Identities[len(m.Identities)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
-			skippy, err := skipEpixNetPeers(dAtA[iNdEx:])
+			skippy, err := skipLinkedIdentities(dAtA[iNdEx:])
 			if err != nil {
 				return err
 			}
@@ -313,8 +313,8 @@ func (m *QueryGetEpixNetPeersResponse) Unmarshal(dAtA []byte) error {
 // Helper functions
 // ---------------------------------------------------------------------------
 
-func encodeVarintEpixNetPeers(dAtA []byte, offset int, v uint64) int {
-	offset -= sovEpixNetPeers(v)
+func encodeVarintLinkedIdentities(dAtA []byte, offset int, v uint64) int {
+	offset -= sovLinkedIdentities(v)
 	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
@@ -325,11 +325,11 @@ func encodeVarintEpixNetPeers(dAtA []byte, offset int, v uint64) int {
 	return base
 }
 
-func sovEpixNetPeers(x uint64) (n int) {
+func sovLinkedIdentities(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
 
-func skipEpixNetPeers(dAtA []byte) (n int, err error) {
+func skipLinkedIdentities(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
 	depth := 0
@@ -400,6 +400,6 @@ func skipEpixNetPeers(dAtA []byte) (n int, err error) {
 }
 
 func init() {
-	proto.RegisterType((*QueryGetEpixNetPeersRequest)(nil), "xid.v1.QueryGetEpixNetPeersRequest")
-	proto.RegisterType((*QueryGetEpixNetPeersResponse)(nil), "xid.v1.QueryGetEpixNetPeersResponse")
+	proto.RegisterType((*QueryGetLinkedIdentitiesRequest)(nil), "xid.v1.QueryGetLinkedIdentitiesRequest")
+	proto.RegisterType((*QueryGetLinkedIdentitiesResponse)(nil), "xid.v1.QueryGetLinkedIdentitiesResponse")
 }

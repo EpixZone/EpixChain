@@ -214,8 +214,8 @@ func (k Keeper) GetRegistrationFee(goCtx context.Context, req *types.QueryGetReg
 	return &types.QueryGetRegistrationFeeResponse{Fee: fee.Amount}, nil
 }
 
-// GetEpixNetPeers returns all EpixNet peers for a name
-func (k Keeper) GetEpixNetPeers(goCtx context.Context, req *types.QueryGetEpixNetPeersRequest) (*types.QueryGetEpixNetPeersResponse, error) {
+// GetLinkedIdentities returns all linked identities for a name
+func (k Keeper) GetLinkedIdentities(goCtx context.Context, req *types.QueryGetLinkedIdentitiesRequest) (*types.QueryGetLinkedIdentitiesResponse, error) {
 	if req == nil {
 		return nil, errorsmod.Wrap(types.ErrInvalidName, "empty request")
 	}
@@ -227,8 +227,8 @@ func (k Keeper) GetEpixNetPeers(goCtx context.Context, req *types.QueryGetEpixNe
 		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", req.Name, req.Tld)
 	}
 
-	peers := k.GetAllEpixNetPeers(ctx, req.Tld, req.Name)
-	return &types.QueryGetEpixNetPeersResponse{Peers: peers}, nil
+	identities := k.GetAllLinkedIdentities(ctx, req.Tld, req.Name)
+	return &types.QueryGetLinkedIdentitiesResponse{Identities: identities}, nil
 }
 
 // QueryStateDigest returns the current xID state digest
@@ -309,9 +309,9 @@ func (k Keeper) QueryStateSnapshot(goCtx context.Context, req *types.QueryStateS
 			snap.DnsRecords = dns
 		}
 
-		peers := k.GetAllEpixNetPeers(ctx, record.Tld, record.Name)
-		if len(peers) > 0 {
-			snap.Peers = peers
+		identities := k.GetAllLinkedIdentities(ctx, record.Tld, record.Name)
+		if len(identities) > 0 {
+			snap.Identities = identities
 		}
 
 		if cr, found := k.GetContentRoot(ctx, record.Tld, record.Name); found && cr.Root != "" {
@@ -359,9 +359,9 @@ func (k Keeper) ResolveWithProof(goCtx context.Context, req *types.QueryResolveW
 		snap.DnsRecords = dns
 	}
 
-	peers := k.GetAllEpixNetPeers(ctx, req.Tld, req.Name)
-	if len(peers) > 0 {
-		snap.Peers = peers
+	identities := k.GetAllLinkedIdentities(ctx, req.Tld, req.Name)
+	if len(identities) > 0 {
+		snap.Identities = identities
 	}
 
 	if cr, found := k.GetContentRoot(ctx, req.Tld, req.Name); found && cr.Root != "" {
@@ -390,30 +390,30 @@ func (k Keeper) ResolveWithProof(goCtx context.Context, req *types.QueryResolveW
 	}, nil
 }
 
-// ReverseResolveByPeer finds the xID name associated with an EpixNet peer address
-func (k Keeper) ReverseResolveByPeer(goCtx context.Context, req *types.QueryReverseResolveByPeerRequest) (*types.QueryReverseResolveByPeerResponse, error) {
+// ReverseResolveByIdentity finds the xID name associated with a linked identity address
+func (k Keeper) ReverseResolveByIdentity(goCtx context.Context, req *types.QueryReverseResolveByIdentityRequest) (*types.QueryReverseResolveByIdentityResponse, error) {
 	if req == nil {
 		return nil, errorsmod.Wrap(types.ErrInvalidName, "empty request")
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	tld, name, found := k.GetEpixNetPeerOwner(ctx, req.Address)
+	tld, name, found := k.GetLinkedIdentityOwner(ctx, req.Address)
 	if !found {
-		return &types.QueryReverseResolveByPeerResponse{}, nil
+		return &types.QueryReverseResolveByIdentityResponse{}, nil
 	}
 
 	record, recordFound := k.GetNameRecord(ctx, tld, name)
 	if !recordFound {
-		return &types.QueryReverseResolveByPeerResponse{}, nil
+		return &types.QueryReverseResolveByIdentityResponse{}, nil
 	}
 
-	peer, peerFound := k.GetEpixNetPeerEntry(ctx, tld, name, req.Address)
-	if !peerFound {
-		return &types.QueryReverseResolveByPeerResponse{NameRecord: &record}, nil
+	identity, identityFound := k.GetLinkedIdentityEntry(ctx, tld, name, req.Address)
+	if !identityFound {
+		return &types.QueryReverseResolveByIdentityResponse{NameRecord: &record}, nil
 	}
 
-	return &types.QueryReverseResolveByPeerResponse{NameRecord: &record, Peer: &peer}, nil
+	return &types.QueryReverseResolveByIdentityResponse{NameRecord: &record, Identity: &identity}, nil
 }
 
 // GetStats returns xID module statistics

@@ -538,10 +538,10 @@ func (m *DomainSnapshot) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2a
 	}
 	// field 4: peers (repeated message)
-	if len(m.Peers) > 0 {
-		for iNdEx := len(m.Peers) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.Identities) > 0 {
+		for iNdEx := len(m.Identities) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.Peers[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.Identities[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -610,8 +610,8 @@ func (m *DomainSnapshot) Size() (n int) {
 			n += 1 + l + sovQuery(uint64(l))
 		}
 	}
-	if len(m.Peers) > 0 {
-		for _, e := range m.Peers {
+	if len(m.Identities) > 0 {
+		for _, e := range m.Identities {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}

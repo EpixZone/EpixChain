@@ -204,8 +204,8 @@ func (k Keeper) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) 
 	return &types.MsgUpdateParamsResponse{}, nil
 }
 
-// SetEpixNetPeer handles MsgSetEpixNetPeer
-func (k Keeper) SetEpixNetPeer(goCtx context.Context, msg *types.MsgSetEpixNetPeer) (*types.MsgSetEpixNetPeerResponse, error) {
+// LinkIdentity handles MsgLinkIdentity
+func (k Keeper) LinkIdentity(goCtx context.Context, msg *types.MsgLinkIdentity) (*types.MsgLinkIdentityResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Verify name exists and caller is owner
@@ -217,7 +217,7 @@ func (k Keeper) SetEpixNetPeer(goCtx context.Context, msg *types.MsgSetEpixNetPe
 		return nil, errorsmod.Wrapf(types.ErrNotOwner, "sender %s is not the owner", msg.Owner)
 	}
 
-	if err := k.SetEpixNetPeerEntry(ctx, msg.Tld, msg.Name, msg.Peer); err != nil {
+	if err := k.SetLinkedIdentityEntry(ctx, msg.Tld, msg.Name, msg.Identity); err != nil {
 		return nil, err
 	}
 
@@ -226,10 +226,10 @@ func (k Keeper) SetEpixNetPeer(goCtx context.Context, msg *types.MsgSetEpixNetPe
 
 	events := sdk.Events{
 		sdk.NewEvent(
-			"xid_epixnet_peer_set",
+			"xid_identity_linked",
 			sdk.NewAttribute("name", msg.Name+"."+msg.Tld),
-			sdk.NewAttribute("address", msg.Peer.Address),
-			sdk.NewAttribute("label", msg.Peer.Label),
+			sdk.NewAttribute("address", msg.Identity.Address),
+			sdk.NewAttribute("label", msg.Identity.Label),
 		),
 		sdk.NewEvent(
 			"xid_content_root_updated",
@@ -239,16 +239,16 @@ func (k Keeper) SetEpixNetPeer(goCtx context.Context, msg *types.MsgSetEpixNetPe
 	}
 	ctx.EventManager().EmitEvents(events)
 
-	return &types.MsgSetEpixNetPeerResponse{}, nil
+	return &types.MsgLinkIdentityResponse{}, nil
 }
 
-// UpdateContentRoot is deprecated — content root is now auto-computed from active peers.
+// UpdateContentRoot is deprecated — content root is now auto-computed from active identities.
 func (k Keeper) UpdateContentRoot(_ context.Context, _ *types.MsgUpdateContentRoot) (*types.MsgUpdateContentRootResponse, error) {
-	return nil, errorsmod.Wrap(types.ErrInvalidContentRoot, "content root is auto-computed from active peers; manual updates are no longer supported")
+	return nil, errorsmod.Wrap(types.ErrInvalidContentRoot, "content root is auto-computed from active identities; manual updates are no longer supported")
 }
 
-// RevokeEpixNetPeer handles MsgRevokeEpixNetPeer
-func (k Keeper) RevokeEpixNetPeer(goCtx context.Context, msg *types.MsgRevokeEpixNetPeer) (*types.MsgRevokeEpixNetPeerResponse, error) {
+// UnlinkIdentity handles MsgUnlinkIdentity
+func (k Keeper) UnlinkIdentity(goCtx context.Context, msg *types.MsgUnlinkIdentity) (*types.MsgUnlinkIdentityResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Verify name exists and caller is owner
@@ -260,16 +260,16 @@ func (k Keeper) RevokeEpixNetPeer(goCtx context.Context, msg *types.MsgRevokeEpi
 		return nil, errorsmod.Wrapf(types.ErrNotOwner, "sender %s is not the owner", msg.Owner)
 	}
 
-	// Verify the peer exists and is currently active
-	peer, found := k.GetEpixNetPeerEntry(ctx, msg.Tld, msg.Name, msg.Address)
+	// Verify the linked identity exists and is currently active
+	identity, found := k.GetLinkedIdentityEntry(ctx, msg.Tld, msg.Name, msg.Address)
 	if !found {
-		return nil, errorsmod.Wrapf(types.ErrEpixNetPeerNotFound, "peer %s not found for %s.%s", msg.Address, msg.Name, msg.Tld)
+		return nil, errorsmod.Wrapf(types.ErrIdentityNotFound, "identity %s not found for %s.%s", msg.Address, msg.Name, msg.Tld)
 	}
-	if !peer.Active {
-		return nil, errorsmod.Wrapf(types.ErrEpixNetPeerNotFound, "peer %s is already revoked for %s.%s", msg.Address, msg.Name, msg.Tld)
+	if !identity.Active {
+		return nil, errorsmod.Wrapf(types.ErrIdentityNotFound, "identity %s is already unlinked for %s.%s", msg.Address, msg.Name, msg.Tld)
 	}
 
-	if err := k.RevokeEpixNetPeerEntry(ctx, msg.Tld, msg.Name, msg.Address); err != nil {
+	if err := k.RevokeLinkedIdentityEntry(ctx, msg.Tld, msg.Name, msg.Address); err != nil {
 		return nil, err
 	}
 
@@ -278,7 +278,7 @@ func (k Keeper) RevokeEpixNetPeer(goCtx context.Context, msg *types.MsgRevokeEpi
 
 	events := sdk.Events{
 		sdk.NewEvent(
-			"xid_epixnet_peer_revoked",
+			"xid_identity_unlinked",
 			sdk.NewAttribute("name", msg.Name+"."+msg.Tld),
 			sdk.NewAttribute("address", msg.Address),
 		),
@@ -290,7 +290,7 @@ func (k Keeper) RevokeEpixNetPeer(goCtx context.Context, msg *types.MsgRevokeEpi
 	}
 	ctx.EventManager().EmitEvents(events)
 
-	return &types.MsgRevokeEpixNetPeerResponse{}, nil
+	return &types.MsgUnlinkIdentityResponse{}, nil
 }
 
 // SetPrimaryName handles MsgSetPrimaryName

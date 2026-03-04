@@ -382,115 +382,115 @@ func (k Keeper) GetAllDNSRecords(ctx sdk.Context, tld, name string) []types.DNSR
 }
 
 // ---------------------------------------------------------------------------
-// EpixNet Peers
+// Linked Identities
 // ---------------------------------------------------------------------------
 
-// peerReverseEntry is the value stored in the peer address reverse index.
-type peerReverseEntry struct {
+// identityReverseEntry is the value stored in the identity address reverse index.
+type identityReverseEntry struct {
 	Tld  string `json:"tld"`
 	Name string `json:"name"`
 }
 
-// SetEpixNetPeerEntry stores an EpixNet peer for a name.
-// Returns ErrEpixNetPeerAlreadyLinked if the peer address is linked to a different xID.
-func (k Keeper) SetEpixNetPeerEntry(ctx sdk.Context, tld, name string, peer types.EpixNetPeer) error {
+// SetLinkedIdentityEntry stores a linked identity for a name.
+// Returns ErrIdentityAlreadyLinked if the identity address is linked to a different xID.
+func (k Keeper) SetLinkedIdentityEntry(ctx sdk.Context, tld, name string, identity types.LinkedIdentity) error {
 	store := ctx.KVStore(k.storeKey)
 
-	// Check the reverse index: is this peer address already linked to another name?
-	revKey := types.EpixNetPeerReverseKey(peer.Address)
+	// Check the reverse index: is this identity address already linked to another name?
+	revKey := types.LinkedIdentityReverseKey(identity.Address)
 	if bz := store.Get(revKey); bz != nil {
-		var existing peerReverseEntry
+		var existing identityReverseEntry
 		if err := json.Unmarshal(bz, &existing); err == nil {
 			// Allow re-adding to the same name (label update), reject if linked elsewhere
 			if existing.Tld != tld || existing.Name != name {
-				return types.ErrEpixNetPeerAlreadyLinked.Wrapf(
-					"address %s is already linked to %s.%s", peer.Address, existing.Name, existing.Tld,
+				return types.ErrIdentityAlreadyLinked.Wrapf(
+					"address %s is already linked to %s.%s", identity.Address, existing.Name, existing.Tld,
 				)
 			}
 		}
 	}
 
-	peer.AddedAt = uint64(ctx.BlockHeight())
-	peer.Active = true
-	peer.RevokedAt = 0
-	bz, _ := json.Marshal(peer)
-	store.Set(types.EpixNetPeerKey(tld, name, peer.Address), bz)
+	identity.AddedAt = uint64(ctx.BlockHeight())
+	identity.Active = true
+	identity.RevokedAt = 0
+	bz, _ := json.Marshal(identity)
+	store.Set(types.LinkedIdentityKey(tld, name, identity.Address), bz)
 
 	// Write the reverse index
-	revBz, _ := json.Marshal(peerReverseEntry{Tld: tld, Name: name})
+	revBz, _ := json.Marshal(identityReverseEntry{Tld: tld, Name: name})
 	store.Set(revKey, revBz)
 
 	return nil
 }
 
-// GetEpixNetPeerEntry retrieves a specific EpixNet peer by address
-func (k Keeper) GetEpixNetPeerEntry(ctx sdk.Context, tld, name, address string) (types.EpixNetPeer, bool) {
+// GetLinkedIdentityEntry retrieves a specific linked identity by address
+func (k Keeper) GetLinkedIdentityEntry(ctx sdk.Context, tld, name, address string) (types.LinkedIdentity, bool) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.EpixNetPeerKey(tld, name, address))
+	bz := store.Get(types.LinkedIdentityKey(tld, name, address))
 	if bz == nil {
-		return types.EpixNetPeer{}, false
+		return types.LinkedIdentity{}, false
 	}
 
-	var peer types.EpixNetPeer
-	if err := json.Unmarshal(bz, &peer); err != nil {
-		return types.EpixNetPeer{}, false
+	var identity types.LinkedIdentity
+	if err := json.Unmarshal(bz, &identity); err != nil {
+		return types.LinkedIdentity{}, false
 	}
-	return peer, true
+	return identity, true
 }
 
-// RevokeEpixNetPeerEntry marks a peer as revoked (inactive) without removing it from the store.
+// RevokeLinkedIdentityEntry marks a linked identity as revoked (inactive) without removing it from the store.
 // The reverse index is preserved so the address cannot be re-used on a different xID.
-func (k Keeper) RevokeEpixNetPeerEntry(ctx sdk.Context, tld, name, address string) error {
+func (k Keeper) RevokeLinkedIdentityEntry(ctx sdk.Context, tld, name, address string) error {
 	store := ctx.KVStore(k.storeKey)
-	key := types.EpixNetPeerKey(tld, name, address)
+	key := types.LinkedIdentityKey(tld, name, address)
 	bz := store.Get(key)
 	if bz == nil {
-		return types.ErrEpixNetPeerNotFound.Wrapf("peer %s not found for %s.%s", address, name, tld)
+		return types.ErrIdentityNotFound.Wrapf("identity %s not found for %s.%s", address, name, tld)
 	}
 
-	var peer types.EpixNetPeer
-	if err := json.Unmarshal(bz, &peer); err != nil {
+	var identity types.LinkedIdentity
+	if err := json.Unmarshal(bz, &identity); err != nil {
 		return err
 	}
 
-	peer.Active = false
-	peer.RevokedAt = uint64(ctx.BlockHeight())
+	identity.Active = false
+	identity.RevokedAt = uint64(ctx.BlockHeight())
 
-	updated, _ := json.Marshal(peer)
+	updated, _ := json.Marshal(identity)
 	store.Set(key, updated)
 	return nil
 }
 
-// GetEpixNetPeerOwner returns the tld and name that a peer address is linked to.
-func (k Keeper) GetEpixNetPeerOwner(ctx sdk.Context, address string) (tld, name string, found bool) {
+// GetLinkedIdentityOwner returns the tld and name that an identity address is linked to.
+func (k Keeper) GetLinkedIdentityOwner(ctx sdk.Context, address string) (tld, name string, found bool) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.EpixNetPeerReverseKey(address))
+	bz := store.Get(types.LinkedIdentityReverseKey(address))
 	if bz == nil {
 		return "", "", false
 	}
-	var entry peerReverseEntry
+	var entry identityReverseEntry
 	if err := json.Unmarshal(bz, &entry); err != nil {
 		return "", "", false
 	}
 	return entry.Tld, entry.Name, true
 }
 
-// GetAllEpixNetPeers returns all EpixNet peers for a name
-func (k Keeper) GetAllEpixNetPeers(ctx sdk.Context, tld, name string) []types.EpixNetPeer {
+// GetAllLinkedIdentities returns all linked identities for a name
+func (k Keeper) GetAllLinkedIdentities(ctx sdk.Context, tld, name string) []types.LinkedIdentity {
 	store := ctx.KVStore(k.storeKey)
-	pfx := types.EpixNetPeerPrefix(tld, name)
+	pfx := types.LinkedIdentityPrefix(tld, name)
 	iterator := storetypes.KVStorePrefixIterator(store, pfx)
 	defer iterator.Close()
 
-	var peers []types.EpixNetPeer
+	var identities []types.LinkedIdentity
 	for ; iterator.Valid(); iterator.Next() {
-		var peer types.EpixNetPeer
-		if err := json.Unmarshal(iterator.Value(), &peer); err != nil {
+		var identity types.LinkedIdentity
+		if err := json.Unmarshal(iterator.Value(), &identity); err != nil {
 			continue
 		}
-		peers = append(peers, peer)
+		identities = append(identities, identity)
 	}
-	return peers
+	return identities
 }
 
 // ---------------------------------------------------------------------------

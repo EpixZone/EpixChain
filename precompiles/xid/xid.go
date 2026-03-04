@@ -28,8 +28,8 @@ const (
 	SetDNSRecordMethod    = "setDNSRecord"
 	DeleteDNSRecordMethod = "deleteDNSRecord"
 
-	SetEpixNetPeerMethod    = "setEpixNetPeer"
-	RevokeEpixNetPeerMethod = "revokeEpixNetPeer"
+	LinkIdentityMethod   = "linkIdentity"
+	UnlinkIdentityMethod = "unlinkIdentity"
 
 	SetPrimaryNameMethod = "setPrimaryName"
 
@@ -39,14 +39,14 @@ const (
 	GetProfileMethod         = "getProfile"
 	GetDNSRecordMethod       = "getDNSRecord"
 	GetRegistrationFeeMethod = "getRegistrationFee"
-	GetEpixNetPeersMethod           = "getEpixNetPeers"
+	GetLinkedIdentitiesMethod        = "getLinkedIdentities"
 	GetContentRootMethod            = "getContentRoot"
 	ReverseResolveBech32Method      = "reverseResolveBech32"
 	GetStateDigestMethod            = "getStateDigest"
 	GetAttestationsMethod           = "getAttestations"
 	AttestStateDigestMethod         = "attestStateDigest"
 	GetPrimaryNameMethod            = "getPrimaryName"
-	ReverseResolveByPeerMethod      = "reverseResolveByPeer"
+	ReverseResolveByIdentityMethod  = "reverseResolveByIdentity"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}
@@ -135,10 +135,10 @@ func (p Precompile) Execute(ctx sdk.Context, stateDB vm.StateDB, contract *vm.Co
 		bz, err = p.SetDNSRecord(ctx, contract, stateDB, method, args)
 	case DeleteDNSRecordMethod:
 		bz, err = p.DeleteDNSRecord(ctx, contract, stateDB, method, args)
-	case SetEpixNetPeerMethod:
-		bz, err = p.SetEpixNetPeer(ctx, contract, stateDB, method, args)
-	case RevokeEpixNetPeerMethod:
-		bz, err = p.RevokeEpixNetPeer(ctx, contract, stateDB, method, args)
+	case LinkIdentityMethod:
+		bz, err = p.LinkIdentity(ctx, contract, stateDB, method, args)
+	case UnlinkIdentityMethod:
+		bz, err = p.UnlinkIdentity(ctx, contract, stateDB, method, args)
 	case AttestStateDigestMethod:
 		bz, err = p.AttestStateDigest(ctx, contract, stateDB, method, args)
 	case SetPrimaryNameMethod:
@@ -155,8 +155,8 @@ func (p Precompile) Execute(ctx sdk.Context, stateDB vm.StateDB, contract *vm.Co
 		bz, err = p.GetDNSRecord(ctx, method, args)
 	case GetRegistrationFeeMethod:
 		bz, err = p.GetRegistrationFee(ctx, method, args)
-	case GetEpixNetPeersMethod:
-		bz, err = p.GetEpixNetPeers(ctx, method, args)
+	case GetLinkedIdentitiesMethod:
+		bz, err = p.GetLinkedIdentities(ctx, method, args)
 	case GetContentRootMethod:
 		bz, err = p.GetContentRoot(ctx, method, args)
 	case ReverseResolveBech32Method:
@@ -167,8 +167,8 @@ func (p Precompile) Execute(ctx sdk.Context, stateDB vm.StateDB, contract *vm.Co
 		bz, err = p.GetAttestations(ctx, method, args)
 	case GetPrimaryNameMethod:
 		bz, err = p.GetPrimaryName(ctx, method, args)
-	case ReverseResolveByPeerMethod:
-		bz, err = p.ReverseResolveByPeer(ctx, method, args)
+	case ReverseResolveByIdentityMethod:
+		bz, err = p.ReverseResolveByIdentity(ctx, method, args)
 	default:
 		return nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
 	}
@@ -179,7 +179,7 @@ func (p Precompile) Execute(ctx sdk.Context, stateDB vm.StateDB, contract *vm.Co
 // IsTransaction checks if the given method is a state-changing transaction
 func (Precompile) IsTransaction(method *abi.Method) bool {
 	switch method.Name {
-	case RegisterMethod, TransferNameMethod, UpdateProfileMethod, SetDNSRecordMethod, DeleteDNSRecordMethod, SetEpixNetPeerMethod, RevokeEpixNetPeerMethod, AttestStateDigestMethod, SetPrimaryNameMethod:
+	case RegisterMethod, TransferNameMethod, UpdateProfileMethod, SetDNSRecordMethod, DeleteDNSRecordMethod, LinkIdentityMethod, UnlinkIdentityMethod, AttestStateDigestMethod, SetPrimaryNameMethod:
 		return true
 	default:
 		return false

@@ -17,8 +17,8 @@ const (
 	EventProfileUpdated   = "ProfileUpdated"
 	EventDNSRecordSet        = "DNSRecordSet"
 	EventDNSRecordDeleted    = "DNSRecordDeleted"
-	EventEpixNetPeerSet      = "EpixNetPeerSet"
-	EventEpixNetPeerRevoked  = "EpixNetPeerRevoked"
+	EventIdentityLinked      = "IdentityLinked"
+	EventIdentityUnlinked    = "IdentityUnlinked"
 	EventContentRootUpdated  = "ContentRootUpdated"
 	EventPrimaryNameSet      = "PrimaryNameSet"
 )
@@ -191,19 +191,19 @@ func (p Precompile) EmitDNSRecordDeleted(
 	return nil
 }
 
-// EmitEpixNetPeerSet emits an EpixNetPeerSet event to the EVM state DB.
-func (p Precompile) EmitEpixNetPeerSet(
+// EmitIdentityLinked emits an IdentityLinked event to the EVM state DB.
+func (p Precompile) EmitIdentityLinked(
 	ctx sdk.Context,
 	stateDB vm.StateDB,
-	name, tld, peerAddress, label string,
+	name, tld, identityAddress, label string,
 ) error {
-	event := p.Events[EventEpixNetPeerSet]
+	event := p.Events[EventIdentityLinked]
 
 	topics := make([]common.Hash, 1)
 	topics[0] = event.ID
 
 	arguments := event.Inputs.NonIndexed()
-	packed, err := arguments.Pack(name, tld, peerAddress, label)
+	packed, err := arguments.Pack(name, tld, identityAddress, label)
 	if err != nil {
 		return err
 	}
@@ -218,19 +218,19 @@ func (p Precompile) EmitEpixNetPeerSet(
 	return nil
 }
 
-// EmitEpixNetPeerRevoked emits an EpixNetPeerRevoked event to the EVM state DB.
-func (p Precompile) EmitEpixNetPeerRevoked(
+// EmitIdentityUnlinked emits an IdentityUnlinked event to the EVM state DB.
+func (p Precompile) EmitIdentityUnlinked(
 	ctx sdk.Context,
 	stateDB vm.StateDB,
-	name, tld, peerAddress string,
+	name, tld, identityAddress string,
 ) error {
-	event := p.Events[EventEpixNetPeerRevoked]
+	event := p.Events[EventIdentityUnlinked]
 
 	topics := make([]common.Hash, 1)
 	topics[0] = event.ID
 
 	arguments := event.Inputs.NonIndexed()
-	packed, err := arguments.Pack(name, tld, peerAddress)
+	packed, err := arguments.Pack(name, tld, identityAddress)
 	if err != nil {
 		return err
 	}
