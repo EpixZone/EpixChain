@@ -86,6 +86,8 @@ message LinkedIdentity {
   bool active = 4;
   // revoked_at is the block height when this identity was revoked (0 if active)
   uint64 revoked_at = 5;
+  // revoked_at_time is the unix timestamp (seconds) when this identity was revoked (0 if active)
+  int64 revoked_at_time = 6;
 }
 
 // StateDigest represents a deterministic hash of all xID state.

@@ -584,6 +584,11 @@
         "internalType": "uint64[]",
         "name": "revokedAts",
         "type": "uint64[]"
+      },
+      {
+        "internalType": "int64[]",
+        "name": "revokedAtTimes",
+        "type": "int64[]"
       }
     ],
     "stateMutability": "view",

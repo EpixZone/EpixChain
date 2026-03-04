@@ -228,11 +228,12 @@ func (m *ContentRoot) Unmarshal(dAtA []byte) error {
 
 // LinkedIdentity represents a linked identity address attached to a name
 type LinkedIdentity struct {
-	Address   string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
-	Label     string `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
-	AddedAt   uint64 `protobuf:"varint,3,opt,name=added_at,json=addedAt,proto3" json:"added_at,omitempty"`
-	Active    bool   `protobuf:"varint,4,opt,name=active,proto3" json:"active,omitempty"`
-	RevokedAt uint64 `protobuf:"varint,5,opt,name=revoked_at,json=revokedAt,proto3" json:"revoked_at,omitempty"`
+	Address       string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	Label         string `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
+	AddedAt       uint64 `protobuf:"varint,3,opt,name=added_at,json=addedAt,proto3" json:"added_at,omitempty"`
+	Active        bool   `protobuf:"varint,4,opt,name=active,proto3" json:"active,omitempty"`
+	RevokedAt     uint64 `protobuf:"varint,5,opt,name=revoked_at,json=revokedAt,proto3" json:"revoked_at,omitempty"`
+	RevokedAtTime int64  `protobuf:"varint,6,opt,name=revoked_at_time,json=revokedAtTime,proto3" json:"revoked_at_time,omitempty"`
 }
 
 func (m *LinkedIdentity) Reset()         { *m = LinkedIdentity{} }
@@ -303,6 +304,13 @@ func (m *LinkedIdentity) GetRevokedAt() uint64 {
 	return 0
 }
 
+func (m *LinkedIdentity) GetRevokedAtTime() int64 {
+	if m != nil {
+		return m.RevokedAtTime
+	}
+	return 0
+}
+
 func (m *LinkedIdentity) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -320,6 +328,12 @@ func (m *LinkedIdentity) MarshalTo(dAtA []byte) (int, error) {
 
 func (m *LinkedIdentity) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
+	// field 6: revoked_at_time (int64, varint)
+	if m.RevokedAtTime != 0 {
+		i = encodeVarintTypes(dAtA, i, uint64(m.RevokedAtTime))
+		i--
+		dAtA[i] = 0x30
+	}
 	// field 5: revoked_at (uint64, varint)
 	if m.RevokedAt != 0 {
 		i = encodeVarintTypes(dAtA, i, m.RevokedAt)
@@ -376,6 +390,9 @@ func (m *LinkedIdentity) Size() (n int) {
 	}
 	if m.RevokedAt != 0 {
 		n += 1 + sovTypes(m.RevokedAt)
+	}
+	if m.RevokedAtTime != 0 {
+		n += 1 + sovTypes(uint64(m.RevokedAtTime))
 	}
 	return n
 }
@@ -489,6 +506,22 @@ func (m *LinkedIdentity) Unmarshal(dAtA []byte) error {
 				b := dAtA[iNdEx]
 				iNdEx++
 				m.RevokedAt |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6: // revoked_at_time
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RevokedAtTime", wireType)
+			}
+			m.RevokedAtTime = 0
+			for shift := uint(0); ; shift += 7 {
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.RevokedAtTime |= int64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

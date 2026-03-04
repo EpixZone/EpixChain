@@ -455,6 +455,7 @@ func (k Keeper) RevokeLinkedIdentityEntry(ctx sdk.Context, tld, name, address st
 
 	identity.Active = false
 	identity.RevokedAt = uint64(ctx.BlockHeight())
+	identity.RevokedAtTime = ctx.BlockTime().Unix()
 
 	updated, _ := json.Marshal(identity)
 	store.Set(key, updated)

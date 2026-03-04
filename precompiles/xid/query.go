@@ -220,15 +220,17 @@ func (p Precompile) GetLinkedIdentities(
 	addedAts := make([]uint64, len(identities))
 	actives := make([]bool, len(identities))
 	revokedAts := make([]uint64, len(identities))
+	revokedAtTimes := make([]int64, len(identities))
 	for i, identity := range identities {
 		addresses[i] = identity.Address
 		labels[i] = identity.Label
 		addedAts[i] = identity.AddedAt
 		actives[i] = identity.Active
 		revokedAts[i] = identity.RevokedAt
+		revokedAtTimes[i] = identity.RevokedAtTime
 	}
 
-	return method.Outputs.Pack(addresses, labels, addedAts, actives, revokedAts)
+	return method.Outputs.Pack(addresses, labels, addedAts, actives, revokedAts, revokedAtTimes)
 }
 
 // GetContentRoot handles the getContentRoot(name, tld) view function.
