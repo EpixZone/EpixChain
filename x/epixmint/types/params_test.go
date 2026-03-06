@@ -87,13 +87,14 @@ func TestParamsValidate(t *testing.T) {
 		{
 			name: "valid custom params",
 			params: types.Params{
-				MintDenom:               "uepix",
-				InitialAnnualMintAmount: math.NewInt(1000000),
-				AnnualReductionRate:     math.LegacyMustNewDecFromStr("0.25"),
-				BlockTimeSeconds:        5, // 5 second blocks
-				MaxSupply:               math.NewInt(100000000),
-				CommunityPoolRate:       math.LegacyMustNewDecFromStr("0.02"),
-				StakingRewardsRate:      math.LegacyMustNewDecFromStr("0.98"),
+				MintDenom:                  "uepix",
+				InitialAnnualMintAmount:    math.NewInt(1000000),
+				AnnualReductionRate:        math.LegacyMustNewDecFromStr("0.25"),
+				BlockTimeSeconds:           5, // 5 second blocks
+				MaxSupply:                  math.NewInt(100000000),
+				CommunityPoolRate:          math.LegacyMustNewDecFromStr("0.02"),
+				StakingRewardsRate:         math.LegacyMustNewDecFromStr("0.98"),
+				MinValidatorSelfDelegation: math.NewInt(1000000),
 			},
 			expError: false,
 		},
