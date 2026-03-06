@@ -81,15 +81,17 @@ func (k Keeper) MintCoins(ctx context.Context) error {
 func (k Keeper) distributeMintedTokens(ctx context.Context, mintedCoins sdk.Coins, params types.Params) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	// Calculate distribution amounts
+	// Calculate distribution amounts using both configured rates
 	totalAmount := mintedCoins[0].Amount
 	communityPoolAmount := params.CommunityPoolRate.MulInt(totalAmount).TruncateInt()
 	stakingRewardsAmount := params.StakingRewardsRate.MulInt(totalAmount).TruncateInt()
 
-	// Ensure we don't exceed the total minted amount due to rounding
+	// Assign any truncation remainder to staking rewards to avoid rounding loss
 	distributedAmount := communityPoolAmount.Add(stakingRewardsAmount)
-	if distributedAmount.GT(totalAmount) {
-		// Adjust staking rewards to ensure total doesn't exceed minted amount
+	if distributedAmount.LT(totalAmount) {
+		stakingRewardsAmount = stakingRewardsAmount.Add(totalAmount.Sub(distributedAmount))
+	} else if distributedAmount.GT(totalAmount) {
+		// Adjust staking rewards down if rounding caused over-distribution
 		stakingRewardsAmount = totalAmount.Sub(communityPoolAmount)
 	}
 
