@@ -9,6 +9,7 @@ import (
 	cmn "github.com/cosmos/evm/precompiles/common"
 	erc20Keeper "github.com/cosmos/evm/x/erc20/keeper"
 	transferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
+	vrfkeeper "github.com/cosmos/evm/x/vrf/keeper"
 	xidkeeper "github.com/cosmos/evm/x/xid/keeper"
 	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
 
@@ -76,6 +77,7 @@ func DefaultStaticPrecompiles(
 	slashingKeeper slashingkeeper.Keeper,
 	codec codec.Codec,
 	xidKeeper xidkeeper.Keeper,
+	vrfKeeper vrfkeeper.Keeper,
 	opts ...Option,
 ) map[common.Address]vm.PrecompiledContract {
 	precompiles := NewStaticPrecompiles().
@@ -89,7 +91,8 @@ func DefaultStaticPrecompiles(
 		WithBankPrecompile(bankKeeper, erc20Keeper).
 		WithGovPrecompile(govKeeper, bankKeeper, codec, opts...).
 		WithSlashingPrecompile(slashingKeeper, bankKeeper, opts...).
-		WithXIDPrecompile(xidKeeper, bankKeeper)
+		WithXIDPrecompile(xidKeeper, bankKeeper).
+		WithVRFPrecompile(vrfKeeper)
 
 	return map[common.Address]vm.PrecompiledContract(precompiles)
 }

@@ -1,0 +1,12 @@
+syntax = "proto3";
+package vrf.v1;
+
+option go_package = "github.com/cosmos/evm/x/vrf/types";
+
+import "vrf/v1/vrf.proto";
+
+// GenesisState defines the VRF module's genesis state.
+message GenesisState {
+  Params params = 1;
+  repeated RandomBeacon beacons = 2;
+}

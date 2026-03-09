@@ -18,9 +18,11 @@ import (
 	"github.com/cosmos/evm/precompiles/p256"
 	slashingprecompile "github.com/cosmos/evm/precompiles/slashing"
 	stakingprecompile "github.com/cosmos/evm/precompiles/staking"
+	vrfprecompile "github.com/cosmos/evm/precompiles/vrf"
 	xidprecompile "github.com/cosmos/evm/precompiles/xid"
 	erc20Keeper "github.com/cosmos/evm/x/erc20/keeper"
 	transferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
+	vrfkeeper "github.com/cosmos/evm/x/vrf/keeper"
 	xidkeeper "github.com/cosmos/evm/x/xid/keeper"
 	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
 
@@ -193,5 +195,13 @@ func (s StaticPrecompiles) WithXIDPrecompile(
 ) StaticPrecompiles {
 	xidPc := xidprecompile.NewPrecompile(xidKeeper, bankKeeper)
 	s[xidPc.Address()] = xidPc
+	return s
+}
+
+func (s StaticPrecompiles) WithVRFPrecompile(
+	vrfKeeper vrfkeeper.Keeper,
+) StaticPrecompiles {
+	vrfPc := vrfprecompile.NewPrecompile(vrfKeeper)
+	s[vrfPc.Address()] = vrfPc
 	return s
 }

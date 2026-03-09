@@ -52,6 +52,9 @@ import (
 	"github.com/cosmos/evm/x/topholders"
 	topholderskeeper "github.com/cosmos/evm/x/topholders/keeper"
 	topholderstypes "github.com/cosmos/evm/x/topholders/types"
+	"github.com/cosmos/evm/x/vrf"
+	vrfkeeper "github.com/cosmos/evm/x/vrf/keeper"
+	vrftypes "github.com/cosmos/evm/x/vrf/types"
 	"github.com/cosmos/evm/x/xid"
 	xidkeeper "github.com/cosmos/evm/x/xid/keeper"
 	xidtypes "github.com/cosmos/evm/x/xid/types"
@@ -205,6 +208,7 @@ type EVMD struct {
 	TopHoldersKeeper  topholderskeeper.Keeper // Optional: only initialized if enabled in config
 	topHoldersEnabled bool                    // Track if TopHolders module is enabled
 	XIDKeeper         xidkeeper.Keeper
+	VRFKeeper         vrfkeeper.Keeper
 	EVMMempool        *evmmempool.ExperimentalEVMMempool
 
 	// the module manager
@@ -262,6 +266,7 @@ func NewExampleApp(
 		// Cosmos EVM store keys
 		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey, precisebanktypes.StoreKey, epixminttypes.StoreKey,
 		xidtypes.StoreKey,
+		vrftypes.StoreKey,
 	}
 
 	// Conditionally add TopHolders store key if enabled AND this is a fresh node
@@ -534,6 +539,13 @@ func NewExampleApp(
 		app.StakingKeeper,
 	)
 
+	// Set up VRF keeper (must be before EVM keeper for precompile registration)
+	app.VRFKeeper = vrfkeeper.NewKeeper(
+		appCodec,
+		keys[vrftypes.StoreKey],
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
 	// Set up EVM keeper
 	tracer := cast.ToString(appOpts.Get(srvflags.EVMTracer))
 
@@ -568,6 +580,7 @@ func NewExampleApp(
 			app.SlashingKeeper,
 			appCodec,
 			app.XIDKeeper,
+			app.VRFKeeper,
 		),
 	)
 
@@ -680,6 +693,7 @@ func NewExampleApp(
 		precisebank.NewAppModule(app.PreciseBankKeeper, app.BankKeeper, app.AccountKeeper),
 		epixmint.NewAppModule(app.EpixMintKeeper),
 		xid.NewAppModule(app.XIDKeeper),
+		vrf.NewAppModule(app.VRFKeeper),
 	}
 
 	// Conditionally add TopHolders module if enabled
@@ -758,6 +772,7 @@ func NewExampleApp(
 		precisebanktypes.ModuleName,
 		vestingtypes.ModuleName,
 		xidtypes.ModuleName,
+		vrftypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderBeginBlockers(beginBlockers...)
@@ -792,6 +807,7 @@ func NewExampleApp(
 		precisebanktypes.ModuleName,
 		vestingtypes.ModuleName,
 		xidtypes.ModuleName,
+		vrftypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(endBlockers...)
@@ -814,6 +830,7 @@ func NewExampleApp(
 		erc20types.ModuleName,
 		precisebanktypes.ModuleName,
 		xidtypes.ModuleName,
+		vrftypes.ModuleName,
 	}
 
 	// Conditionally add TopHolders module to genesis order if enabled

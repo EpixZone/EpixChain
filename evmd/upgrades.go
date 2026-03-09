@@ -16,6 +16,7 @@ import (
 
 	"github.com/cosmos/evm/config"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	vrftypes "github.com/cosmos/evm/x/vrf/types"
 	xidtypes "github.com/cosmos/evm/x/xid/types"
 )
 
@@ -128,28 +129,32 @@ func (app EVMD) RegisterUpgradeHandlers() {
 		},
 	)
 
-	// Register v0.5.5 upgrade handler - xID Identity System
+	// Register v0.5.5 upgrade handler - xID Identity System + VRF Randomness Beacon
 	app.UpgradeKeeper.SetUpgradeHandler(
 		UpgradeName_v0_5_5,
 		func(ctx context.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 			sdkCtx := sdk.UnwrapSDKContext(ctx)
-			sdkCtx.Logger().Info("Starting EpixChain v0.5.5 upgrade - xID Identity System...")
+			sdkCtx.Logger().Info("Starting EpixChain v0.5.5 upgrade - xID Identity System + VRF Randomness Beacon...")
 			sdkCtx.Logger().Info("This upgrade introduces the xID on-chain identity and DNS module")
+			sdkCtx.Logger().Info("This upgrade introduces the VRF on-chain verifiable randomness module")
 
-			// Add the xID precompile to the active static precompiles list
+			// Add the xID and VRF precompiles to the active static precompiles list
 			evmParams := app.EVMKeeper.GetParams(sdkCtx)
 			evmParams.ActiveStaticPrecompiles = append(
 				evmParams.ActiveStaticPrecompiles,
 				evmtypes.XIDPrecompileAddress,
+				evmtypes.VRFPrecompileAddress,
 			)
 			if err := app.EVMKeeper.SetParams(sdkCtx, evmParams); err != nil {
-				return nil, fmt.Errorf("failed to set EVM params with xID precompile: %w", err)
+				return nil, fmt.Errorf("failed to set EVM params with xID and VRF precompiles: %w", err)
 			}
 			sdkCtx.Logger().Info("Enabled xID precompile at " + evmtypes.XIDPrecompileAddress)
+			sdkCtx.Logger().Info("Enabled VRF precompile at " + evmtypes.VRFPrecompileAddress)
 
-			// RunMigrations will call InitGenesis for the new xid module
-			// (since it has no prior version in the version map), which creates
-			// the default .epix TLD with length-based pricing.
+			// RunMigrations will call InitGenesis for both new modules
+			// (since they have no prior version in the version map):
+			// - xid: creates the default .epix TLD with length-based pricing
+			// - vrf: sets default params (Enabled=true, LookbackBlocks=256)
 			return app.ModuleManager.RunMigrations(ctx, app.Configurator(), fromVM)
 		},
 	)
@@ -171,11 +176,11 @@ func (app EVMD) RegisterUpgradeHandlers() {
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
 	}
 
-	// Handle v0.5.5 upgrade - adds xID module store key
+	// Handle v0.5.5 upgrade - adds xID and VRF module store keys
 	if upgradeInfo.Name == UpgradeName_v0_5_5 &&
 		!app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 		storeUpgrades := storetypes.StoreUpgrades{
-			Added: []string{xidtypes.StoreKey},
+			Added: []string{xidtypes.StoreKey, vrftypes.StoreKey},
 		}
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
 	}
