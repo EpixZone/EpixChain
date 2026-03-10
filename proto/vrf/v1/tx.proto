@@ -3,12 +3,15 @@ package vrf.v1;
 
 option go_package = "github.com/cosmos/evm/x/vrf/types";
 
+import "gogoproto/gogo.proto";
 import "cosmos/msg/v1/msg.proto";
 import "amino/amino.proto";
 import "vrf/v1/vrf.proto";
 
 // Msg defines the VRF Msg service.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
+
   // UpdateParams updates the module parameters (governance only).
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
@@ -19,7 +22,7 @@ message MsgUpdateParams {
   option (amino.name) = "cosmos/evm/x/vrf/MsgUpdateParams";
 
   string authority = 1;
-  Params params = 2;
+  Params params = 2 [(gogoproto.nullable) = false];
 }
 
 message MsgUpdateParamsResponse {}
