@@ -152,7 +152,9 @@ func (k Keeper) TransferNameRecord(ctx sdk.Context, currentOwner, newOwner sdk.A
 	k.SetOwnerIndex(ctx, newOwner, tld, name)
 
 	// Update owner counts
-	k.DecrementOwnerCount(ctx, currentOwner)
+	if err := k.DecrementOwnerCount(ctx, currentOwner); err != nil {
+		k.Logger(ctx).Error("owner count underflow during transfer", "owner", currentOwner, "error", err)
+	}
 	k.IncrementOwnerCount(ctx, newOwner)
 
 	// If this was the old owner's primary name, clear it

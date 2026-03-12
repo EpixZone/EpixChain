@@ -44,7 +44,6 @@ func (k Keeper) HasNameRecord(ctx sdk.Context, tld, name string) bool {
 	return store.Has(types.NameRecordKey(tld, name))
 }
 
-
 // IterateNameRecords iterates over all name records
 func (k Keeper) IterateNameRecords(ctx sdk.Context, cb func(record types.NameRecord) bool) {
 	store := ctx.KVStore(k.storeKey)
@@ -159,11 +158,14 @@ func (k Keeper) IncrementOwnerCount(ctx sdk.Context, owner sdk.AccAddress) {
 }
 
 // DecrementOwnerCount atomically decrements the owner's name count by 1.
-func (k Keeper) DecrementOwnerCount(ctx sdk.Context, owner sdk.AccAddress) {
+// Returns an error if the count is already zero, indicating a state inconsistency.
+func (k Keeper) DecrementOwnerCount(ctx sdk.Context, owner sdk.AccAddress) error {
 	count := k.GetOwnerCount(ctx, owner)
-	if count > 0 {
-		k.SetOwnerCount(ctx, owner, count-1)
+	if count == 0 {
+		return types.ErrOwnerCountUnderflow.Wrapf("owner %s count is already 0", owner)
 	}
+	k.SetOwnerCount(ctx, owner, count-1)
+	return nil
 }
 
 // ---------------------------------------------------------------------------
