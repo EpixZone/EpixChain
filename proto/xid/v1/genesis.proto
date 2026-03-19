@@ -4,7 +4,6 @@ package xid.v1;
 option go_package = "github.com/cosmos/evm/x/xid/types";
 
 import "gogoproto/gogo.proto";
-import "cosmos_proto/cosmos.proto";
 import "xid/v1/xid.proto";
 
 // GenesisState defines the xid module's genesis state.
