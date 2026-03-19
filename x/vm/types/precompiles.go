@@ -14,6 +14,8 @@ const (
 	GovPrecompileAddress          = "0x0000000000000000000000000000000000000805"
 	SlashingPrecompileAddress     = "0x0000000000000000000000000000000000000806"
 	ICS02PrecompileAddress        = "0x0000000000000000000000000000000000000807"
+	XIDPrecompileAddress          = "0x0000000000000000000000000000000000000900"
+	VRFPrecompileAddress          = "0x0000000000000000000000000000000000000901"
 )
 
 // AvailableStaticPrecompiles defines the full list of all available EVM extension addresses.
@@ -31,4 +33,6 @@ var AvailableStaticPrecompiles = []string{
 	GovPrecompileAddress,
 	SlashingPrecompileAddress,
 	ICS02PrecompileAddress,
+	XIDPrecompileAddress,
+	VRFPrecompileAddress,
 }

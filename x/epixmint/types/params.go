@@ -63,6 +63,16 @@ func (p Params) Validate() error {
 	if err := validateMinValidatorSelfDelegation(p.MinValidatorSelfDelegation); err != nil {
 		return err
 	}
+
+	// Validate that distribution rates sum to exactly 1.0
+	totalRate := p.CommunityPoolRate.Add(p.StakingRewardsRate)
+	if !totalRate.Equal(math.LegacyOneDec()) {
+		return fmt.Errorf(
+			"community pool rate (%s) + staking rewards rate (%s) must equal 1.0, got %s",
+			p.CommunityPoolRate, p.StakingRewardsRate, totalRate,
+		)
+	}
+
 	return nil
 }
 

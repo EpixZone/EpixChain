@@ -1,0 +1,273 @@
+syntax = "proto3";
+package xid.v1;
+
+option go_package = "github.com/cosmos/evm/x/xid/types";
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "xid/v1/xid.proto";
+import "xid/v1/genesis.proto";
+
+// Query defines the xid module's gRPC query service.
+service Query {
+  // ResolveName resolves a name.tld to an owner address.
+  rpc ResolveName(QueryResolveNameRequest) returns (QueryResolveNameResponse) {
+    option (google.api.http).get = "/xid/v1/resolve/{tld}/{name}";
+  }
+  // ReverseResolve finds the primary name for an address.
+  rpc ReverseResolve(QueryReverseResolveRequest) returns (QueryReverseResolveResponse) {
+    option (google.api.http).get = "/xid/v1/reverse/{address}";
+  }
+  // GetProfile returns the profile for a name.
+  rpc GetProfile(QueryGetProfileRequest) returns (QueryGetProfileResponse) {
+    option (google.api.http).get = "/xid/v1/profile/{tld}/{name}";
+  }
+  // GetDNSRecords returns all DNS records for a name.
+  rpc GetDNSRecords(QueryGetDNSRecordsRequest) returns (QueryGetDNSRecordsResponse) {
+    option (google.api.http).get = "/xid/v1/dns/{tld}/{name}";
+  }
+  // GetTLD returns the configuration for a TLD.
+  rpc GetTLD(QueryGetTLDRequest) returns (QueryGetTLDResponse) {
+    option (google.api.http).get = "/xid/v1/tld/{tld}";
+  }
+  // ListTLDs returns all registered TLDs.
+  rpc ListTLDs(QueryListTLDsRequest) returns (QueryListTLDsResponse) {
+    option (google.api.http).get = "/xid/v1/tlds";
+  }
+  // GetNamesByOwner returns all names owned by an address.
+  rpc GetNamesByOwner(QueryGetNamesByOwnerRequest) returns (QueryGetNamesByOwnerResponse) {
+    option (google.api.http).get = "/xid/v1/names/{owner}";
+  }
+  // Params returns the module parameters.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/xid/v1/params";
+  }
+  // GetRegistrationFee returns the registration fee for a given name and TLD.
+  rpc GetRegistrationFee(QueryGetRegistrationFeeRequest) returns (QueryGetRegistrationFeeResponse) {
+    option (google.api.http).get = "/xid/v1/fee/{tld}/{name}";
+  }
+  // ListAllNames returns all registered names with pagination.
+  rpc ListAllNames(QueryListAllNamesRequest) returns (QueryListAllNamesResponse) {
+    option (google.api.http).get = "/xid/v1/allnames";
+  }
+  // GetStats returns xID module statistics.
+  rpc GetStats(QueryGetStatsRequest) returns (QueryGetStatsResponse) {
+    option (google.api.http).get = "/xid/v1/stats";
+  }
+  // GetLinkedIdentities returns all linked identities for a name.
+  rpc GetLinkedIdentities(QueryGetLinkedIdentitiesRequest) returns (QueryGetLinkedIdentitiesResponse) {
+    option (google.api.http).get = "/xid/v1/identities/{tld}/{name}";
+  }
+  // QueryStateDigest returns the current state digest of the xID module.
+  rpc QueryStateDigest(QueryStateDigestRequest) returns (QueryStateDigestResponse) {
+    option (google.api.http).get = "/xid/v1/state_digest";
+  }
+  // QueryAttestations returns validator attestations for a given digest.
+  rpc QueryAttestations(QueryAttestationsRequest) returns (QueryAttestationsResponse) {
+    option (google.api.http).get = "/xid/v1/attestations";
+  }
+  // QueryStateSnapshot returns a paginated snapshot of all domain state.
+  rpc QueryStateSnapshot(QueryStateSnapshotRequest) returns (QueryStateSnapshotResponse) {
+    option (google.api.http).get = "/xid/v1/state_snapshot";
+  }
+  // ResolveWithProof resolves a name and returns a Merkle proof of inclusion.
+  rpc ResolveWithProof(QueryResolveWithProofRequest) returns (QueryResolveWithProofResponse) {
+    option (google.api.http).get = "/xid/v1/resolve_with_proof/{tld}/{name}";
+  }
+  // ReverseResolveByIdentity finds the xID name associated with a linked identity address.
+  rpc ReverseResolveByIdentity(QueryReverseResolveByIdentityRequest) returns (QueryReverseResolveByIdentityResponse) {
+    option (google.api.http).get = "/xid/v1/reverse_identity/{address}";
+  }
+}
+
+message QueryResolveNameRequest {
+  string name = 1;
+  string tld = 2;
+}
+
+message QueryResolveNameResponse {
+  NameRecord record = 1;
+}
+
+message QueryReverseResolveRequest {
+  string address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+message QueryReverseResolveResponse {
+  // primary_name is the first name found for this address
+  NameRecord primary_name = 1;
+}
+
+message QueryGetProfileRequest {
+  string name = 1;
+  string tld = 2;
+}
+
+message QueryGetProfileResponse {
+  Profile profile = 1;
+}
+
+message QueryGetDNSRecordsRequest {
+  string name = 1;
+  string tld = 2;
+}
+
+message QueryGetDNSRecordsResponse {
+  repeated DNSRecord records = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryGetTLDRequest {
+  string tld = 1;
+}
+
+message QueryGetTLDResponse {
+  TLDConfig tld_config = 1;
+}
+
+message QueryListTLDsRequest {}
+
+message QueryListTLDsResponse {
+  repeated TLDConfig tlds = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryGetNamesByOwnerRequest {
+  string owner = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+message QueryGetNamesByOwnerResponse {
+  repeated NameRecord names = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryParamsRequest {}
+
+message QueryParamsResponse {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryGetRegistrationFeeRequest {
+  string name = 1;
+  string tld = 2;
+}
+
+message QueryGetRegistrationFeeResponse {
+  string fee = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message QueryListAllNamesRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryListAllNamesResponse {
+  repeated NameRecord names = 1 [(gogoproto.nullable) = false];
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message TLDStats {
+  string tld = 1;
+  uint64 name_count = 2;
+  string fees_burned = 3;
+  bool enabled = 4;
+}
+
+message QueryGetStatsRequest {}
+
+message QueryGetStatsResponse {
+  uint64 total_names = 1;
+  string total_fees_burned = 2;
+  repeated TLDStats tld_stats = 3 [(gogoproto.nullable) = false];
+}
+
+message QueryGetLinkedIdentitiesRequest {
+  string name = 1;
+  string tld = 2;
+}
+
+message QueryGetLinkedIdentitiesResponse {
+  repeated LinkedIdentity identities = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryStateDigestRequest is the request type for the Query/QueryStateDigest RPC method.
+message QueryStateDigestRequest {}
+
+// QueryStateDigestResponse is the response type for the Query/QueryStateDigest RPC method.
+message QueryStateDigestResponse {
+  string digest = 1;
+  uint64 height = 2;
+  uint64 num_names = 3;
+}
+
+// QueryAttestationsRequest is the request type for the Query/QueryAttestations RPC method.
+message QueryAttestationsRequest {
+  string digest = 1;
+}
+
+// QueryAttestationsResponse is the response type for the Query/QueryAttestations RPC method.
+message QueryAttestationsResponse {
+  repeated Attestation attestations = 1;
+  bool finalized = 2;
+}
+
+// QueryStateSnapshotRequest is the request type for the Query/QueryStateSnapshot RPC method.
+message QueryStateSnapshotRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// DomainSnapshot contains the full state of a single domain.
+message DomainSnapshot {
+  NameRecord record = 1;
+  Profile profile = 2;
+  repeated DNSRecord dns_records = 3;
+  repeated LinkedIdentity identities = 4;
+  string content_root = 5;
+}
+
+// QueryStateSnapshotResponse is the response type for the Query/QueryStateSnapshot RPC method.
+message QueryStateSnapshotResponse {
+  repeated DomainSnapshot domains = 1;
+  string digest = 2;
+  uint64 height = 3;
+  cosmos.base.query.v1beta1.PageResponse pagination = 4;
+}
+
+// MerkleProof contains a Merkle inclusion proof for a single leaf.
+message MerkleProof {
+  uint32 leaf_index = 1;
+  string leaf_hash = 2;
+  repeated string siblings = 3;
+  string root = 4;
+}
+
+// QueryResolveWithProofRequest is the request type for the Query/ResolveWithProof RPC method.
+message QueryResolveWithProofRequest {
+  string tld = 1;
+  string name = 2;
+}
+
+// QueryResolveWithProofResponse is the response type for the Query/ResolveWithProof RPC method.
+message QueryResolveWithProofResponse {
+  DomainSnapshot domain = 1;
+  MerkleProof proof = 2;
+  string root = 3;
+  uint64 height = 4;
+}
+
+// QueryReverseResolveByIdentityRequest is the request type for the Query/ReverseResolveByIdentity RPC method.
+message QueryReverseResolveByIdentityRequest {
+  string address = 1;
+}
+
+// QueryReverseResolveByIdentityResponse is the response type for the Query/ReverseResolveByIdentity RPC method.
+message QueryReverseResolveByIdentityResponse {
+  // name_record is the xID name associated with this identity address, if any.
+  NameRecord name_record = 1;
+  // identity contains the linked identity entry details including active/revoked status.
+  LinkedIdentity identity = 2;
+}

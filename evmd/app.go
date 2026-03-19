@@ -51,6 +51,12 @@ import (
 	"github.com/cosmos/evm/x/topholders"
 	topholderskeeper "github.com/cosmos/evm/x/topholders/keeper"
 	topholderstypes "github.com/cosmos/evm/x/topholders/types"
+	"github.com/cosmos/evm/x/vrf"
+	vrfkeeper "github.com/cosmos/evm/x/vrf/keeper"
+	vrftypes "github.com/cosmos/evm/x/vrf/types"
+	"github.com/cosmos/evm/x/xid"
+	xidkeeper "github.com/cosmos/evm/x/xid/keeper"
+	xidtypes "github.com/cosmos/evm/x/xid/types"
 	"github.com/cosmos/evm/x/vm"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
@@ -200,6 +206,8 @@ type EVMD struct {
 	EpixMintKeeper    epixmintkeeper.Keeper
 	TopHoldersKeeper  topholderskeeper.Keeper // Optional: only initialized if enabled in config
 	topHoldersEnabled bool                    // Track if TopHolders module is enabled
+	XIDKeeper         xidkeeper.Keeper
+	VRFKeeper         vrfkeeper.Keeper
 	EVMMempool        *evmmempool.ExperimentalEVMMempool
 
 	// the module manager
@@ -256,6 +264,8 @@ func NewExampleApp(
 		ibcexported.StoreKey, ibctransfertypes.StoreKey,
 		// Cosmos EVM store keys
 		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey, precisebanktypes.StoreKey, epixminttypes.StoreKey,
+		xidtypes.StoreKey,
+		vrftypes.StoreKey,
 	}
 	
 	keys := storetypes.NewKVStoreKeys(storeKeys...)
@@ -494,6 +504,23 @@ func NewExampleApp(
 		)
 	}
 
+	// Set up xID keeper (must be before EVM keeper for precompile registration)
+	app.XIDKeeper = xidkeeper.NewKeeper(
+		appCodec,
+		keys[xidtypes.StoreKey],
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		app.PreciseBankKeeper,
+		app.AccountKeeper,
+		app.StakingKeeper,
+	)
+
+	// Set up VRF keeper (must be before EVM keeper for precompile registration)
+	app.VRFKeeper = vrfkeeper.NewKeeper(
+		appCodec,
+		keys[vrftypes.StoreKey],
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
 	// Set up EVM keeper
 	tracer := cast.ToString(appOpts.Get(srvflags.EVMTracer))
 
@@ -527,6 +554,8 @@ func NewExampleApp(
 			app.GovKeeper,
 			app.SlashingKeeper,
 			appCodec,
+			app.XIDKeeper,
+			app.VRFKeeper,
 		),
 	)
 
@@ -638,6 +667,8 @@ func NewExampleApp(
 		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
 		precisebank.NewAppModule(app.PreciseBankKeeper, app.BankKeeper, app.AccountKeeper),
 		epixmint.NewAppModule(app.EpixMintKeeper),
+		xid.NewAppModule(app.XIDKeeper),
+		vrf.NewAppModule(app.VRFKeeper),
 	}
 
 	// Conditionally add TopHolders module if enabled
@@ -715,6 +746,8 @@ func NewExampleApp(
 		consensusparamtypes.ModuleName,
 		precisebanktypes.ModuleName,
 		vestingtypes.ModuleName,
+		xidtypes.ModuleName,
+		vrftypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderBeginBlockers(beginBlockers...)
@@ -748,6 +781,8 @@ func NewExampleApp(
 		feegrant.ModuleName, upgradetypes.ModuleName, consensusparamtypes.ModuleName,
 		precisebanktypes.ModuleName,
 		vestingtypes.ModuleName,
+		xidtypes.ModuleName,
+		vrftypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(endBlockers...)
@@ -769,6 +804,8 @@ func NewExampleApp(
 		feemarkettypes.ModuleName,
 		erc20types.ModuleName,
 		precisebanktypes.ModuleName,
+		xidtypes.ModuleName,
+		vrftypes.ModuleName,
 	}
 
 	// Conditionally add TopHolders module to genesis order if enabled

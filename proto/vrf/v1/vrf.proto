@@ -1,0 +1,18 @@
+syntax = "proto3";
+package vrf.v1;
+
+option go_package = "github.com/cosmos/evm/x/vrf/types";
+
+// RandomBeacon represents a verifiable random beacon produced at a given block height.
+message RandomBeacon {
+  uint64 height = 1;
+  string beacon = 2;      // 64-char hex SHA-256
+  string proposer = 3;    // proposer consensus address
+  int64  timestamp = 4;   // block time (unix seconds)
+}
+
+// Params defines the parameters for the VRF module.
+message Params {
+  bool   enabled = 1;
+  uint64 lookback_blocks = 2;  // how many beacons to keep (default 256)
+}

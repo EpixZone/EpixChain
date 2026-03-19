@@ -1,0 +1,47 @@
+syntax = "proto3";
+package vrf.v1;
+
+option go_package = "github.com/cosmos/evm/x/vrf/types";
+
+import "google/api/annotations.proto";
+import "vrf/v1/vrf.proto";
+
+// Query defines the VRF gRPC query service.
+service Query {
+  // LatestBeacon returns the most recent random beacon.
+  // NOTE: Must be defined before GetBeacon so the gRPC gateway registers the
+  // literal "/beacon/latest" route before the wildcard "/beacon/{height}".
+  rpc LatestBeacon(QueryLatestBeaconRequest) returns (QueryLatestBeaconResponse) {
+    option (google.api.http).get = "/vrf/v1/beacon/latest";
+  }
+
+  // GetBeacon returns the random beacon at a specific block height.
+  rpc GetBeacon(QueryGetBeaconRequest) returns (QueryGetBeaconResponse) {
+    option (google.api.http).get = "/vrf/v1/beacon/{height}";
+  }
+
+  // Params returns the current VRF module parameters.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/vrf/v1/params";
+  }
+}
+
+message QueryGetBeaconRequest {
+  uint64 height = 1;
+}
+
+message QueryGetBeaconResponse {
+  RandomBeacon beacon = 1;
+}
+
+message QueryLatestBeaconRequest {}
+
+message QueryLatestBeaconResponse {
+  RandomBeacon beacon = 1;
+}
+
+message QueryParamsRequest {}
+
+message QueryParamsResponse {
+  Params params = 1;
+}
