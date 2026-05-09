@@ -8,8 +8,7 @@ import (
 	"github.com/cosmos/evm/x/vm/statedb"
 	vmtypes "github.com/cosmos/evm/x/vm/types"
 
-	storetypes "cosmossdk.io/store/types"
-
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -29,7 +28,6 @@ type VMKeeperI interface {
 	SetCode(ctx sdk.Context, codeHash []byte, code []byte)
 	DeleteAccount(ctx sdk.Context, addr common.Address) error
 	KVStoreKeys() map[string]storetypes.StoreKey
-	SetEvmMempool(evmMempool *ExperimentalEVMMempool)
 }
 
 type FeeMarketKeeperI interface {

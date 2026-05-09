@@ -21,8 +21,8 @@ import (
 	"github.com/cosmos/evm/testutil/tx"
 	testutiltypes "github.com/cosmos/evm/testutil/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
-	"github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	"github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 
 	"cosmossdk.io/math"
 
@@ -311,7 +311,6 @@ func TestPrecompileIntegrationTestSuite(t *testing.T, evmAppCreator ibctesting.A
 
 			// send some tokens to the contract address
 			fundAmt := math.NewInt(100)
-			fundAmtConverted := fundAmt.Mul(math.NewInt(1e12))
 			err = evmAppA.GetBankKeeper().SendCoins(
 				s.chainA.GetContext(),
 				s.chainA.SenderAccount.GetAddress(),
@@ -324,10 +323,9 @@ func TestPrecompileIntegrationTestSuite(t *testing.T, evmAppCreator ibctesting.A
 				s.chainA.GetContext(),
 				ics20CallerAddr,
 			)
-			Expect(contractBalance.ToBig()).To(Equal(fundAmtConverted.BigInt()), "Contract balance should be equal to the fund amount")
+			Expect(contractBalance.ToBig()).To(Equal(fundAmt.BigInt()), "Contract balance should be equal to the fund amount")
 
 			sendAmt := math.NewInt(1)
-			sendAmtConverted := sendAmt.Mul(math.NewInt(1e12))
 			callArgs := testutiltypes.CallArgs{
 				ContractABI: ics20CallerContract.ABI,
 				MethodName:  "testIbcTransferWithTransfer",
@@ -356,7 +354,7 @@ func TestPrecompileIntegrationTestSuite(t *testing.T, evmAppCreator ibctesting.A
 				0,
 			)
 			Expect(err).To(BeNil(), "Failed to testTransfer")
-			expectedContractBalance := fundAmtConverted.Sub(sendAmtConverted)
+			expectedContractBalance := fundAmt.Sub(sendAmt)
 			if tc.before {
 				expectedContractBalance = expectedContractBalance.Sub(math.NewInt(15))
 			}
@@ -407,7 +405,6 @@ func TestPrecompileIntegrationTestSuite(t *testing.T, evmAppCreator ibctesting.A
 
 			// send some tokens to the contract address
 			fundAmt := math.NewInt(100)
-			fundAmtConverted := fundAmt.Mul(math.NewInt(1e12))
 			err = evmAppA.GetBankKeeper().SendCoins(
 				s.chainA.GetContext(),
 				s.chainA.SenderAccount.GetAddress(),
@@ -420,7 +417,7 @@ func TestPrecompileIntegrationTestSuite(t *testing.T, evmAppCreator ibctesting.A
 				common.BytesToAddress(ics20CallerAddr.Bytes()),
 			)
 			// check contract balance
-			Expect(contractBalance.ToBig()).To(Equal(fundAmtConverted.BigInt()), "Contract balance should be equal to the fund amount")
+			Expect(contractBalance.ToBig()).To(Equal(fundAmt.BigInt()), "Contract balance should be equal to the fund amount")
 
 			sendAmt := math.NewInt(1)
 			callArgs := testutiltypes.CallArgs{

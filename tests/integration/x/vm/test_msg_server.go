@@ -6,12 +6,15 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/holiman/uint256"
 
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	"github.com/cosmos/evm/testutil/integration/evm/utils"
 	"github.com/cosmos/evm/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"
 
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
@@ -121,12 +124,15 @@ func (s *KeeperTestSuite) TestEthereumTx() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			// Fund fee collector account
+			// Fund fee collector account's virtual balance.
+			// With virtual fee collection enabled, RefundGas uses SendCoinsFromModuleToAccountVirtual
+			// which checks the virtual (object store) balance, not the real balance.
 			ctx := s.Network.GetContext()
 			coins := sdktypes.NewCoins(sdktypes.NewCoin(types.GetEVMCoinDenom(), sdkmath.NewInt(1e18)))
 			err := s.Network.App.GetBankKeeper().MintCoins(ctx, "mint", coins)
 			s.Require().NoError(err)
-			err = s.Network.App.GetBankKeeper().SendCoinsFromModuleToModule(ctx, "mint", "fee_collector", coins)
+			mintAddr := authtypes.NewModuleAddress("mint")
+			err = s.Network.App.GetBankKeeper().SendCoinsFromAccountToModuleVirtual(ctx, mintAddr, authtypes.FeeCollectorName, coins)
 			s.Require().NoError(err)
 
 			// Get EthereumTx msg
@@ -173,7 +179,7 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 			getMsg: func() *types.MsgUpdateParams {
 				return &types.MsgUpdateParams{Authority: "foobar"}
 			},
-			expectedErr: govtypes.ErrInvalidSigner,
+			expectedErr: sdkerrors.ErrUnauthorized,
 		},
 		{
 			name: "pass - valid Update msg",
@@ -216,7 +222,7 @@ func (s *KeeperTestSuite) TestRegisterPreinstalls() {
 			getMsg: func() *types.MsgRegisterPreinstalls {
 				return &types.MsgRegisterPreinstalls{Authority: "foobar"}
 			},
-			expectedErr: govtypes.ErrInvalidSigner,
+			expectedErr: sdkerrors.ErrUnauthorized,
 		},
 		{
 			name: "pass - valid Update msg",
@@ -259,4 +265,78 @@ func (s *KeeperTestSuite) TestRegisterPreinstalls() {
 		err := s.Network.NextBlock()
 		s.Require().NoError(err)
 	}
+}
+
+// TestUpdateParamsAuthority verifies that the EVM keeper resolves the
+// authority through the consensus AuthorityParams when set, and otherwise
+// falls back to the keeper's authority.
+func (s *KeeperTestSuite) TestUpdateParamsAuthority() {
+	s.SetupTest()
+
+	keeperAuthority := s.Network.App.GetEVMKeeper().GetAuthority().String()
+	overrideAuthority := sdktypes.AccAddress("override_authority___").String()
+	s.Require().NotEqual(keeperAuthority, overrideAuthority)
+
+	s.Run("fallback to keeper authority when consensus authority is unset", func() {
+		ctx := s.Network.GetContext()
+
+		_, err := s.Network.App.GetEVMKeeper().UpdateParams(ctx, &types.MsgUpdateParams{
+			Authority: keeperAuthority,
+			Params:    types.DefaultParams(),
+		})
+		s.Require().NoError(err)
+
+		_, err = s.Network.App.GetEVMKeeper().UpdateParams(ctx, &types.MsgUpdateParams{
+			Authority: overrideAuthority,
+			Params:    types.DefaultParams(),
+		})
+		s.Require().Error(err)
+		s.Require().Contains(err.Error(), "invalid authority")
+	})
+
+	s.Run("consensus authority takes precedence over keeper authority", func() {
+		ctx := s.Network.GetContext().WithConsensusParams(cmtproto.ConsensusParams{
+			Authority: &cmtproto.AuthorityParams{Authority: overrideAuthority},
+		})
+
+		_, err := s.Network.App.GetEVMKeeper().UpdateParams(ctx, &types.MsgUpdateParams{
+			Authority: overrideAuthority,
+			Params:    types.DefaultParams(),
+		})
+		s.Require().NoError(err)
+
+		_, err = s.Network.App.GetEVMKeeper().UpdateParams(ctx, &types.MsgUpdateParams{
+			Authority: keeperAuthority,
+			Params:    types.DefaultParams(),
+		})
+		s.Require().Error(err)
+		s.Require().Contains(err.Error(), "invalid authority")
+	})
+
+	s.Run("RegisterPreinstalls honors consensus authority override", func() {
+		ctx := s.Network.GetContext().WithConsensusParams(cmtproto.ConsensusParams{
+			Authority: &cmtproto.AuthorityParams{Authority: overrideAuthority},
+		})
+
+		_, err := s.Network.App.GetEVMKeeper().RegisterPreinstalls(ctx, &types.MsgRegisterPreinstalls{
+			Authority: keeperAuthority,
+			Preinstalls: []types.Preinstall{{
+				Name:    "AuthOverride1",
+				Address: "0xb364E75b1189DcbBF7f0C856456c1ba8e4d6481b",
+				Code:    "0x000000000",
+			}},
+		})
+		s.Require().Error(err)
+		s.Require().Contains(err.Error(), "invalid authority")
+
+		_, err = s.Network.App.GetEVMKeeper().RegisterPreinstalls(ctx, &types.MsgRegisterPreinstalls{
+			Authority: overrideAuthority,
+			Preinstalls: []types.Preinstall{{
+				Name:    "AuthOverride2",
+				Address: "0xc364E75b1189DcbBF7f0C856456c1ba8e4d6481b",
+				Code:    "0x000000000",
+			}},
+		})
+		s.Require().NoError(err)
+	})
 }

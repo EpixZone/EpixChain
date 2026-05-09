@@ -5,14 +5,14 @@ import (
 	"fmt"
 
 	"cosmossdk.io/math"
-	storetypes "cosmossdk.io/store/types"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
 
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 
 	"github.com/cosmos/evm/config"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
@@ -27,8 +27,13 @@ const UpgradeName_v0_5_3 = "v0.5.3"
 const UpgradeName_v0_5_4 = "v0.5.4"
 const UpgradeName_v0_5_5 = "v0.5.5"
 
+// UpgradeName_v0_7_0 marks the migration from EpixChain v0.5.5 (cosmos/evm v0.5/v0.6 hybrid)
+// to v0.7.0: drop x/ibc/transfer override, drop x/precisebank, ibc-go v10 → v11,
+// Krakatoa app-side mempool, BlockSTM + virtual fees, optimistic execution.
+const UpgradeName_v0_7_0 = "v0.6.0-to-v0.7.0"
+
 // UpgradeName is the current upgrade (for store upgrades)
-const UpgradeName = UpgradeName_v0_5_5
+const UpgradeName = UpgradeName_v0_7_0
 
 // RegisterUpgradeHandlers registers upgrade handlers for v0.5.1 and v0.5.2
 func (app EVMD) RegisterUpgradeHandlers() {
@@ -37,6 +42,7 @@ func (app EVMD) RegisterUpgradeHandlers() {
 		UpgradeName_v0_5_1,
 		func(ctx context.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 			sdkCtx := sdk.UnwrapSDKContext(ctx)
+<<<<<<< HEAD
 			sdkCtx.Logger().Info("Starting EpixChain v0.5.1 upgrade with recovery fix...")
 
 			// Apply the recovery fix
@@ -159,6 +165,22 @@ func (app EVMD) RegisterUpgradeHandlers() {
 		},
 	)
 
+	// Register v0.6.0 -> v0.7.0 upgrade handler.
+	// State changes are wiring-only (drop x/precisebank, drop x/ibc/transfer override,
+	// adopt Krakatoa app-side mempool, BlockSTM with virtual fees, optimistic execution,
+	// ibc-go v10 -> v11). x/precisebank store key is removed; existing precisebank state
+	// (if any) is dropped on the upgrade boundary via storeUpgrades.Deleted below.
+	app.UpgradeKeeper.SetUpgradeHandler(
+		UpgradeName_v0_7_0,
+		func(ctx context.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+			sdkCtx := sdk.UnwrapSDKContext(ctx)
+			sdkCtx.Logger().Info("Starting EpixChain v0.6.0 -> v0.7.0 upgrade (cosmos/evm v0.7)...")
+			sdkCtx.Logger().Info("Krakatoa app-side mempool, BlockSTM + virtual fees, optimistic execution")
+			sdkCtx.Logger().Info("Dropping x/precisebank (Epix is 18-decimal); dropping x/ibc/transfer override")
+			return app.ModuleManager.RunMigrations(ctx, app.Configurator(), fromVM)
+		},
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(err)
@@ -181,6 +203,15 @@ func (app EVMD) RegisterUpgradeHandlers() {
 		!app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 		storeUpgrades := storetypes.StoreUpgrades{
 			Added: []string{xidtypes.StoreKey, vrftypes.StoreKey},
+		}
+		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
+	}
+
+	// Handle v0.6.0 -> v0.7.0 upgrade - deletes precisebank store key
+	if upgradeInfo.Name == UpgradeName_v0_7_0 &&
+		!app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		storeUpgrades := storetypes.StoreUpgrades{
+			Deleted: []string{"precisebank"},
 		}
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
 	}

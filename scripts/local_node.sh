@@ -272,13 +272,13 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
   sed -i.bak 's/timeout_precommit_delta = "500ms"/timeout_precommit_delta = "200ms"/g' "$CONFIG_TOML"
   sed -i.bak 's/timeout_commit = "5s"/timeout_commit = "1s"/g' "$CONFIG_TOML"
   sed -i.bak 's/timeout_broadcast_tx_commit = "10s"/timeout_broadcast_tx_commit = "5s"/g' "$CONFIG_TOML"
+  sed -i.bak 's/type = "flood"/type = "app"/g' "$CONFIG_TOML"
 
   # enable prometheus metrics and all APIs for dev node
   sed -i.bak 's/prometheus = false/prometheus = true/' "$CONFIG_TOML"
   sed -i.bak 's/prometheus-retention-time  = "0"/prometheus-retention-time  = "1000000000000"/g' "$APP_TOML"
   sed -i.bak 's/enabled = false/enabled = true/g' "$APP_TOML"
   sed -i.bak 's/enable = false/enable = true/g' "$APP_TOML"
-  sed -i.bak 's/enable-indexer = false/enable-indexer = true/g' "$APP_TOML"
 
   # --------- maybe generate additional users ---------
   # start with provided/default list

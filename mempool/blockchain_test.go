@@ -18,9 +18,9 @@ import (
 	"github.com/cosmos/evm/x/vm/statedb"
 	vmtypes "github.com/cosmos/evm/x/vm/types"
 
-	"cosmossdk.io/log"
-	storetypes "cosmossdk.io/store/types"
+	"cosmossdk.io/log/v2"
 
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -35,7 +35,8 @@ func createMockContext() sdk.Context {
 	return ctx.
 		WithBlockTime(time.Now()).
 		WithBlockHeader(cmtproto.Header{AppHash: []byte("00000000000000000000000000000000")}).
-		WithBlockHeight(1)
+		WithBlockHeight(1).
+		WithEventManager(sdk.NewEventManager())
 }
 
 // TestBlockchainRaceCondition tests concurrent access to NotifyNewBlock and StateAt
@@ -44,7 +45,7 @@ func TestBlockchainRaceCondition(t *testing.T) {
 	logger := log.NewNopLogger()
 
 	// Create mock keepers using generated mocks
-	mockVMKeeper := mocks.NewVMKeeper(t)
+	mockVMKeeper := mocks.NewVMKeeperI(t)
 	mockFeeMarketKeeper := mocks.NewFeeMarketKeeper(t)
 
 	ethCfg := vmtypes.DefaultChainConfig(constants.EighteenDecimalsChainID)
@@ -62,9 +63,6 @@ func TestBlockchainRaceCondition(t *testing.T) {
 	mockVMKeeper.On("GetCodeHash", mock.Anything, common.Address{}).Return(common.Hash{}).Maybe()
 	mockVMKeeper.On("ForEachStorage", mock.Anything, common.Address{}, mock.AnythingOfType("func(common.Hash, common.Hash) bool")).Maybe()
 	mockVMKeeper.On("KVStoreKeys").Return(make(map[string]*storetypes.KVStoreKey)).Maybe()
-
-	err := vmtypes.NewEVMConfigurator().WithEVMCoinInfo(constants.ChainsCoinInfo[constants.EighteenDecimalsChainID]).Configure()
-	require.NoError(t, err)
 
 	// Mock context callback that returns a valid context
 	getCtxCallback := func(height int64, prove bool) (sdk.Context, error) {

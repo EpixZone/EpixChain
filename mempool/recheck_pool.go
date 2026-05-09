@@ -1,0 +1,657 @@
+package mempool
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"math/big"
+	"sync"
+	"time"
+
+	"github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/holiman/uint256"
+	"go.opentelemetry.io/otel/metric"
+
+	"github.com/cosmos/evm/mempool/internal/heightsync"
+	"github.com/cosmos/evm/mempool/internal/reaplist"
+	"github.com/cosmos/evm/mempool/reserver"
+
+	"cosmossdk.io/log/v2"
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
+)
+
+var (
+	recheckDuration   metric.Float64Histogram
+	recheckRemovals   metric.Int64Histogram
+	recheckNumChecked metric.Int64Histogram
+)
+
+func init() {
+	var err error
+	recheckDuration, err = meter.Float64Histogram(
+		"mempool.recheck.duration",
+		metric.WithDescription("Duration of cosmos mempool recheck loop"),
+		metric.WithUnit("ms"),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	recheckRemovals, err = meter.Int64Histogram(
+		"mempool.recheck.removals",
+		metric.WithDescription("Number of transactions that were removed from the pool per iteration"),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	recheckNumChecked, err = meter.Int64Histogram(
+		"mempool.recheck.num_checked",
+		metric.WithDescription("Number of transactions rechecked per iteration"),
+	)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// Rechecker defines the minimal set of methods needed to recheck cosmos
+// transactions and manage the context that the transactions are rechecked
+// against.
+type Rechecker interface {
+	// GetContext gets a branch of the current context that transactions should
+	// be rechecked against. Changes to ctx will only be persisted back to the
+	// Rechecker once the write function is invoked.
+	GetContext() (ctx sdk.Context, write func())
+
+	// RecheckCosmos performs validation of a cosmos tx against a context, and
+	// returns an updated context.
+	RecheckCosmos(ctx sdk.Context, tx sdk.Tx) (sdk.Context, error)
+
+	// Update updates the recheckers context to be the ctx at headers height.
+	Update(ctx sdk.Context, header *ethtypes.Header)
+}
+
+// RecheckMempool wraps an ExtMempool and provides block-driven rechecking
+// of transactions when new blocks are committed. It mirrors the legacypool
+// pattern but simplified for Cosmos mempool behavior (no reorgs, no queued/pending management).
+//
+// All pool mutations (Insert, Remove) and reads (Select, CountTx) are protected
+// by a RWMutex to ensure thread-safety during recheck operations.
+type RecheckMempool struct {
+	sdkmempool.ExtMempool
+
+	// mu protects the pool during mutations and reads.
+	// Write lock: Insert, Remove, runRecheck
+	// Read lock: Select, CountTx
+	mu sync.RWMutex
+
+	// reserver coordinates address reservations with other pools (i.e. legacypool)
+	reserver *reserver.ReservationHandle
+
+	rechecker       Rechecker
+	blockchain      *Blockchain
+	signerExtractor sdkmempool.SignerExtractionAdapter
+	logger          log.Logger
+
+	// event channels
+	reqRecheckCh    chan *recheckRequest // channel that schedules rechecking.
+	recheckDoneCh   chan chan struct{}   // channel that is returned to recheck callers that signals when a recheck is complete.
+	shutdownCh      chan struct{}        // shutdown channel to gracefully shutdown the recheck loop.
+	shutdownOnce    sync.Once            // ensures shutdown channel is only closed once.
+	recheckShutdown chan struct{}        // closed when scheduleRecheckLoop exits
+
+	// recheckedTxs is a height synced CosmosTxStore, used to collect txs that
+	// have been rechecked at a height, and discard of them once the chain.
+	recheckedTxs *heightsync.HeightSync[CosmosTxStore]
+
+	reapList *reaplist.ReapList
+
+	wg sync.WaitGroup
+}
+
+// NewRecheckMempool creates a new RecheckMempool.
+func NewRecheckMempool(
+	defaultCosmosPoolConfig *sdkmempool.PriorityNonceMempoolConfig[math.Int],
+	maxTxs int,
+	reserver *reserver.ReservationHandle,
+	rechecker Rechecker,
+	recheckedTxs *heightsync.HeightSync[CosmosTxStore],
+	reapList *reaplist.ReapList,
+	blockchain *Blockchain,
+	logger log.Logger,
+) *RecheckMempool {
+	signerExtractor := sdkmempool.NewDefaultSignerExtractionAdapter()
+	cosmosMempoolConfig := cosmosPoolConfig(
+		blockchain,
+		defaultCosmosPoolConfig,
+		maxTxs,
+		onTransactionReplace(reapList, signerExtractor, reserver, logger),
+	)
+
+	return &RecheckMempool{
+		ExtMempool:      sdkmempool.NewPriorityMempool(cosmosMempoolConfig),
+		reserver:        reserver,
+		rechecker:       rechecker,
+		blockchain:      blockchain,
+		signerExtractor: signerExtractor,
+		logger:          logger.With(log.ModuleKey, "RecheckMempool"),
+		reqRecheckCh:    make(chan *recheckRequest),
+		recheckDoneCh:   make(chan chan struct{}),
+		shutdownCh:      make(chan struct{}),
+		recheckShutdown: make(chan struct{}),
+		reapList:        reapList,
+		recheckedTxs:    recheckedTxs,
+	}
+}
+
+// Start begins the background recheck loop and initializes the rechecker's
+// context to the latest chain state. The initialHead is used for the first
+// Rechecker.Update call before any recheck has been triggered.
+func (m *RecheckMempool) Start(initialHead *ethtypes.Header) {
+	ctx, err := m.blockchain.GetLatestContext()
+	if err != nil {
+		m.logger.Error("failed to initialize rechecker context", "err", err)
+	} else {
+		m.rechecker.Update(ctx, initialHead)
+	}
+
+	m.wg.Add(1)
+	go m.scheduleRecheckLoop()
+}
+
+// Close gracefully shuts down the recheck loop.
+func (m *RecheckMempool) Close() error {
+	m.shutdownOnce.Do(func() {
+		close(m.shutdownCh)
+	})
+	m.wg.Wait()
+	return nil
+}
+
+// Insert adds a transaction to the pool after running the ante handler.
+// This is the main entry point for new cosmos transactions.
+func (m *RecheckMempool) Insert(_ context.Context, tx sdk.Tx) (err error) {
+	// Reserve addresses to prevent conflicts with EVM pool
+	addrs, err := m.reserveTx(tx)
+	if err != nil {
+		return fmt.Errorf("acquiring reservations for tx: %w", err)
+	}
+
+	defer func() {
+		if err == nil {
+			return
+		}
+		if errRelease := m.reserver.Release(addrs...); errRelease != nil {
+			m.logger.Error("Failed to release reservations (Insert)", "err", errRelease, "addrs", addrs)
+		}
+	}()
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// Branch from the Rechecker's internal ctx (post-recheck cache).
+	// This ctx has chain_state + all pending txs' nonce increments.
+	ctx, write := m.rechecker.GetContext()
+	if ctx.IsZero() {
+		m.logger.Warn("no context found in rechecker on insert, updating to latest")
+		// if this happens, we have not rechecked any txs yet, so this is safe
+		// to update
+		newCtx, err := m.blockchain.GetLatestContext()
+		if err != nil {
+			return fmt.Errorf("fetching latest context since rechecker has none: %w", err)
+		}
+
+		m.rechecker.Update(newCtx, m.blockchain.CurrentBlock())
+		ctx, write = m.rechecker.GetContext()
+	}
+
+	if _, err := m.rechecker.RecheckCosmos(ctx, tx); err != nil {
+		return fmt.Errorf("ante handler failed: %w", err)
+	}
+
+	if err := m.ExtMempool.Insert(ctx, tx); err != nil {
+		return err
+	}
+
+	// since we have rechecked the tx via `rechecker.RecheckCosmos`, and this
+	// rechecks the tx on top of the state of all txs already rechecked in the
+	// mempool, this tx is valid and we can include it in the reaplist
+	if err := m.reapList.PushCosmosTx(tx); err != nil {
+		m.logger.Error("successfully inserted cosmos tx, but failed to insert into reap list", "err", err)
+	}
+
+	write()
+	m.markTxInserted(tx)
+
+	return nil
+}
+
+// Remove is a noop for this pool. All removals are processed during the async
+// recheck loop.
+func (m *RecheckMempool) Remove(tx sdk.Tx) error {
+	// NOTE: processing the removal here produces a subtle bug for cosmos txs
+	// with multiple signers. the underlying mempool here (priority nonce
+	// mempool) identifies txs by only the first signer of multi signer txs. so
+	// when we see a tx included in a block (currently the only spot where we
+	// care about remove being called for this mempool) with for example,
+	// signer A at nonce 0, and we have a different tx in the mempool with
+	// signer A at nonce 0 and signer B at nonce 0, removing the tx in the
+	// block with only signer A will remove the tx in the mempool with both
+	// signers A and B. the priority nonce mempool gives us no hook to see what
+	// tx was actually removed. to account for this, we must not remove during
+	// FinalizeBlock, and process the removal during recheck where the multi
+	// signer tx will be dropped due to a nonce too low error on signer A.
+	// during recheck we know exactly which tx we are removing and why, and can
+	// properly unreserve the signer A's and signer B's address reservations.
+	return nil
+}
+
+// RemoveWithReason is a noop for this pool. All removals are processed during
+// the async recheck loop. This must be explicitly defined to prevent Go from
+// promoting the embedded ExtMempool's RemoveWithReason.
+func (m *RecheckMempool) RemoveWithReason(_ context.Context, tx sdk.Tx, _ sdkmempool.RemoveReason) error {
+	return m.Remove(tx)
+}
+
+// reserveTx extracts the signers of tx and acquires their reserver
+// holds. Returns any addresses who are now reserved, and any errors that occurred.
+func (m *RecheckMempool) reserveTx(tx sdk.Tx) ([]common.Address, error) {
+	addrs, err := extractEVMAddresses(m.signerExtractor, tx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := m.reserver.Hold(addrs...); err != nil {
+		return nil, fmt.Errorf("reserving %d addresses for cosmos recheck pool: %w", len(addrs), err)
+	}
+
+	return addrs, nil
+}
+
+// unreserveTx extracts the signers of tx and releases their
+// reserver holds. Returns an error only if signer extraction fails; any
+// error from the reserver itself is swallowed to preserve the prior
+// best-effort cleanup semantics.
+func (m *RecheckMempool) unreserveTx(tx sdk.Tx) error {
+	addrs, err := extractEVMAddresses(m.signerExtractor, tx)
+	if err != nil {
+		return fmt.Errorf("extractEVMAddresses: %w", err)
+	}
+
+	if err := m.reserver.Release(addrs...); err != nil {
+		m.logger.Error("Failed to release reservations (unreserveTx)", "err", err, "addrs", addrs)
+	}
+
+	return nil
+}
+
+// Select returns an iterator over transactions in the pool.
+func (m *RecheckMempool) Select(ctx context.Context, txs [][]byte) sdkmempool.Iterator {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.ExtMempool.Select(ctx, txs)
+}
+
+// CountTx returns the number of transactions in the pool.
+func (m *RecheckMempool) CountTx() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.ExtMempool.CountTx()
+}
+
+type recheckRequest struct {
+	newHead *ethtypes.Header
+}
+
+// TriggerRecheck signals that a new block arrived and returns a channel
+// that closes when the recheck completes (or is superseded by another).
+func (m *RecheckMempool) TriggerRecheck(newHead *ethtypes.Header) <-chan struct{} {
+	select {
+	case m.reqRecheckCh <- &recheckRequest{newHead: newHead}:
+		return <-m.recheckDoneCh
+	case <-m.recheckShutdown:
+		ch := make(chan struct{})
+		close(ch)
+		return ch
+	}
+}
+
+// TriggerRecheckSync triggers a recheck and blocks until complete.
+func (m *RecheckMempool) TriggerRecheckSync(newHead *ethtypes.Header) {
+	<-m.TriggerRecheck(newHead)
+}
+
+// RecheckedTxs returns the txs that have been rechecked for a height. The
+// RecheckMempool must be currently operating on this height (i.e. recheck has
+// been triggered on this height via TriggerRecheck). If height is in the past
+// (TriggerRecheck has been called on height + 1), this will panic. If height
+// is in the future, this will block until TriggerReset is called for height,
+// or the context times out.
+func (m *RecheckMempool) RecheckedTxs(ctx context.Context, height *big.Int) sdkmempool.Iterator {
+	txStore := m.recheckedTxs.GetStore(ctx, height)
+	if txStore == nil {
+		return nil
+	}
+	return txStore.Iterator()
+}
+
+// OrderedRecheckedTxs returns the rechecked tx snapshot for a height using
+// fee-priority ordering across signer buckets while still honoring nonce order
+// within each bucket.
+func (m *RecheckMempool) OrderedRecheckedTxs(
+	ctx context.Context,
+	height *big.Int,
+	bondDenom string,
+	baseFee *uint256.Int,
+) sdkmempool.Iterator {
+	txStore := m.recheckedTxs.GetStore(ctx, height)
+	if txStore == nil {
+		return nil
+	}
+	return txStore.OrderedIterator(bondDenom, baseFee)
+}
+
+// scheduleRecheckLoop is the main event loop that coordinates recheck execution.
+// Only one recheck runs at a time. If a new block arrives while a recheck is
+// running, the current recheck is cancelled and a new one is scheduled.
+func (m *RecheckMempool) scheduleRecheckLoop() {
+	defer m.wg.Done()
+	defer close(m.recheckShutdown)
+
+	var (
+		curDone       chan struct{} // non-nil while recheck is running
+		nextDone      = make(chan struct{})
+		launchNextRun bool
+		recheckReq    *recheckRequest
+		cancelCh      chan struct{} // closed to signal cancellation
+	)
+
+	for {
+		if curDone == nil && launchNextRun {
+			cancelCh = make(chan struct{})
+			go m.runRecheck(nextDone, recheckReq.newHead, cancelCh)
+
+			curDone, nextDone = nextDone, make(chan struct{})
+			launchNextRun = false
+			recheckReq = nil
+		}
+
+		select {
+		case req := <-m.reqRecheckCh:
+			if curDone != nil && cancelCh != nil {
+				close(cancelCh)
+				cancelCh = nil
+			}
+			recheckReq = req
+			launchNextRun = true
+			m.recheckDoneCh <- nextDone
+
+		case <-curDone:
+			curDone = nil
+			cancelCh = nil
+
+		case <-m.shutdownCh:
+			if curDone != nil {
+				if cancelCh != nil {
+					close(cancelCh)
+				}
+				<-curDone
+			}
+			close(nextDone)
+			return
+		}
+	}
+}
+
+// runRecheck performs the actual recheck work. It holds the write lock for the
+// entire duration, iterates through all txs, runs them through the ante handler,
+// and removes any that fail (plus dependent txs with higher sequences).
+func (m *RecheckMempool) runRecheck(done chan struct{}, newHead *ethtypes.Header, cancelled <-chan struct{}) {
+	defer close(done)
+	start := time.Now()
+	txsRemoved := 0
+	txsChecked := 0
+	defer func() {
+		recheckDuration.Record(context.Background(), float64(time.Since(start).Milliseconds()))
+		if txsRemoved > 0 {
+			recheckRemovals.Record(context.Background(), int64(txsRemoved))
+		}
+		if txsChecked > 0 {
+			recheckNumChecked.Record(context.Background(), int64(txsChecked))
+		}
+	}()
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.recheckedTxs.StartNewHeight(newHead.Number)
+	defer m.recheckedTxs.EndCurrentHeight()
+
+	latestCtx, err := m.blockchain.GetLatestContext()
+	if err != nil {
+		m.logger.Error("failed to get context for recheck", "err", err)
+		return
+	}
+	m.rechecker.Update(latestCtx, newHead)
+
+	failedAtSequence := make(map[string]uint64)
+	removeTxs := make([]sdk.Tx, 0)
+
+	// context.Background() safe to use here since ExtMempool is a
+	// PriorityNonceMempool and ctx is unused
+	iter := m.ExtMempool.Select(context.Background(), nil)
+	for iter != nil {
+		if isCancelled(cancelled) {
+			m.logger.Debug("recheck cancelled - new block arrived")
+			return
+		}
+
+		txn := iter.Tx()
+		if txn == nil {
+			break
+		}
+
+		txsChecked++
+		signers, err := m.signerExtractor.GetSigners(txn)
+		if err != nil {
+			m.logger.Error("failed to extract signers", "err", err)
+			iter = iter.Next()
+			continue
+		}
+
+		invalidTx := false
+		for _, s := range signers {
+			if failedSeq, ok := failedAtSequence[string(s.Signer)]; ok && failedSeq < s.Sequence {
+				invalidTx = true
+				break
+			}
+		}
+
+		keepFuturesOnError := false
+		if !invalidTx {
+			ctx, write := m.rechecker.GetContext()
+			_, err := m.rechecker.RecheckCosmos(ctx, txn)
+			if err == nil {
+				write()
+				m.markTxRechecked(txn)
+				iter = iter.Next()
+				continue
+			}
+
+			// we do not want to drop future txs for a signer if it had a tx
+			// fail due sequence mismatch. a sequence mismatch here means the
+			// nonce of this tx became too low compared to the chain state. we
+			// rerun ante handlers on insert to this pool, so at insert time,
+			// we know the nonce of the tx was not too high. since nonces only
+			// increase, ErrWrongSequence seen here must mean that the tx's
+			// nonce became too low. we still remove this tx, but we do not
+			// want to cascade and evict the signer's tx at nonce+1 since
+			// that may still be valid at the correct nonce.
+			if errors.Is(err, sdkerrors.ErrWrongSequence) {
+				keepFuturesOnError = true
+			}
+		}
+
+		removeTxs = append(removeTxs, txn)
+
+		if keepFuturesOnError {
+			iter = iter.Next()
+			continue
+		}
+
+		// marks all future txs for this txs signers as invalid and we will
+		// drop them before they are even rechecked
+		for _, s := range signers {
+			key := string(s.Signer)
+			if existing, ok := failedAtSequence[key]; !ok || existing > s.Sequence {
+				failedAtSequence[key] = s.Sequence
+			}
+		}
+
+		iter = iter.Next()
+	}
+
+	if isCancelled(cancelled) {
+		m.logger.Debug("recheck cancelled before removal - new block arrived")
+		return
+	}
+
+	for _, txn := range removeTxs {
+		if err := m.ExtMempool.Remove(txn); err != nil {
+			m.logger.Error("failed to remove tx during recheck", "err", err)
+			continue
+		}
+		m.reapList.DropCosmosTx(txn)
+
+		if err := m.unreserveTx(txn); err != nil {
+			m.logger.Error("failed to release reservations", "err", err)
+			continue
+		}
+	}
+	txsRemoved = len(removeTxs)
+}
+
+// markTxRechecked adds a tx into the height synced cosmos tx store.
+func (m *RecheckMempool) markTxRechecked(txn sdk.Tx) {
+	m.recheckedTxs.Do(func(store *CosmosTxStore) { store.AddTx(txn) })
+}
+
+// markTxInserted conservatively updates the current height snapshot for live inserts.
+// If the inserted tx replaces an existing tx, any other txs from the same sender with
+// a higher nonce is dropped and rebuilt by the next recheck.
+func (m *RecheckMempool) markTxInserted(txn sdk.Tx) {
+	m.recheckedTxs.Do(func(store *CosmosTxStore) {
+		// If we invalidate any txs we can't execute this txn's antehandler sequence until the next rechecker.Update.
+		// This is because the invalidated txns have written their state to the Store's cache context already.
+		if store.InvalidateFrom(txn) > 0 {
+			return
+		}
+		store.AddTx(txn)
+	})
+}
+
+// isCancelled checks if the cancellation channel has been closed.
+func isCancelled(ch <-chan struct{}) bool {
+	select {
+	case <-ch:
+		return true
+	default:
+		return false
+	}
+}
+
+func cosmosPoolConfig(
+	blockchain *Blockchain,
+	defaultConfig *sdkmempool.PriorityNonceMempoolConfig[math.Int],
+	maxTxs int,
+	onReplace func(oldTx, newTx sdk.Tx),
+) sdkmempool.PriorityNonceMempoolConfig[math.Int] {
+	var config sdkmempool.PriorityNonceMempoolConfig[math.Int]
+
+	if defaultConfig != nil {
+		// prioritize the default configs TxPriority struct if defined
+		config.TxPriority = defaultConfig.TxPriority
+	} else {
+		config.TxPriority = sdkmempool.TxPriority[math.Int]{
+			GetTxPriority: func(_ context.Context, tx sdk.Tx) math.Int {
+				cosmosTxFee, ok := tx.(sdk.FeeTx)
+				if !ok {
+					return math.ZeroInt()
+				}
+				found, coin := cosmosTxFee.GetFee().Find(blockchain.GetCoinDenom())
+				if !found {
+					return math.ZeroInt()
+				}
+
+				gasPrice := coin.Amount.Quo(math.NewIntFromUint64(cosmosTxFee.GetGas()))
+
+				return gasPrice
+			},
+			Compare: func(a, b math.Int) int {
+				return a.BigInt().Cmp(b.BigInt())
+			},
+			MinValue: math.ZeroInt(),
+		}
+	}
+
+	config.TxReplacement = func(oldPriority, newPriority math.Int, oldTx, newTx sdk.Tx) bool {
+		shouldReplace := true
+
+		if defaultConfig != nil && defaultConfig.TxReplacement != nil {
+			// if the default config has a custom TxReplacement function, call
+			// that to determine if we should replace oldTx for newTx
+			shouldReplace = defaultConfig.TxReplacement(oldPriority, newPriority, oldTx, newTx)
+		}
+
+		if shouldReplace {
+			onReplace(oldTx, newTx)
+		}
+
+		return shouldReplace
+	}
+
+	config.MaxTx = maxTxs
+	return config
+}
+
+func onTransactionReplace(
+	reapList *reaplist.ReapList,
+	signerExtractor sdkmempool.SignerExtractionAdapter,
+	reserver *reserver.ReservationHandle,
+	logger log.Logger,
+) func(oldTx, newTx sdk.Tx) {
+	return func(oldTx, _ sdk.Tx) {
+		// tx is being replaced, we need to drop the tx that is going to be removed
+		// from the reap list. we assume that the tx doing the replacing has
+		// already been inserted into the reaplist via the insert.
+		reapList.DropCosmosTx(oldTx)
+
+		addrs, err := extractEVMAddresses(signerExtractor, oldTx)
+		if err != nil {
+			return
+		}
+
+		if err := reserver.Release(addrs...); err != nil {
+			logger.Error("Failed to release reservations (onTransactionReplace)", "err", err, "addrs", addrs)
+		}
+	}
+}
+
+func extractEVMAddresses(extractor sdkmempool.SignerExtractionAdapter, tx sdk.Tx) ([]common.Address, error) {
+	signers, err := extractor.GetSigners(tx)
+	if err != nil {
+		return nil, err
+	}
+
+	addrs := make([]common.Address, len(signers))
+	for i, s := range signers {
+		addrs[i] = common.BytesToAddress(s.Signer)
+	}
+
+	return addrs, nil
+}

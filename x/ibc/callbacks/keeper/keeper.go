@@ -12,13 +12,14 @@ import (
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	"github.com/cosmos/evm/x/ibc/callbacks/types"
 	evmante "github.com/cosmos/evm/x/vm/ante"
+	"github.com/cosmos/evm/x/vm/statedb"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
-	callbacktypes "github.com/cosmos/ibc-go/v10/modules/apps/callbacks/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
-	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	callbacktypes "github.com/cosmos/ibc-go/v11/modules/apps/callbacks/types"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v11/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
@@ -129,6 +130,7 @@ func (k ContractKeeper) IBCReceivePacketCallback(
 	cachedCtx, writeFn := ctx.CacheContext()
 	cachedCtx = evmante.BuildEvmExecutionCtx(cachedCtx).
 		WithGasMeter(evmtypes.NewInfiniteGasMeterWithLimit(cbData.CommitGasLimit))
+	stateDB := statedb.New(cachedCtx, k.evmKeeper, statedb.NewEmptyTxConfig())
 
 	// receiver := sdk.MustAccAddressFromBech32(data.Receiver)
 	receiver, err := sdk.AccAddressFromBech32(data.Receiver)
@@ -146,8 +148,10 @@ func (k ContractKeeper) IBCReceivePacketCallback(
 	isolatedAddr := types.GenerateIsolatedAddress(packet.GetDestChannel(), data.Sender)
 	isolatedAddrHex := common.BytesToAddress(isolatedAddr.Bytes())
 
-	acc := k.authKeeper.NewAccountWithAddress(ctx, receiver)
-	k.authKeeper.SetAccount(ctx, acc)
+	if !k.authKeeper.HasAccount(ctx, receiver) {
+		acc := k.authKeeper.NewAccountWithAddress(ctx, receiver)
+		k.authKeeper.SetAccount(ctx, acc)
+	}
 
 	// Ensure receiver address is equal to the isolated address.
 	if receiverHex.Cmp(isolatedAddrHex) != 0 {
@@ -189,7 +193,7 @@ func (k ContractKeeper) IBCReceivePacketCallback(
 	// Call the EVM with the remaining gas as the maximum gas limit.
 	// Up to now, the remaining gas is equal to the callback gas limit set by the user.
 	// NOTE: use the cached ctx for the EVM calls.
-	res, err := k.evmKeeper.CallEVM(cachedCtx, erc20.ABI, receiverHex, tokenPair.GetERC20Contract(), true, remainingGas, "approve", contractAddr, amountInt.BigInt())
+	res, err := k.evmKeeper.CallEVM(cachedCtx, stateDB, erc20.ABI, receiverHex, tokenPair.GetERC20Contract(), true, false, remainingGas, "approve", contractAddr, amountInt.BigInt())
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrAllowanceFailed, "failed to set allowance: %v", err)
 	}
@@ -212,7 +216,7 @@ func (k ContractKeeper) IBCReceivePacketCallback(
 	}
 
 	// NOTE: use the cached ctx for the EVM calls.
-	res, err = k.evmKeeper.CallEVMWithData(cachedCtx, receiverHex, &contractAddr, cbData.Calldata, true, remainingGas)
+	res, err = k.evmKeeper.CallEVMWithData(cachedCtx, stateDB, receiverHex, &contractAddr, cbData.Calldata, true, false, remainingGas)
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrEVMCallFailed, "EVM returned error: %s", err.Error())
 	}
@@ -297,6 +301,8 @@ func (k ContractKeeper) IBCOnAcknowledgementPacketCallback(
 	cachedCtx, writeFn := ctx.CacheContext()
 	cachedCtx = evmante.BuildEvmExecutionCtx(cachedCtx).
 		WithGasMeter(evmtypes.NewInfiniteGasMeterWithLimit(cbData.CommitGasLimit))
+	cachedCtx = types.WithSourceCallbackExecution(cachedCtx)
+	stateDB := statedb.New(cachedCtx, k.evmKeeper, statedb.NewEmptyTxConfig())
 
 	if len(cbData.Calldata) != 0 {
 		return errorsmod.Wrap(types.ErrInvalidCalldata, "acknowledgement callback data should not contain calldata")
@@ -309,6 +315,11 @@ func (k ContractKeeper) IBCOnAcknowledgementPacketCallback(
 
 	contractAddr := common.HexToAddress(contractAddress)
 
+	// Only allow src_callback to target the packet sender.
+	if contractAddr != sender {
+		return errorsmod.Wrapf(types.ErrCallbackFailed, "source callback contract must match packet sender: sender=%s contract=%s", sender.Hex(), contractAddr.Hex())
+	}
+
 	// Check if the contract address contains code.
 	// This check is required because if there is no code, the call will still pass on the EVM side,
 	// but it will ignore the calldata and funds may get stuck.
@@ -318,7 +329,7 @@ func (k ContractKeeper) IBCOnAcknowledgementPacketCallback(
 
 	// Call the onPacketAcknowledgement function in the contract
 	// NOTE: use the cached ctx for the EVM calls.
-	res, err := k.evmKeeper.CallEVM(cachedCtx, callbacksabi.ABI, sender, contractAddr, true, math.NewIntFromUint64(cachedCtx.GasMeter().GasRemaining()).BigInt(), "onPacketAcknowledgement",
+	res, err := k.evmKeeper.CallEVM(cachedCtx, stateDB, callbacksabi.ABI, sender, contractAddr, true, false, math.NewIntFromUint64(cachedCtx.GasMeter().GasRemaining()).BigInt(), "onPacketAcknowledgement",
 		packet.GetSourceChannel(), packet.GetSourcePort(), packet.GetSequence(), packet.GetData(), acknowledgement)
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrCallbackFailed, "EVM returned error: %s", err.Error())
@@ -395,6 +406,11 @@ func (k ContractKeeper) IBCOnTimeoutPacketCallback(
 	sender := common.BytesToAddress(senderAccount.Bytes())
 	contractAddr := common.HexToAddress(contractAddress)
 
+	// Only allow src_callback to target the packet sender.
+	if contractAddr != sender {
+		return errorsmod.Wrapf(types.ErrCallbackFailed, "source callback contract must match packet sender: sender=%s contract=%s", sender.Hex(), contractAddr.Hex())
+	}
+
 	// Check if the contract address contains code.
 	// This check is required because if there is no code, the call will still pass on the EVM side,
 	// but it will ignore the calldata and funds may get stuck.
@@ -410,8 +426,10 @@ func (k ContractKeeper) IBCOnTimeoutPacketCallback(
 	cachedCtx, writeFn := ctx.CacheContext()
 	cachedCtx = evmante.BuildEvmExecutionCtx(cachedCtx).
 		WithGasMeter(evmtypes.NewInfiniteGasMeterWithLimit(cbData.CommitGasLimit))
+	cachedCtx = types.WithSourceCallbackExecution(cachedCtx)
+	stateDB := statedb.New(cachedCtx, k.evmKeeper, statedb.NewEmptyTxConfig())
 
-	res, err := k.evmKeeper.CallEVM(cachedCtx, callbacksabi.ABI, sender, contractAddr, true, math.NewIntFromUint64(cachedCtx.GasMeter().GasRemaining()).BigInt(), "onPacketTimeout",
+	res, err := k.evmKeeper.CallEVM(cachedCtx, stateDB, callbacksabi.ABI, sender, contractAddr, true, false, math.NewIntFromUint64(cachedCtx.GasMeter().GasRemaining()).BigInt(), "onPacketTimeout",
 		packet.GetSourceChannel(), packet.GetSourcePort(), packet.GetSequence(), packet.GetData())
 	if err != nil {
 		return errorsmod.Wrapf(types.ErrCallbackFailed, "EVM returned error: %s", err.Error())

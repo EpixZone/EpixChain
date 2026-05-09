@@ -4,29 +4,25 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-
 	dbm "github.com/cosmos/cosmos-db"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
-
 	"github.com/cosmos/evm"
 	"github.com/cosmos/evm/evmd"
-	evmmempool "github.com/cosmos/evm/mempool"
 	srvflags "github.com/cosmos/evm/server/flags"
 	"github.com/cosmos/evm/testutil/constants"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 
-	"cosmossdk.io/log"
+	"cosmossdk.io/log/v2"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	simutils "github.com/cosmos/cosmos-sdk/testutil/sims"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-// CreateEvmd creates an evm app for regular integration tests (non-mempool)
-// This version uses a noop mempool to avoid state issues during transaction processing
+// CreateEvmd creates an evm app for integration tests
 func CreateEvmd(chainID string, evmChainID uint64, customBaseAppOptions ...func(*baseapp.BaseApp)) evm.EvmApp {
 	// A temporary home directory is created and used to prevent race conditions
 	// related to home directory locks in chains that use the WASM module.
@@ -46,7 +42,6 @@ func CreateEvmd(chainID string, evmChainID uint64, customBaseAppOptions ...func(
 	app := evmd.NewExampleApp(
 		logger,
 		db,
-		nil,
 		loadLatest,
 		appOptions,
 		baseAppOptions...,
@@ -57,8 +52,8 @@ func CreateEvmd(chainID string, evmChainID uint64, customBaseAppOptions ...func(
 		WithHeight(1).
 		WithTxConfig(app.GetTxConfig())
 
-	// Get the mempool and set the client context
-	if m, ok := app.GetMempool().(*evmmempool.ExperimentalEVMMempool); ok && m != nil {
+	// Get the mempool and set the client context if supported
+	if m, ok := app.GetMempool().(interface{ SetClientCtx(client.Context) }); ok && m != nil {
 		m.SetClientCtx(clientCtx)
 	}
 
@@ -76,7 +71,6 @@ func SetupEvmd() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	app := evmd.NewExampleApp(
 		log.NewNopLogger(),
 		dbm.NewMemDB(),
-		nil,
 		true,
 		NewAppOptionsWithFlagHomeAndChainID(defaultNodeHome, constants.EighteenDecimalsChainID),
 	)
@@ -97,7 +91,9 @@ func SetupEvmd() (ibctesting.TestingApp, map[string]json.RawMessage) {
 
 func NewAppOptionsWithFlagHomeAndChainID(home string, evmChainID uint64) simutils.AppOptionsMap {
 	return simutils.AppOptionsMap{
-		flags.FlagHome:      home,
-		srvflags.EVMChainID: evmChainID,
+		flags.FlagHome:                              home,
+		srvflags.EVMChainID:                         evmChainID,
+		srvflags.EVMMempoolInsertQueueSize:          5000,
+		srvflags.EVMMempoolPendingTxProposalTimeout: "250ms",
 	}
 }

@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"os"
+	goruntime "runtime"
 
-	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cast"
 
+	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
 
@@ -18,6 +18,7 @@ import (
 	_ "github.com/cosmos/evm/crypto/ethsecp256k1"
 
 	abci "github.com/cometbft/cometbft/abci/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	dbm "github.com/cosmos/cosmos-db"
 	evmante "github.com/cosmos/evm/ante"
@@ -42,12 +43,6 @@ import (
 	"github.com/cosmos/evm/x/epixmint"
 	epixmintkeeper "github.com/cosmos/evm/x/epixmint/keeper"
 	epixminttypes "github.com/cosmos/evm/x/epixmint/types"
-	"github.com/cosmos/evm/x/ibc/transfer"
-	transferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
-	transferv2 "github.com/cosmos/evm/x/ibc/transfer/v2"
-	"github.com/cosmos/evm/x/precisebank"
-	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
-	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
 	"github.com/cosmos/evm/x/topholders"
 	topholderskeeper "github.com/cosmos/evm/x/topholders/keeper"
 	topholderstypes "github.com/cosmos/evm/x/topholders/types"
@@ -57,38 +52,33 @@ import (
 	"github.com/cosmos/evm/x/xid"
 	xidkeeper "github.com/cosmos/evm/x/xid/keeper"
 	xidtypes "github.com/cosmos/evm/x/xid/types"
+
 	"github.com/cosmos/evm/x/vm"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
+	vmrunner "github.com/cosmos/evm/x/vm/runner"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/cosmos/gogoproto/proto"
-	ibccallbacks "github.com/cosmos/ibc-go/v10/modules/apps/callbacks"
-	ibctransfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
-	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v10/modules/core"
-	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
-	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
-	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
-	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	ibccallbacks "github.com/cosmos/ibc-go/v11/modules/apps/callbacks"
+	transfer "github.com/cosmos/ibc-go/v11/modules/apps/transfer"
+	transferkeeper "github.com/cosmos/ibc-go/v11/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	transferv2 "github.com/cosmos/ibc-go/v11/modules/apps/transfer/v2"
+	ibc "github.com/cosmos/ibc-go/v11/modules/core"
+	porttypes "github.com/cosmos/ibc-go/v11/modules/core/05-port/types"
+	ibcapi "github.com/cosmos/ibc-go/v11/modules/core/api"
+	ibcexported "github.com/cosmos/ibc-go/v11/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v11/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v11/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 	"cosmossdk.io/client/v2/autocli"
 	"cosmossdk.io/core/appmodule"
-	"cosmossdk.io/log"
-	storetypes "cosmossdk.io/store/types"
-	"cosmossdk.io/x/evidence"
-	evidencekeeper "cosmossdk.io/x/evidence/keeper"
-	evidencetypes "cosmossdk.io/x/evidence/types"
-	"cosmossdk.io/x/feegrant"
-	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
-	feegrantmodule "cosmossdk.io/x/feegrant/module"
-	"cosmossdk.io/x/upgrade"
-	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
+	"cosmossdk.io/log/v2"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/baseapp/txnrunner"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
@@ -101,6 +91,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	testdata_pulsar "github.com/cosmos/cosmos-sdk/testutil/testdata/testpb"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
@@ -129,6 +120,12 @@ import (
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	"github.com/cosmos/cosmos-sdk/x/evidence"
+	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
+	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
+	"github.com/cosmos/cosmos-sdk/x/feegrant"
+	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
+	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/gov"
@@ -144,6 +141,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/cosmos-sdk/x/upgrade"
+	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
 func init() {
@@ -195,20 +195,19 @@ type EVMD struct {
 
 	// IBC keepers
 	IBCKeeper      *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	TransferKeeper transferkeeper.Keeper
+	TransferKeeper *transferkeeper.Keeper
 	CallbackKeeper ibccallbackskeeper.ContractKeeper
 
 	// Cosmos EVM keepers
 	FeeMarketKeeper   feemarketkeeper.Keeper
 	EVMKeeper         *evmkeeper.Keeper
 	Erc20Keeper       erc20keeper.Keeper
-	PreciseBankKeeper precisebankkeeper.Keeper
 	EpixMintKeeper    epixmintkeeper.Keeper
 	TopHoldersKeeper  topholderskeeper.Keeper // Optional: only initialized if enabled in config
 	topHoldersEnabled bool                    // Track if TopHolders module is enabled
 	XIDKeeper         xidkeeper.Keeper
 	VRFKeeper         vrfkeeper.Keeper
-	EVMMempool        *evmmempool.ExperimentalEVMMempool
+	EVMMempool        sdkmempool.ExtMempool
 
 	// the module manager
 	ModuleManager      *module.Manager
@@ -225,7 +224,6 @@ type EVMD struct {
 func NewExampleApp(
 	logger log.Logger,
 	db dbm.DB,
-	traceStore io.Writer,
 	loadLatest bool,
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
@@ -237,16 +235,22 @@ func NewExampleApp(
 	legacyAmino := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry
 	txConfig := encodingConfig.TxConfig
+	txDecoder := encodingConfig.TxConfig.TxDecoder()
+
+	// enable optimistic execution
+	baseAppOptions = append(
+		baseAppOptions,
+		baseapp.SetOptimisticExecution(),
+	)
 
 	bApp := baseapp.NewBaseApp(
 		appName,
 		logger,
 		db,
 		// use transaction decoder to support the sdk.Tx interface instead of sdk.StdTx
-		encodingConfig.TxConfig.TxDecoder(),
+		txDecoder,
 		baseAppOptions...,
 	)
-	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 	bApp.SetTxEncoder(txConfig.TxEncoder())
@@ -263,11 +267,13 @@ func NewExampleApp(
 		// ibc keys
 		ibcexported.StoreKey, ibctransfertypes.StoreKey,
 		// Cosmos EVM store keys
-		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey, precisebanktypes.StoreKey, epixminttypes.StoreKey,
+		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey,
+		// EpixChain custom modules
+		epixminttypes.StoreKey,
 		xidtypes.StoreKey,
 		vrftypes.StoreKey,
 	}
-	
+
 	keys := storetypes.NewKVStoreKeys(storeKeys...)
 	oKeys := storetypes.NewObjectStoreKeys(banktypes.ObjectStoreKey, evmtypes.ObjectKey)
 
@@ -278,6 +284,9 @@ func NewExampleApp(
 	for _, k := range oKeys {
 		nonTransientKeys = append(nonTransientKeys, k)
 	}
+
+	// disable block gas meter
+	bApp.SetDisableBlockGasMeter(true)
 
 	// load state streaming if enabled
 	if err := bApp.RegisterStreamingServices(appOpts, keys); err != nil {
@@ -466,14 +475,16 @@ func NewExampleApp(
 		keys[feemarkettypes.StoreKey],
 	)
 
-	// Set up PreciseBank keeper
-	//
-	// NOTE: PreciseBank is not needed if SDK use 18 decimals for gas coin. Use BankKeeper instead.
-	app.PreciseBankKeeper = precisebankkeeper.NewKeeper(
+	// instantiate IBC transfer keeper before the EVM keeper so precompiles receive a non-nil reference
+	app.TransferKeeper = transferkeeper.NewKeeper(
 		appCodec,
-		keys[precisebanktypes.StoreKey],
-		app.BankKeeper,
+		evmaddress.NewEvmCodec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
+		runtime.NewKVStoreService(keys[ibctransfertypes.StoreKey]),
+		app.IBCKeeper.ChannelKeeper,
+		app.MsgServiceRouter(),
 		app.AccountKeeper,
+		app.BankKeeper,
+		authAddr,
 	)
 
 	// Set up EpixMint keeper
@@ -536,7 +547,7 @@ func NewExampleApp(
 		appCodec, keys[evmtypes.StoreKey], oKeys[evmtypes.ObjectKey], nonTransientKeys,
 		authtypes.NewModuleAddress(govtypes.ModuleName),
 		app.AccountKeeper,
-		app.PreciseBankKeeper,
+		app.BankKeeper,
 		app.StakingKeeper,
 		app.FeeMarketKeeper,
 		&app.ConsensusParamsKeeper,
@@ -546,9 +557,9 @@ func NewExampleApp(
 		precompiletypes.DefaultStaticPrecompiles(
 			*app.StakingKeeper,
 			app.DistrKeeper,
-			app.PreciseBankKeeper,
+			app.BankKeeper,
 			&app.Erc20Keeper,
-			&app.TransferKeeper,
+			app.TransferKeeper,
 			app.IBCKeeper.ChannelKeeper,
 			app.IBCKeeper.ClientKeeper,
 			app.GovKeeper,
@@ -559,28 +570,18 @@ func NewExampleApp(
 		),
 	)
 
+	// enable virtual fee collection
+	app.EVMKeeper.EnableVirtualFeeCollection()
+
 	app.Erc20Keeper = erc20keeper.NewKeeper(
 		keys[erc20types.StoreKey],
 		appCodec,
 		authtypes.NewModuleAddress(govtypes.ModuleName),
 		app.AccountKeeper,
-		app.PreciseBankKeeper,
+		app.BankKeeper,
 		app.EVMKeeper,
 		app.StakingKeeper,
-		&app.TransferKeeper,
-	)
-
-	// instantiate IBC transfer keeper AFTER the ERC-20 keeper to use it in the instantiation
-	app.TransferKeeper = transferkeeper.NewKeeper(
-		appCodec,
-		evmaddress.NewEvmCodec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
-		runtime.NewKVStoreService(keys[ibctransfertypes.StoreKey]),
-		app.IBCKeeper.ChannelKeeper,
-		app.MsgServiceRouter(),
-		app.AccountKeeper,
-		app.BankKeeper,
-		app.Erc20Keeper, // Add ERC20 Keeper for ERC20 transfers
-		authAddr,
+		app.TransferKeeper,
 	)
 
 	/*
@@ -635,6 +636,8 @@ func NewExampleApp(
 	// Override the ICS20 app module
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
 
+	vmModule := vm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.BankKeeper, app.AccountKeeper.AddressCodec())
+
 	/****  Module Options ****/
 
 	// NOTE: Any module instantiated in the module manager that is later modified
@@ -662,10 +665,9 @@ func NewExampleApp(
 		ibctm.NewAppModule(tmLightClientModule),
 		transferModule,
 		// Cosmos EVM modules
-		vm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.BankKeeper, app.AccountKeeper.AddressCodec()),
+		vmModule,
 		feemarket.NewAppModule(app.FeeMarketKeeper),
 		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
-		precisebank.NewAppModule(app.PreciseBankKeeper, app.BankKeeper, app.AccountKeeper),
 		epixmint.NewAppModule(app.EpixMintKeeper),
 		xid.NewAppModule(app.XIDKeeper),
 		vrf.NewAppModule(app.VRFKeeper),
@@ -690,7 +692,7 @@ func NewExampleApp(
 				paramsclient.ProposalHandler,
 			},
 		),
-		ibctransfertypes.ModuleName: transfer.AppModuleBasic{AppModuleBasic: &ibctransfer.AppModuleBasic{}},
+		ibctransfertypes.ModuleName: transfer.AppModuleBasic{},
 	}
 
 	// Conditionally add TopHolders module basic if enabled
@@ -744,7 +746,6 @@ func NewExampleApp(
 		authtypes.ModuleName, banktypes.ModuleName, govtypes.ModuleName, genutiltypes.ModuleName,
 		authz.ModuleName, feegrant.ModuleName,
 		consensusparamtypes.ModuleName,
-		precisebanktypes.ModuleName,
 		vestingtypes.ModuleName,
 		xidtypes.ModuleName,
 		vrftypes.ModuleName,
@@ -779,7 +780,6 @@ func NewExampleApp(
 	endBlockers = append(endBlockers,
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName, upgradetypes.ModuleName, consensusparamtypes.ModuleName,
-		precisebanktypes.ModuleName,
 		vestingtypes.ModuleName,
 		xidtypes.ModuleName,
 		vrftypes.ModuleName,
@@ -803,7 +803,6 @@ func NewExampleApp(
 		evmtypes.ModuleName,
 		feemarkettypes.ModuleName,
 		erc20types.ModuleName,
-		precisebanktypes.ModuleName,
 		xidtypes.ModuleName,
 		vrftypes.ModuleName,
 	}
@@ -914,7 +913,25 @@ func NewExampleApp(
 			logger.Error("error on loading last version", "err", err)
 			os.Exit(1)
 		}
+
+		ctx := app.NewContextLegacy(true, cmtproto.Header{
+			Height:  app.LastBlockHeight(),
+			ChainID: app.ChainID(),
+		})
+
+		// set global evm variables from KV store
+		vmModule.HydrateGlobals(ctx)
 	}
+
+	vmrunner.SetRunner(bApp, txnrunner.NewSTMRunner(
+		txDecoder,
+		nonTransientKeys,
+		min(goruntime.GOMAXPROCS(0), goruntime.NumCPU()),
+		true,
+		func(ms storetypes.MultiStore) string {
+			return app.EVMKeeper.GetParams(sdk.NewContext(ms, cmtproto.Header{}, false, log.NewNopLogger())).EvmDenom
+		},
+	))
 
 	return app
 }
@@ -1112,7 +1129,9 @@ func (app *EVMD) RegisterTendermintService(clientCtx client.Context) {
 }
 
 func (app *EVMD) RegisterNodeService(clientCtx client.Context, cfg config.Config) {
-	node.RegisterNodeService(clientCtx, app.GRPCQueryRouter(), cfg)
+	node.RegisterNodeService(clientCtx, app.GRPCQueryRouter(), cfg, func() int64 {
+		return app.CommitMultiStore().EarliestVersion()
+	})
 }
 
 // ---------------------------------------------
@@ -1190,19 +1209,15 @@ func (app *EVMD) GetMintKeeper() mintkeeper.Keeper {
 	return app.MintKeeper
 }
 
-func (app *EVMD) GetPreciseBankKeeper() *precisebankkeeper.Keeper {
-	return &app.PreciseBankKeeper
-}
-
 func (app *EVMD) GetCallbackKeeper() ibccallbackskeeper.ContractKeeper {
 	return app.CallbackKeeper
 }
 
-func (app *EVMD) GetTransferKeeper() transferkeeper.Keeper {
+func (app *EVMD) GetTransferKeeper() *transferkeeper.Keeper {
 	return app.TransferKeeper
 }
 
-func (app *EVMD) SetTransferKeeper(transferKeeper transferkeeper.Keeper) {
+func (app *EVMD) SetTransferKeeper(transferKeeper *transferkeeper.Keeper) {
 	app.TransferKeeper = transferKeeper
 }
 
@@ -1211,7 +1226,7 @@ func (app *EVMD) GetMempool() sdkmempool.ExtMempool {
 }
 
 func (app *EVMD) GetAnteHandler() sdk.AnteHandler {
-	return app.BaseApp.AnteHandler()
+	return app.AnteHandler()
 }
 
 // GetTxConfig implements the TestingApp interface.
@@ -1222,7 +1237,7 @@ func (app *EVMD) GetTxConfig() client.TxConfig {
 // Close unsubscribes from the CometBFT event bus (if set) and closes the mempool and underlying BaseApp.
 func (app *EVMD) Close() error {
 	var err error
-	if m, ok := app.GetMempool().(*evmmempool.ExperimentalEVMMempool); ok && m != nil {
+	if m, ok := app.EVMMempool.(*evmmempool.Mempool); ok && m != nil {
 		app.Logger().Info("Shutting down mempool")
 		err = m.Close()
 	}

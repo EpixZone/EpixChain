@@ -5,22 +5,21 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/cosmos/evm/evmd/config"
-	srvflags "github.com/cosmos/evm/server/flags"
-	testconstants "github.com/cosmos/evm/testutil/constants"
-	"github.com/cosmos/evm/testutil/integration/evm/network"
-	"github.com/cosmos/evm/x/vm/types"
-
 	"github.com/stretchr/testify/require"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmttypes "github.com/cometbft/cometbft/types"
 
 	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/evm/evmd/config"
+	srvflags "github.com/cosmos/evm/server/flags"
+	testconstants "github.com/cosmos/evm/testutil/constants"
+	"github.com/cosmos/evm/testutil/integration/evm/network"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
-	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	"github.com/cosmos/evm/x/vm/types"
+	ibctesting "github.com/cosmos/ibc-go/v11/testing"
 
-	"cosmossdk.io/log"
+	"cosmossdk.io/log/v2"
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -60,7 +59,7 @@ func setup(withGenesis bool, invCheckPeriod uint, chainID string, evmChainID uin
 	appOptions[server.FlagInvCheckPeriod] = invCheckPeriod
 	appOptions[srvflags.EVMChainID] = evmChainID
 
-	app := NewExampleApp(log.NewNopLogger(), db, nil, true, appOptions, baseapp.SetChainID(chainID))
+	app := NewExampleApp(log.NewNopLogger(), db, true, appOptions, baseapp.SetChainID(chainID))
 	if withGenesis {
 		return app, app.DefaultGenesis()
 	}
@@ -142,7 +141,7 @@ func SetupTestingApp(chainID string) func() (ibctesting.TestingApp, map[string]j
 		db := dbm.NewMemDB()
 		app := NewExampleApp(
 			log.NewNopLogger(),
-			db, nil, true,
+			db, true,
 			simtestutil.NewAppOptionsWithFlagHome(defaultNodeHome),
 			baseapp.SetChainID(chainID),
 		)
