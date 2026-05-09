@@ -4,7 +4,7 @@ go 1.25.9
 
 require (
 	cosmossdk.io/api v1.0.0
-	cosmossdk.io/client/v2 v2.0.0-beta.10.0.20260227212600-39d4711b8970
+	cosmossdk.io/client/v2 v2.11.0
 	cosmossdk.io/core v1.1.0
 	cosmossdk.io/errors v1.1.0
 	cosmossdk.io/log/v2 v2.1.0
@@ -18,6 +18,7 @@ require (
 	github.com/cosmos/gogoproto v1.7.2
 	github.com/cosmos/ibc-go/v11 v11.0.0
 	github.com/ethereum/go-ethereum v1.16.8
+	github.com/gorilla/mux v1.8.1
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.38.0
 	github.com/spf13/cast v1.10.0
@@ -161,7 +162,6 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.14 // indirect
 	github.com/googleapis/gax-go/v2 v2.22.0 // indirect
 	github.com/gorilla/handlers v1.5.2 // indirect
-	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect

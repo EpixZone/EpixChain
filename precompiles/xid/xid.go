@@ -107,6 +107,11 @@ func (p Precompile) RequiredGas(input []byte) uint64 {
 	return p.Precompile.RequiredGas(input, p.IsTransaction(method))
 }
 
+// Name returns the name of the precompile, used by go-ethereum's PrecompiledContract interface.
+func (Precompile) Name() string {
+	return "xid"
+}
+
 // Run executes the precompile
 func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readonly bool) ([]byte, error) {
 	return p.RunNativeAction(evm, contract, func(ctx sdk.Context) ([]byte, error) {

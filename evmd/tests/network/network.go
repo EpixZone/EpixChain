@@ -32,7 +32,6 @@ import (
 	evmconfig "github.com/cosmos/evm/evmd/config"
 	"github.com/cosmos/evm/server/config"
 	evmtestutil "github.com/cosmos/evm/testutil"
-	testconstants "github.com/cosmos/evm/testutil/constants"
 	"github.com/cosmos/evm/utils"
 
 	"cosmossdk.io/log/v2"
