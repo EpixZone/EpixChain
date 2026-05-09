@@ -11,9 +11,8 @@ import (
 	epixminttypes "github.com/cosmos/evm/x/epixmint/types"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
-	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 
 	clienthelpers "cosmossdk.io/client/v2/helpers"
 
@@ -44,11 +43,10 @@ var maccPerms = map[string][]string{
 	govtypes.ModuleName:            {authtypes.Burner},
 
 	// Cosmos EVM modules
-	epixminttypes.ModuleName:    {authtypes.Minter},
-	evmtypes.ModuleName:         {authtypes.Minter, authtypes.Burner},
-	feemarkettypes.ModuleName:   nil,
-	erc20types.ModuleName:       {authtypes.Minter, authtypes.Burner},
-	precisebanktypes.ModuleName: {authtypes.Minter, authtypes.Burner},
+	epixminttypes.ModuleName:  {authtypes.Minter},
+	evmtypes.ModuleName:       {authtypes.Minter, authtypes.Burner},
+	feemarkettypes.ModuleName: nil,
+	erc20types.ModuleName:     {authtypes.Minter, authtypes.Burner},
 }
 
 // BlockedAddresses returns all the app's blocked account addresses.

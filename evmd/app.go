@@ -491,7 +491,7 @@ func NewExampleApp(
 	app.EpixMintKeeper = epixmintkeeper.NewKeeper(
 		appCodec,
 		keys[epixminttypes.StoreKey],
-		app.PreciseBankKeeper, // Use PreciseBankKeeper for minting
+		app.BankKeeper, // v0.7: BankKeeper directly (Epix is 18-decimal so no precisebank wrapper needed)
 		app.AccountKeeper,
 		app.DistrKeeper,
 		app.StakingKeeper,
@@ -520,7 +520,7 @@ func NewExampleApp(
 		appCodec,
 		keys[xidtypes.StoreKey],
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		app.PreciseBankKeeper,
+		app.BankKeeper,
 		app.AccountKeeper,
 		app.StakingKeeper,
 	)

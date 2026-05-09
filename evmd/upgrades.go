@@ -42,7 +42,6 @@ func (app EVMD) RegisterUpgradeHandlers() {
 		UpgradeName_v0_5_1,
 		func(ctx context.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 			sdkCtx := sdk.UnwrapSDKContext(ctx)
-<<<<<<< HEAD
 			sdkCtx.Logger().Info("Starting EpixChain v0.5.1 upgrade with recovery fix...")
 
 			// Apply the recovery fix
