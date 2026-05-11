@@ -14,8 +14,6 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 
-	clienthelpers "cosmossdk.io/client/v2/helpers"
-
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -23,14 +21,6 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
-
-func MustGetDefaultNodeHome() string {
-	defaultNodeHome, err := clienthelpers.GetNodeHomeDirectory(".epixd")
-	if err != nil {
-		panic(err)
-	}
-	return defaultNodeHome
-}
 
 // module account permissions
 var maccPerms = map[string][]string{

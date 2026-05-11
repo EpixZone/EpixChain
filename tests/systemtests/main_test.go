@@ -5,18 +5,15 @@ package systemtests
 import (
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/tools/systemtests"
+
+	"github.com/cosmos/evm/evmd/config"
 	"github.com/cosmos/evm/tests/systemtests/accountabstraction"
 	"github.com/cosmos/evm/tests/systemtests/chainupgrade"
-
-	"cosmossdk.io/systemtests"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/evm/config"
 	"github.com/cosmos/evm/tests/systemtests/eip712"
-
 	"github.com/cosmos/evm/tests/systemtests/mempool"
 	"github.com/cosmos/evm/tests/systemtests/suite"
-
-	"github.com/cosmos/cosmos-sdk/tools/systemtests"
 )
 
 func TestMain(m *testing.M) {
