@@ -665,7 +665,10 @@ func setupIteratorTest(t *testing.T) (client.TxConfig, *Blockchain) {
 	require.NoError(t, err)
 
 	coinInfo := constants.ChainsCoinInfo[chainID]
+	// Override both Denom and ExtendedDenom together; v0.7's
+	// setTestingEVMCoinInfo enforces that they match for 18-decimal chains.
 	coinInfo.Denom = testBondDenom
+	coinInfo.ExtendedDenom = testBondDenom
 
 	err = configurator.WithEVMCoinInfo(coinInfo).Configure()
 	require.NoError(t, err)
@@ -812,6 +815,7 @@ func makeBlockchain(t *testing.T, baseFee *big.Int) *Blockchain {
 
 	coinInfo := constants.ChainsCoinInfo[constants.EighteenDecimalsChainID]
 	coinInfo.Denom = testBondDenom
+	coinInfo.ExtendedDenom = testBondDenom
 
 	blockchain := &Blockchain{
 		logger:        log.NewNopLogger(),

@@ -30,7 +30,7 @@ require (
 	cloud.google.com/go/monitoring v1.27.0 // indirect
 	cloud.google.com/go/storage v1.62.1 // indirect
 	cosmossdk.io/api v1.0.0 // indirect
-	cosmossdk.io/client/v2 v2.0.0-beta.10.0.20260227212600-39d4711b8970 // indirect
+	cosmossdk.io/client/v2 v2.11.0 // indirect
 	cosmossdk.io/collections v1.4.0 // indirect
 	cosmossdk.io/core v1.1.0 // indirect
 	cosmossdk.io/depinject v1.2.1 // indirect

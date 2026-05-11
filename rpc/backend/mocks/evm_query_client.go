@@ -1135,6 +1135,154 @@ func (_c *EVMQueryClient_ValidatorAccount_Call) RunAndReturn(run func(context.Co
 	return _c
 }
 
+// HexToBech32 provides a mock function with given fields: ctx, in, opts
+func (_m *EVMQueryClient) HexToBech32(ctx context.Context, in *types.QueryHexToBech32Request, opts ...grpc.CallOption) (*types.QueryHexToBech32Response, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HexToBech32")
+	}
+
+	var r0 *types.QueryHexToBech32Response
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *types.QueryHexToBech32Request, ...grpc.CallOption) (*types.QueryHexToBech32Response, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *types.QueryHexToBech32Request, ...grpc.CallOption) *types.QueryHexToBech32Response); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*types.QueryHexToBech32Response)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *types.QueryHexToBech32Request, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// EVMQueryClient_HexToBech32_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HexToBech32'
+type EVMQueryClient_HexToBech32_Call struct {
+	*mock.Call
+}
+
+// HexToBech32 is a helper method to define mock.On call
+//   - ctx context.Context
+//   - in *types.QueryHexToBech32Request
+//   - opts ...grpc.CallOption
+func (_e *EVMQueryClient_Expecter) HexToBech32(ctx interface{}, in interface{}, opts ...interface{}) *EVMQueryClient_HexToBech32_Call {
+	return &EVMQueryClient_HexToBech32_Call{Call: _e.mock.On("HexToBech32",
+		append([]interface{}{ctx, in}, opts...)...)}
+}
+
+func (_c *EVMQueryClient_HexToBech32_Call) Run(run func(ctx context.Context, in *types.QueryHexToBech32Request, opts ...grpc.CallOption)) *EVMQueryClient_HexToBech32_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]grpc.CallOption, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(grpc.CallOption)
+			}
+		}
+		run(args[0].(context.Context), args[1].(*types.QueryHexToBech32Request), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *EVMQueryClient_HexToBech32_Call) Return(_a0 *types.QueryHexToBech32Response, _a1 error) *EVMQueryClient_HexToBech32_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *EVMQueryClient_HexToBech32_Call) RunAndReturn(run func(context.Context, *types.QueryHexToBech32Request, ...grpc.CallOption) (*types.QueryHexToBech32Response, error)) *EVMQueryClient_HexToBech32_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Bech32ToHex provides a mock function with given fields: ctx, in, opts
+func (_m *EVMQueryClient) Bech32ToHex(ctx context.Context, in *types.QueryBech32ToHexRequest, opts ...grpc.CallOption) (*types.QueryBech32ToHexResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Bech32ToHex")
+	}
+
+	var r0 *types.QueryBech32ToHexResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *types.QueryBech32ToHexRequest, ...grpc.CallOption) (*types.QueryBech32ToHexResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *types.QueryBech32ToHexRequest, ...grpc.CallOption) *types.QueryBech32ToHexResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*types.QueryBech32ToHexResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *types.QueryBech32ToHexRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// EVMQueryClient_Bech32ToHex_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Bech32ToHex'
+type EVMQueryClient_Bech32ToHex_Call struct {
+	*mock.Call
+}
+
+// Bech32ToHex is a helper method to define mock.On call
+//   - ctx context.Context
+//   - in *types.QueryBech32ToHexRequest
+//   - opts ...grpc.CallOption
+func (_e *EVMQueryClient_Expecter) Bech32ToHex(ctx interface{}, in interface{}, opts ...interface{}) *EVMQueryClient_Bech32ToHex_Call {
+	return &EVMQueryClient_Bech32ToHex_Call{Call: _e.mock.On("Bech32ToHex",
+		append([]interface{}{ctx, in}, opts...)...)}
+}
+
+func (_c *EVMQueryClient_Bech32ToHex_Call) Run(run func(ctx context.Context, in *types.QueryBech32ToHexRequest, opts ...grpc.CallOption)) *EVMQueryClient_Bech32ToHex_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]grpc.CallOption, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(grpc.CallOption)
+			}
+		}
+		run(args[0].(context.Context), args[1].(*types.QueryBech32ToHexRequest), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *EVMQueryClient_Bech32ToHex_Call) Return(_a0 *types.QueryBech32ToHexResponse, _a1 error) *EVMQueryClient_Bech32ToHex_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *EVMQueryClient_Bech32ToHex_Call) RunAndReturn(run func(context.Context, *types.QueryBech32ToHexRequest, ...grpc.CallOption) (*types.QueryBech32ToHexResponse, error)) *EVMQueryClient_Bech32ToHex_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewEVMQueryClient creates a new instance of EVMQueryClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewEVMQueryClient(t interface {
