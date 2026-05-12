@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/evm/testutil/integration/evm/grpc"
 	"github.com/cosmos/evm/testutil/integration/evm/network"
 	testkeyring "github.com/cosmos/evm/testutil/keyring"
+	epixminttypes "github.com/cosmos/evm/x/epixmint/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	"cosmossdk.io/math"
@@ -92,6 +93,19 @@ func (s *PrecompileTestSuite) SetupTest() {
 	mintGen := minttypes.DefaultGenesisState()
 	mintGen.Params.MintDenom = testconstants.ExampleAttoDenom
 	customGen[minttypes.ModuleName] = mintGen
+
+	// EpixChain: explicitly zero EpixMint inflation for this suite. The
+	// distribution precompile tests allocate rewards directly via the
+	// distribution keeper (see prepareStakingRewards) and assert exact
+	// reward / commission / community-pool amounts. If EpixMint were active
+	// it would auto-distribute aepix every block (98% to validators, 2% to
+	// community pool), polluting those exact-amount assertions and breaking
+	// "no rewards yet" / "empty community pool" cases. EpixMint's own
+	// behavior is covered separately in tests/integration/precompiles/distribution/test_epixmint.go.
+	epixmintGen := epixminttypes.DefaultGenesisState()
+	epixmintGen.Params.MintDenom = testconstants.ExampleAttoDenom
+	epixmintGen.Params.InitialAnnualMintAmount = sdkmath.ZeroInt()
+	customGen[epixminttypes.ModuleName] = epixmintGen
 
 	operatorsAddr := make([]sdk.AccAddress, 3)
 	for i, k := range s.validatorsKeys {

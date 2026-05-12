@@ -21,3 +21,11 @@ func TestDistributionPrecompileIntegrationTestSuite(t *testing.T) {
 	create := testapp.ToEvmAppCreator[evm.DistributionPrecompileApp](integration.CreateEvmd, "evm.DistributionPrecompileApp")
 	distribution.TestPrecompileIntegrationTestSuite(t, create)
 }
+
+// TestEpixMintDistributionTestSuite verifies the distribution precompile
+// against EpixChain's actual inflation source (x/epixmint). See
+// tests/integration/precompiles/distribution/test_epixmint.go for details.
+func TestEpixMintDistributionTestSuite(t *testing.T) {
+	create := testapp.ToEvmAppCreator[evm.DistributionPrecompileApp](integration.CreateEvmd, "evm.DistributionPrecompileApp")
+	distribution.TestEpixMintDistributionTestSuiteRunner(t, create)
+}
