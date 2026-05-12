@@ -30,7 +30,7 @@ const UpgradeName_v0_5_5 = "v0.5.5"
 // UpgradeName_v0_7_0 marks the migration from EpixChain v0.5.5 (cosmos/evm v0.5/v0.6 hybrid)
 // to v0.7.0: drop x/ibc/transfer override, drop x/precisebank, ibc-go v10 → v11,
 // Krakatoa app-side mempool, BlockSTM + virtual fees, optimistic execution.
-const UpgradeName_v0_7_0 = "v0.6.0-to-v0.7.0"
+const UpgradeName_v0_7_0 = "v0.5.5-to-v0.7.0"
 
 // UpgradeName is the current upgrade (for store upgrades)
 const UpgradeName = UpgradeName_v0_7_0
