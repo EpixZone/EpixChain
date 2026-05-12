@@ -651,7 +651,15 @@ func NewExampleApp(
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, nil),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, nil),
-		// mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, nil), // Disabled in favor of epixmint
+		// mint.NewAppModule disabled in favor of epixmint. The mint Keeper
+		// is still constructed (so callers holding the keeper handle keep
+		// compiling) but the module is not registered with the manager —
+		// no BeginBlocker, no InitGenesis. Queries against the mint Inflation
+		// endpoint fail with "collections: not found" since the Minter store
+		// is never seeded; testutil/integration/evm/utils/staking.go treats
+		// that as a non-fatal signal and falls back to polling for actual
+		// rewards (which EpixMint allocates directly via the distribution
+		// module).
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil, app.interfaceRegistry),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil),
 		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, nil),
