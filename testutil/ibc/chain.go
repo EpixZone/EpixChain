@@ -20,6 +20,7 @@ import (
 
 	"github.com/cosmos/evm"
 	"github.com/cosmos/evm/crypto/ethsecp256k1"
+	testconstants "github.com/cosmos/evm/testutil/constants"
 	"github.com/cosmos/evm/testutil/tx"
 	"github.com/cosmos/evm/x/vm/types"
 	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
@@ -140,12 +141,26 @@ func NewTestChainWithValSet(tb testing.TB, isEVM bool, coord *Coordinator, chain
 		require.True(tb, ok)
 
 		// add sender account
+		//
+		// EpixChain customisation: also seed each genesis account with the
+		// chain's actual bond denom (constants.ExampleAttoDenom = "aepix").
+		// The IBC tests' TestMiddlewareTestSuite / TestICS20Transfer*TestSuite
+		// query the EVMD staking keeper for its bond denom (which is "aepix"
+		// per evmd/tests/integration/create_app.go) and then attempt to
+		// transfer that denom; without this seeding the accounts have only
+		// "stake" + "aatom" and the transfer fails with "spendable balance
+		// 0aepix is smaller than ...".
+		coins := sdk.NewCoins(
+			sdk.NewCoin(sdk.DefaultBondDenom, amount),
+			sdk.NewCoin(types.DefaultEVMExtendedDenom, amount),
+		)
+		if testconstants.ExampleAttoDenom != sdk.DefaultBondDenom &&
+			testconstants.ExampleAttoDenom != types.DefaultEVMExtendedDenom {
+			coins = coins.Add(sdk.NewCoin(testconstants.ExampleAttoDenom, amount))
+		}
 		balance := banktypes.Balance{
 			Address: acc.GetAddress().String(),
-			Coins: sdk.NewCoins(
-				sdk.NewCoin(sdk.DefaultBondDenom, amount),
-				sdk.NewCoin(types.DefaultEVMExtendedDenom, amount),
-			),
+			Coins:   coins,
 		}
 
 		genAccs = append(genAccs, acc)
