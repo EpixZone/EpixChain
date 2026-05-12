@@ -4,7 +4,7 @@
       "@type": "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
       "authority": "epix10d07y265gmmuvt4z0w9aw880jnsr700j0fas3g",
       "plan": {
-        "name": "v0.5.5-to-v0.7.0",
+        "name": "v0.7.0",
         "height": "3925000",
         "info": "https://github.com/EpixZone/EpixChain/releases/tag/v0.7.0"
       }
