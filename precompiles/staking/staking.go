@@ -14,9 +14,9 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	"cosmossdk.io/core/address"
-	"cosmossdk.io/log"
-	storetypes "cosmossdk.io/store/types"
+	"cosmossdk.io/log/v2"
 
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -72,6 +72,10 @@ func NewPrecompile(
 		stakingQuerier:   stakingQuerier,
 		addrCdc:          addrCdc,
 	}
+}
+
+func (Precompile) Name() string {
+	return "staking"
 }
 
 // RequiredGas returns the required bare minimum gas to execute the precompile.

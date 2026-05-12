@@ -117,9 +117,8 @@ func (b *Backend) EthMsgsFromCometBlock(
 	for i, tx := range block.Txs {
 		// Check if tx exists on EVM by cross checking with blockResults:
 		//  - Include unsuccessful tx that exceeds block gas limit
-		//  - Include unsuccessful tx that failed when committing changes to stateDB
 		//  - Exclude unsuccessful tx with any other error but ExceedBlockGasLimit
-		if !rpctypes.TxSucessOrExpectedFailure(txResults[i]) {
+		if !evmtypes.TxSucessOrExpectedFailure(txResults[i]) {
 			b.Logger.Debug("invalid tx result code", "cosmos-hash", hexutil.Encode(tx.Hash()))
 			continue
 		}
@@ -270,31 +269,17 @@ func (b *Backend) ReceiptsFromCometBlock(
 	receipts := make([]*ethtypes.Receipt, len(msgs))
 	cumulatedGasUsed := uint64(0)
 
-	// Lazily resolved list of all eth messages in the block, used as fallback
-	// when EthTxIndex is uninitialized (-1).
-	var allEthMsgs []*evmtypes.MsgEthereumTx
-
 	for i, ethMsg := range msgs {
 		txResult, err := b.GetTxByEthHash(ctx, ethMsg.Hash())
 		if err != nil {
 			return nil, fmt.Errorf("tx not found: hash=%s, error=%s", ethMsg.Hash(), err.Error())
 		}
 
-		// Resolve EthTxIndex if uninitialized (-1), same fallback as GetTransactionByHash
+		// Resolve -1 sentinel: indexer hasn't assigned EthTxIndex yet.
+		// Use the loop index as the correct eth tx position,
+		// matching the existing fallback in GetTransactionByHash (tx_info.go).
 		if txResult.EthTxIndex == -1 {
-			if allEthMsgs == nil {
-				allEthMsgs = b.EthMsgsFromCometBlock(ctx, resBlock, blockRes)
-			}
-			txHash := ethMsg.Hash()
-			for j := range allEthMsgs {
-				if allEthMsgs[j].Hash() == txHash {
-					txResult.EthTxIndex = int32(j) //#nosec G115
-					break
-				}
-			}
-		}
-		if txResult.EthTxIndex == -1 {
-			return nil, fmt.Errorf("can't find index of ethereum tx: hash=%s", ethMsg.Hash())
+			txResult.EthTxIndex = int32(i) //#nosec G115 -- checked for int overflow already
 		}
 
 		cumulatedGasUsed += txResult.GasUsed
@@ -326,6 +311,15 @@ func (b *Backend) ReceiptsFromCometBlock(
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert tx result to eth receipt: %w", err)
+		}
+
+		if txResult.EthTxIndex == -1 {
+			var err error
+			// Fallback to find tx index by iterating all valid eth transactions
+			txResult.EthTxIndex, err = b.FindEthTxIndexByHash(ctx, ethMsg.Hash(), resBlock, blockRes)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		bloom := ethtypes.CreateBloom(&ethtypes.Receipt{Logs: logs})

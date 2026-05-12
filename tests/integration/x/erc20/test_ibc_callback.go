@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/mock"
 
 	evm "github.com/cosmos/evm"
 	"github.com/cosmos/evm/contracts"
@@ -14,17 +15,20 @@ import (
 	"github.com/cosmos/evm/utils"
 	"github.com/cosmos/evm/x/erc20/keeper"
 	"github.com/cosmos/evm/x/erc20/types"
+	erc20mocks "github.com/cosmos/evm/x/erc20/types/mocks"
 	"github.com/cosmos/evm/x/vm/statedb"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	ibcgotesting "github.com/cosmos/ibc-go/v10/testing"
-	ibcmock "github.com/cosmos/ibc-go/v10/testing/mock"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v11/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
+	ibcgotesting "github.com/cosmos/ibc-go/v11/testing"
+	ibcmock "github.com/cosmos/ibc-go/v11/testing/mock"
 
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -34,17 +38,23 @@ var erc20Denom = "erc20:0xdac17f958d2ee523a2206206994597c13d831ec7"
 
 func (s *KeeperTestSuite) TestOnRecvPacketRegistered() {
 	var ctx sdk.Context
+	// EpixChain customisation: bech32-encode local-chain recipient addresses
+	// with the running chain's actual prefix instead of upstream's hardcoded
+	// sdk.Bech32MainPrefix ("cosmos"). Our addrCodec rejects any HRP other
+	// than the configured one ("epix"), so cosmos-prefixed receivers fail
+	// the recipient parse in OnRecvPacket on a forked chain.
+	localPrefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
 	// secp256k1 account
 	secpPk := secp256k1.GenPrivKey()
 	secpAddr := sdk.AccAddress(secpPk.PubKey().Address())
-	secpAddrCosmos := sdk.MustBech32ifyAddressBytes(sdk.Bech32MainPrefix, secpAddr)
+	secpAddrCosmos := sdk.MustBech32ifyAddressBytes(localPrefix, secpAddr)
 
 	// ethsecp256k1 account
 	ethPk, err := ethsecp256k1.GenerateKey()
 	s.Require().Nil(err)
 	ethsecpAddr := sdk.AccAddress(ethPk.PubKey().Address())
 	ethsecpAddrEvmos := sdk.AccAddress(ethPk.PubKey().Address()).String()
-	ethsecpAddrCosmos := sdk.MustBech32ifyAddressBytes(sdk.Bech32MainPrefix, ethsecpAddr)
+	ethsecpAddrCosmos := sdk.MustBech32ifyAddressBytes(localPrefix, ethsecpAddr)
 
 	// Setup Cosmos <=> Cosmos EVM IBC relayer
 	sourceChannel := "channel-292"
@@ -305,7 +315,7 @@ func (s *KeeperTestSuite) TestOnRecvPacketRegistered() {
 				s.network.App.GetBankKeeper(),
 				s.network.App.GetEVMKeeper(),
 				s.network.App.GetStakingKeeper(),
-				&tranasferKeeper,
+				tranasferKeeper,
 			)
 			s.network.App.SetErc20Keeper(erc20Keeper)
 
@@ -359,7 +369,14 @@ func (s *KeeperTestSuite) TestOnRecvPacketRegistered() {
 
 func (s *KeeperTestSuite) TestConvertCoinToERC20FromPacket() {
 	var ctx sdk.Context
-	senderAddr := "cosmos1x2w87cvt5mqjncav4lxy8yfreynn273x34qlwy"
+	// EpixChain customisation: the upstream test hardcodes a "cosmos1..."
+	// address, but our chain rejects any prefix other than "epix". Re-encode
+	// the same bytes with the chain's configured prefix at runtime so the
+	// test exercises the same address shape on any fork.
+	_, senderBz, err := bech32.DecodeAndConvert("cosmos1x2w87cvt5mqjncav4lxy8yfreynn273x34qlwy")
+	s.Require().NoError(err)
+	senderAddr, err := bech32.ConvertAndEncode(sdk.GetConfig().GetBech32AccountAddrPrefix(), senderBz)
+	s.Require().NoError(err)
 
 	baseDenom, err := sdk.GetBaseDenom()
 	s.Require().NoError(err)
@@ -429,8 +446,8 @@ func (s *KeeperTestSuite) TestConvertCoinToERC20FromPacket() {
 					),
 				)
 				s.Require().NoError(err)
-
-				_, err = s.network.App.GetEVMKeeper().CallEVM(ctx, contracts.ERC20MinterBurnerDecimalsContract.ABI, s.keyring.GetAddr(0), contractAddr, true, nil, "mint", types.ModuleAddress, big.NewInt(10))
+				stateDB := statedb.New(ctx, s.network.App.GetEVMKeeper(), statedb.NewEmptyTxConfig())
+				_, err = s.network.App.GetEVMKeeper().CallEVM(ctx, stateDB, contracts.ERC20MinterBurnerDecimalsContract.ABI, s.keyring.GetAddr(0), contractAddr, true, false, nil, "mint", types.ModuleAddress, big.NewInt(10))
 				s.Require().NoError(err)
 
 				return transfertypes.NewFungibleTokenPacketData(pair.Denom, "10", senderAddr, "", "")
@@ -456,6 +473,56 @@ func (s *KeeperTestSuite) TestConvertCoinToERC20FromPacket() {
 			}
 		})
 	}
+}
+
+func (s *KeeperTestSuite) TestConvertCoinToERC20FromPacket_GasConfigPreserved() {
+	s.mintFeeCollector = true
+	defer func() { s.mintFeeCollector = false }()
+	s.SetupTest()
+
+	contractAddr, err := s.setupRegisterERC20Pair(contractMinterBurner)
+	s.Require().NoError(err)
+
+	ctx := s.network.GetContext()
+	id := s.network.App.GetErc20Keeper().GetTokenPairID(ctx, contractAddr.String())
+	pair, found := s.network.App.GetErc20Keeper().GetTokenPair(ctx, id)
+	s.Require().True(found)
+
+	// Replace EVMKeeper with a mock so we can capture the ctx forwarded to the EVM.
+	evmMock := new(erc20mocks.EVMKeeper)
+	customKeeper := keeper.NewKeeper(
+		s.network.App.GetKey(types.StoreKey),
+		s.network.App.AppCodec(),
+		authtypes.NewModuleAddress(govtypes.ModuleName),
+		s.network.App.GetAccountKeeper(),
+		s.network.App.GetBankKeeper(),
+		evmMock,
+		s.network.App.GetStakingKeeper(),
+		s.network.App.GetTransferKeeper(),
+	)
+
+	kvGas := storetypes.KVGasConfig()
+	transientGas := storetypes.TransientGasConfig()
+	ctx = ctx.WithKVGasConfig(kvGas).WithTransientKVGasConfig(transientGas)
+
+	var capturedCtx sdk.Context
+	evmMock.On("CallEVM",
+		mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+	).Run(func(args mock.Arguments) {
+		capturedCtx = args.Get(0).(sdk.Context)
+	}).Return((*evmtypes.MsgEthereumTxResponse)(nil), errors.New("mock evm error"))
+	evmMock.On("KVStoreKeys").Return(map[string]storetypes.StoreKey{}).Maybe()
+
+	sender := sdk.AccAddress(s.keyring.GetAddr(0).Bytes())
+	data := transfertypes.NewFungibleTokenPacketData(pair.Denom, "10", sender.String(), sender.String(), "")
+
+	s.Require().NoError(customKeeper.ConvertCoinToERC20FromPacket(ctx, data))
+
+	// capturedCtx is only set if CallEVM was reached. A zeroed GasConfig would not
+	// equal kvGas, so these assertions also verify that CallEVM was called.
+	s.Require().Equal(kvGas, capturedCtx.KVGasConfig(), "KV gas config must not be zeroed before EVM call")
+	s.Require().Equal(transientGas, capturedCtx.TransientKVGasConfig(), "transient KV gas config must not be zeroed before EVM call")
 }
 
 func (s *KeeperTestSuite) TestOnAcknowledgementPacket() {
@@ -566,7 +633,8 @@ func (s *KeeperTestSuite) TestOnAcknowledgementPacket() {
 				)
 				s.Require().NoError(err)
 
-				_, err = s.network.App.GetEVMKeeper().CallEVM(ctx, contracts.ERC20MinterBurnerDecimalsContract.ABI, s.keyring.GetAddr(0), contractAddr, true, nil, "mint", types.ModuleAddress, big.NewInt(100))
+				stateDB := statedb.New(ctx, s.network.App.GetEVMKeeper(), statedb.NewEmptyTxConfig())
+				_, err = s.network.App.GetEVMKeeper().CallEVM(ctx, stateDB, contracts.ERC20MinterBurnerDecimalsContract.ABI, s.keyring.GetAddr(0), contractAddr, true, false, nil, "mint", types.ModuleAddress, big.NewInt(100))
 				s.Require().NoError(err)
 
 				ack = channeltypes.NewErrorAcknowledgement(errors.New("error"))
@@ -672,7 +740,8 @@ func (s *KeeperTestSuite) TestOnTimeoutPacket() {
 				pair, _ = s.network.App.GetErc20Keeper().GetTokenPair(ctx, id)
 				s.Require().NotNil(pair)
 
-				_, err = s.network.App.GetEVMKeeper().CallEVM(ctx, contracts.ERC20MinterBurnerDecimalsContract.ABI, s.keyring.GetAddr(0), contractAddr, true, nil, "mint", types.ModuleAddress, big.NewInt(100))
+				stateDB := statedb.New(ctx, s.network.App.GetEVMKeeper(), statedb.NewEmptyTxConfig())
+				_, err = s.network.App.GetEVMKeeper().CallEVM(ctx, stateDB, contracts.ERC20MinterBurnerDecimalsContract.ABI, s.keyring.GetAddr(0), contractAddr, true, false, nil, "mint", types.ModuleAddress, big.NewInt(100))
 				s.Require().NoError(err)
 
 				// Fund module account with ATOM, ERC20 coins and IBC vouchers

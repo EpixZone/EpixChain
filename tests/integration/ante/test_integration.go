@@ -18,6 +18,7 @@ import (
 	"github.com/cosmos/evm/testutil/integration/evm/utils"
 	testkeyring "github.com/cosmos/evm/testutil/keyring"
 	testutiltx "github.com/cosmos/evm/testutil/tx"
+	epixminttypes "github.com/cosmos/evm/x/epixmint/types"
 
 	"cosmossdk.io/math"
 
@@ -59,6 +60,15 @@ func (s *IntegrationTestSuite) SetupTest() {
 	mintGen := minttypes.DefaultGenesisState()
 	mintGen.Params.MintDenom = testconstants.ExampleAttoDenom
 	customGen[minttypes.ModuleName] = mintGen
+
+	// EpixChain: enable EpixMint inflation for this ante test suite. The
+	// default test setup zeros out InitialAnnualMintAmount in
+	// testutil/integration/evm/network/setup.go to keep upstream staking
+	// balance-delta tests stable; restore the default here so rewards
+	// actually accrue (this suite waits on WaitToAccrueRewards).
+	epixmintGen := epixminttypes.DefaultGenesisState()
+	epixmintGen.Params.MintDenom = testconstants.ExampleAttoDenom
+	customGen[epixminttypes.ModuleName] = epixmintGen
 
 	operatorsAddr := make([]sdk.AccAddress, 3)
 	for i, k := range validatorsKeys {

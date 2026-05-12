@@ -20,7 +20,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 var _ types.MsgServer = &Keeper{}
@@ -39,12 +38,12 @@ func (k *Keeper) EthereumTx(goCtx context.Context, msg *types.MsgEthereumTx) (_ 
 	tx := msg.AsTransaction()
 
 	labels := []metrics.Label{
-		telemetry.NewLabel("tx_type", fmt.Sprintf("%d", tx.Type())), //nolint:staticcheck // TODO: fix
+		telemetry.NewLabel("tx_type", fmt.Sprintf("%d", tx.Type())),
 	}
 	if tx.To() == nil {
-		labels = append(labels, telemetry.NewLabel("execution", "create")) //nolint:staticcheck // TODO: fix
+		labels = append(labels, telemetry.NewLabel("execution", "create"))
 	} else {
-		labels = append(labels, telemetry.NewLabel("execution", "call")) //nolint:staticcheck // TODO: fix
+		labels = append(labels, telemetry.NewLabel("execution", "call"))
 	}
 
 	response, err := k.ApplyTransaction(ctx, msg.AsTransaction())
@@ -53,14 +52,14 @@ func (k *Keeper) EthereumTx(goCtx context.Context, msg *types.MsgEthereumTx) (_ 
 	}
 
 	defer func() {
-		telemetry.IncrCounterWithLabels( //nolint:staticcheck // TODO: fix
+		telemetry.IncrCounterWithLabels(
 			[]string{"tx", "msg", "ethereum_tx", "total"},
 			1,
 			labels,
 		)
 
 		if response.GasUsed != 0 {
-			telemetry.IncrCounterWithLabels( //nolint:staticcheck // TODO: fix
+			telemetry.IncrCounterWithLabels(
 				[]string{"tx", "msg", "ethereum_tx", "gas_used", "total"},
 				float32(response.GasUsed),
 				labels,
@@ -71,7 +70,7 @@ func (k *Keeper) EthereumTx(goCtx context.Context, msg *types.MsgEthereumTx) (_ 
 			gasLimit := math.LegacyNewDec(int64(tx.Gas()))                        //#nosec G115 -- int overflow is not a concern here -- tx gas is not going to exceed int64 max value
 			gasRatio, err := gasLimit.QuoInt64(int64(response.GasUsed)).Float64() //#nosec G115 -- int overflow is not a concern here -- gas used is not going to exceed int64 max value
 			if err == nil {
-				telemetry.SetGaugeWithLabels( //nolint:staticcheck // TODO: fix
+				telemetry.SetGaugeWithLabels(
 					[]string{"tx", "msg", "ethereum_tx", "gas_limit", "per", "gas_used"},
 					float32(gasRatio),
 					labels,
@@ -131,8 +130,8 @@ func (k *Keeper) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams)
 	))
 	defer func() { evmtrace.EndSpanErr(span, err) }()
 
-	if k.authority.String() != req.Authority {
-		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority, expected %s, got %s", k.authority.String(), req.Authority)
+	if err := sdk.ValidateAuthority(ctx, k.authority.String(), req.Authority); err != nil {
+		return nil, err
 	}
 
 	if err := k.SetParams(ctx, req.Params); err != nil {
@@ -154,8 +153,8 @@ func (k *Keeper) RegisterPreinstalls(goCtx context.Context, req *types.MsgRegist
 		attribute.String("authority", req.Authority),
 	))
 	defer func() { evmtrace.EndSpanErr(span, err) }()
-	if k.authority.String() != req.Authority {
-		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority, expected %s, got %s", k.authority.String(), req.Authority)
+	if err := sdk.ValidateAuthority(ctx, k.authority.String(), req.Authority); err != nil {
+		return nil, err
 	}
 
 	if err := k.AddPreinstalls(ctx, req.Preinstalls); err != nil {

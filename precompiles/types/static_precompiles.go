@@ -21,10 +21,10 @@ import (
 	vrfprecompile "github.com/cosmos/evm/precompiles/vrf"
 	xidprecompile "github.com/cosmos/evm/precompiles/xid"
 	erc20Keeper "github.com/cosmos/evm/x/erc20/keeper"
-	transferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
 	vrfkeeper "github.com/cosmos/evm/x/vrf/keeper"
 	xidkeeper "github.com/cosmos/evm/x/xid/keeper"
-	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
+	transferkeeper "github.com/cosmos/ibc-go/v11/modules/apps/transfer/keeper"
+	channelkeeper "github.com/cosmos/ibc-go/v11/modules/core/04-channel/keeper"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
@@ -123,12 +123,14 @@ func (s StaticPrecompiles) WithICS20Precompile(
 	stakingKeeper stakingkeeper.Keeper,
 	transferKeeper *transferkeeper.Keeper,
 	channelKeeper *channelkeeper.Keeper,
+	erc20Keeper *erc20Keeper.Keeper,
 ) StaticPrecompiles {
 	ibcTransferPrecompile := ics20precompile.NewPrecompile(
 		bankKeeper,
 		stakingKeeper,
 		transferKeeper,
 		channelKeeper,
+		erc20Keeper,
 	)
 
 	s[ibcTransferPrecompile.Address()] = ibcTransferPrecompile

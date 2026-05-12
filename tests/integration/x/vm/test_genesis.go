@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosmos/evm/contracts"
 	"github.com/cosmos/evm/crypto/ethsecp256k1"
+	testconstants "github.com/cosmos/evm/testutil/constants"
 	"github.com/cosmos/evm/testutil/integration/evm/network"
 	testutiltypes "github.com/cosmos/evm/testutil/types"
 	"github.com/cosmos/evm/x/vm"
@@ -28,7 +29,7 @@ func (s *GenesisTestSuite) TestInitGenesis() {
 	address := common.HexToAddress(privkey.PubKey().Address().String())
 
 	params := types.Params{
-		EvmDenom:                "aatom",
+		EvmDenom:                testconstants.ExampleAttoDenom,
 		ExtraEIPs:               types.DefaultExtraEIPs,
 		EVMChannels:             types.DefaultEVMChannels,
 		AccessControl:           types.DefaultAccessControl,

@@ -14,7 +14,7 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/log"
+	"cosmossdk.io/log/v2"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -59,7 +59,7 @@ func (kv *KVIndexer) IndexBlock(block *cmttypes.Block, txResults []*abci.ExecTxR
 	var ethTxIndex int32
 	for txIndex, tx := range block.Txs {
 		result := txResults[txIndex]
-		if !rpctypes.TxSucessOrExpectedFailure(result) {
+		if !evmtypes.TxSucessOrExpectedFailure(result) {
 			continue
 		}
 

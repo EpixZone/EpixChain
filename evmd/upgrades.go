@@ -5,14 +5,14 @@ import (
 	"fmt"
 
 	"cosmossdk.io/math"
-	storetypes "cosmossdk.io/store/types"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
 
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 
 	"github.com/cosmos/evm/config"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
@@ -27,8 +27,23 @@ const UpgradeName_v0_5_3 = "v0.5.3"
 const UpgradeName_v0_5_4 = "v0.5.4"
 const UpgradeName_v0_5_5 = "v0.5.5"
 
+// UpgradeName_v0_7_0 marks the migration to v0.7.0. The chain's current
+// mainnet binary is labelled "v0.5.5" on the Epix side but is built from
+// the upstream cosmos/evm v0.6.x codebase (confirmed via on-chain probe:
+// abci_info reports `epixd v0.5.5`, the `precisebank` store key is
+// registered with `aepix` as MintDenom, and the v0.5.5 release tag wires
+// `PreciseBankKeeper` into app.go). The upgrade therefore handles all the
+// changes upstream documents for v0.6.x → v0.7.0:
+//   - drop x/precisebank (chain is 18-decimal; the store has a zero remainder)
+//   - drop x/ibc/transfer override
+//   - ibc-go v10 → v11, cosmos-sdk v0.53 → v0.54, cometbft v0.38 → v0.39
+//   - Krakatoa app-side mempool (replaces ExperimentalEVMMempool)
+//   - BlockSTM parallel execution + virtual fee collection
+//   - optimistic execution
+const UpgradeName_v0_7_0 = "v0.5.5-to-v0.7.0"
+
 // UpgradeName is the current upgrade (for store upgrades)
-const UpgradeName = UpgradeName_v0_5_5
+const UpgradeName = UpgradeName_v0_7_0
 
 // RegisterUpgradeHandlers registers upgrade handlers for v0.5.1 and v0.5.2
 func (app EVMD) RegisterUpgradeHandlers() {
@@ -159,28 +174,95 @@ func (app EVMD) RegisterUpgradeHandlers() {
 		},
 	)
 
+	// Register v0.6.0 -> v0.7.0 upgrade handler.
+	// State changes are wiring-only (drop x/precisebank, drop x/ibc/transfer override,
+	// adopt Krakatoa app-side mempool, BlockSTM with virtual fees, optimistic execution,
+	// ibc-go v10 -> v11). x/precisebank store key is removed; existing precisebank state
+	// is dropped on the upgrade boundary via storeUpgrades.Deleted below.
+	app.UpgradeKeeper.SetUpgradeHandler(
+		UpgradeName_v0_7_0,
+		func(ctx context.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+			sdkCtx := sdk.UnwrapSDKContext(ctx)
+			sdkCtx.Logger().Info("Starting EpixChain v0.6 -> v0.7.0 upgrade (cosmos/evm v0.7)...")
+			sdkCtx.Logger().Info("- drop x/precisebank (chain is 18-decimal; remainder is empty)")
+			sdkCtx.Logger().Info("- drop x/ibc/transfer override")
+			sdkCtx.Logger().Info("- ibc-go v10 -> v11, cosmos-sdk v0.53 -> v0.54, cometbft v0.38 -> v0.39")
+			sdkCtx.Logger().Info("- Krakatoa app-side mempool, BlockSTM + virtual fees, optimistic execution")
+
+			// Run module ConsensusVersion migrations (auth/bank/staking/gov from
+			// sdk v0.54, ibc client/connection/channel from ibc-go v11, x/vm and
+			// x/erc20 from cosmos/evm v0.7). Stock SDK handles the heavy lifting;
+			// the steps below cover gaps specific to a v0.6-shaped chain.
+			vm, err := app.ModuleManager.RunMigrations(ctx, app.Configurator(), fromVM)
+			if err != nil {
+				return nil, err
+			}
+
+			// v0.7 added `Params.HistoryServeWindow` (EIP-2935 history buffer).
+			// A v0.6 params row deserialises with HistoryServeWindow = 0, which
+			// disables history serving. Backfill the default so eth_getBlockByHash
+			// and friends keep working as expected post-upgrade.
+			//
+			// (`Params.AccessControl` does not need a backfill — its zero value
+			//  is `AccessTypePermissionless` for both Create and Call, which
+			//  matches the upstream default `DefaultAccessControl`.)
+			evmParams := app.EVMKeeper.GetParams(sdkCtx)
+			if evmParams.HistoryServeWindow == 0 {
+				evmParams.HistoryServeWindow = evmtypes.DefaultHistoryServeWindow
+				sdkCtx.Logger().Info(fmt.Sprintf("Backfilling Params.HistoryServeWindow to %d (default for EIP-2935)", evmtypes.DefaultHistoryServeWindow))
+			}
+			if err := app.EVMKeeper.SetParams(sdkCtx, evmParams); err != nil {
+				return nil, fmt.Errorf("failed to backfill v0.7 EVM params: %w", err)
+			}
+
+			// Refresh the EVM coin info store from bank denom metadata. After
+			// the binary swap the in-memory `evmCoinInfo` global is rebuilt by
+			// `vmModule.HydrateGlobals` in app.go, but the on-disk key/value
+			// row is what HydrateGlobals reads. Re-running InitEvmCoinInfo
+			// guarantees that row matches the live bank metadata (display
+			// denom + 18-decimal exponent) before virtual-fee collection
+			// reads it on the first post-upgrade tx — without this a stale
+			// row could panic `x/vm/keeper.DeductFees`.
+			if err := app.EVMKeeper.InitEvmCoinInfo(sdkCtx); err != nil {
+				return nil, fmt.Errorf("failed to re-init EVM coin info: %w", err)
+			}
+			sdkCtx.Logger().Info("EVM coin info refreshed from bank metadata")
+
+			sdkCtx.Logger().Info("EpixChain v0.7.0 upgrade complete")
+			return vm, nil
+		},
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(err)
 	}
 
-	// Handle v0.5.1 through v0.5.4 upgrades (no new store keys)
-	if (upgradeInfo.Name == UpgradeName_v0_5_1 ||
-		upgradeInfo.Name == UpgradeName_v0_5_2 ||
-		upgradeInfo.Name == UpgradeName_v0_5_3 ||
-		upgradeInfo.Name == UpgradeName_v0_5_4) &&
-		!app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-		storeUpgrades := storetypes.StoreUpgrades{
-			Added: []string{},
-		}
-		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
-	}
+	// v0.5.1 through v0.5.4 had no store-key changes. Earlier versions of
+	// this file passed `Added: []string{}` which is equivalent to omitting
+	// the store-loader call entirely — drop the no-op for clarity.
 
 	// Handle v0.5.5 upgrade - adds xID and VRF module store keys
 	if upgradeInfo.Name == UpgradeName_v0_5_5 &&
 		!app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 		storeUpgrades := storetypes.StoreUpgrades{
 			Added: []string{xidtypes.StoreKey, vrftypes.StoreKey},
+		}
+		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
+	}
+
+	// Handle v0.6 -> v0.7.0 upgrade - deletes the precisebank store key.
+	// Mainnet currently runs `epixd v0.5.5`, which is built on cosmos/evm
+	// v0.6.x and *does* have the precisebank store registered (confirmed
+	// by querying cosmos.evm.precisebank.v1.Query/Remainder on-chain — the
+	// remainder is zero but the store key exists). Removing the key here
+	// prunes the orphan from the IAVL tree at the upgrade height so the
+	// post-v0.7 binary (which no longer registers the module) doesn't see
+	// a dangling sub-store.
+	if upgradeInfo.Name == UpgradeName_v0_7_0 &&
+		!app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		storeUpgrades := storetypes.StoreUpgrades{
+			Deleted: []string{"precisebank"},
 		}
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &storeUpgrades))
 	}

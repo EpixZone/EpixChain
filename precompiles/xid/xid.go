@@ -14,7 +14,7 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/cosmos/evm/x/xid/keeper"
 
-	storetypes "cosmossdk.io/store/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -105,6 +105,11 @@ func (p Precompile) RequiredGas(input []byte) uint64 {
 	}
 
 	return p.Precompile.RequiredGas(input, p.IsTransaction(method))
+}
+
+// Name returns the name of the precompile, used by go-ethereum's PrecompiledContract interface.
+func (Precompile) Name() string {
+	return "xid"
 }
 
 // Run executes the precompile

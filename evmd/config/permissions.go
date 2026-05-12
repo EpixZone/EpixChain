@@ -14,9 +14,8 @@ import (
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	xidtypes "github.com/cosmos/evm/x/xid/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
-	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
 	vmtypes "github.com/cosmos/evm/x/vm/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	transfertypes "github.com/cosmos/ibc-go/v11/modules/apps/transfer/types"
 	corevm "github.com/ethereum/go-ethereum/core/vm"
 )
 
@@ -63,12 +62,11 @@ var maccPerms = map[string][]string{
 	govtypes.ModuleName:            {authtypes.Burner},
 
 	// Cosmos EVM modules
-	epixminttypes.ModuleName:    {authtypes.Minter},
-	vmtypes.ModuleName:          {authtypes.Minter, authtypes.Burner},
-	feemarkettypes.ModuleName:   nil,
-	erc20types.ModuleName:       {authtypes.Minter, authtypes.Burner},
-	precisebanktypes.ModuleName: {authtypes.Minter, authtypes.Burner},
-	xidtypes.ModuleName:        {authtypes.Burner},
+	epixminttypes.ModuleName:  {authtypes.Minter},
+	vmtypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
+	feemarkettypes.ModuleName: nil,
+	erc20types.ModuleName:     {authtypes.Minter, authtypes.Burner},
+	xidtypes.ModuleName:       {authtypes.Burner},
 }
 
 // GetMaccPerms returns a copy of the module account permissions

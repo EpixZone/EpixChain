@@ -1,0 +1,17 @@
+{
+  "messages": [
+    {
+      "@type": "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
+      "authority": "epix10d07y265gmmuvt4z0w9aw880jnsr700j0fas3g",
+      "plan": {
+        "name": "v0.5.5-to-v0.7.0",
+        "height": "3925000",
+        "info": "https://github.com/EpixZone/EpixChain/releases/tag/v0.7.0"
+      }
+    }
+  ],
+  "metadata": "EpixChain v0.7.0 Upgrade Proposal - cosmos/evm v0.7 (Krakatoa, BlockSTM, virtual fees, ibc-go v11)",
+  "deposit": "5000000000000000000000aepix",
+  "title": "EpixChain v0.7.0 — cosmos/evm v0.7 (Krakatoa, BlockSTM, virtual fees, ibc-go v11)",
+  "summary": "Syncs EpixChain to upstream cosmos/evm v0.7.0: Krakatoa app-side mempool, BlockSTM parallel execution + virtual fees, optimistic execution, ibc-go v10→v11, cosmos-sdk v0.53→v0.54, cometbft v0.38→v0.39. Removes `x/precisebank` (Epix is 18-decimal — store has zero remainder). Consensus-breaking. Validators must run v0.7.0 by block 3,925,000."
+}
