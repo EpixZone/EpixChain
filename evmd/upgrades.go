@@ -40,7 +40,7 @@ const UpgradeName_v0_5_5 = "v0.5.5"
 //   - Krakatoa app-side mempool (replaces ExperimentalEVMMempool)
 //   - BlockSTM parallel execution + virtual fee collection
 //   - optimistic execution
-const UpgradeName_v0_7_0 = "v0.5.5-to-v0.7.0"
+const UpgradeName_v0_7_0 = "v0.7.0"
 
 // UpgradeName is the current upgrade (for store upgrades)
 const UpgradeName = UpgradeName_v0_7_0
