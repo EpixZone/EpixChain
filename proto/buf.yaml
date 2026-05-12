@@ -24,3 +24,12 @@ lint:
 breaking:
   use:
     - FILE
+  # The x/precisebank module was intentionally removed during the
+  # cosmos/evm v0.7.0 upgrade — Epix is 18-decimal so the wrapper module
+  # serves no purpose. The deletions are recorded here so buf's
+  # breaking-change check on PRs doesn't flag them every time. Once this
+  # PR lands on main and main becomes the baseline, these entries can
+  # be removed.
+  ignore:
+    - cosmos/evm/precisebank/v1/query.proto
+    - cosmos/evm/precisebank/v1/genesis.proto
