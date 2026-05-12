@@ -5,7 +5,7 @@
       "authority": "epix10d07y265gmmuvt4z0w9aw880jnsr700j0fas3g",
       "plan": {
         "name": "v0.7.0",
-        "height": "3925000",
+        "height": "3861000",
         "info": "https://github.com/EpixZone/EpixChain/releases/tag/v0.7.0"
       }
     }
@@ -13,5 +13,5 @@
   "metadata": "EpixChain v0.7.0 Upgrade Proposal",
   "deposit": "5000000000000000000000aepix",
   "title": "EpixChain v0.7.0 Upgrade: Faster Transactions and Improved Network",
-  "summary": "This upgrade brings EpixChain up to the latest cosmos/evm release. It introduces faster transaction processing, parallel execution, and updated networking libraries. It also removes an unused module that was carried over from earlier versions. This is a consensus-breaking upgrade. All validators must run the v0.7.0 binary by block 3,925,000."
+  "summary": "This upgrade brings EpixChain up to the latest cosmos/evm release. It introduces faster transaction processing, parallel execution, and updated networking libraries. It also removes an unused module that was carried over from earlier versions. This is a consensus-breaking upgrade. All validators must run the v0.7.0 binary by block 3,861,000."
 }
