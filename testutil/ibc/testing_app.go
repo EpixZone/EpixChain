@@ -11,6 +11,7 @@ import (
 	cmttypes "github.com/cometbft/cometbft/types"
 
 	dbm "github.com/cosmos/cosmos-db"
+	testconstants "github.com/cosmos/evm/testutil/constants"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/cosmos/ibc-go/v11/modules/core/keeper"
 	ibctesting "github.com/cosmos/ibc-go/v11/testing"
@@ -124,7 +125,12 @@ func setupWithGenesisValSet(tb testing.TB, valSet *cmttypes.ValidatorSet, genAcc
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
 
 	evmGenesis := evmtypes.DefaultGenesisState()
-	evmGenesis.Params.EvmDenom = evmtypes.DefaultEVMExtendedDenom
+	// EpixChain customisation: use the chain's actual base denom (aepix)
+	// instead of the upstream DefaultEVMExtendedDenom ("aatom"). Without this,
+	// EvmDenom = "aatom" while staking BondDenom (set by SetupEvmd) = "aepix",
+	// so contracts funded with aepix via the bank module appear to have 0
+	// balance in the EVM, and `address(this).balance` / native transfers fail.
+	evmGenesis.Params.EvmDenom = testconstants.ExampleAttoDenom
 	evmGenesis.Params.ActiveStaticPrecompiles = evmtypes.AvailableStaticPrecompiles
 	genesisState[evmtypes.ModuleName] = app.AppCodec().MustMarshalJSON(evmGenesis)
 

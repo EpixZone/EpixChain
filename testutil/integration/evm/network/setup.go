@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/evm"
 	"github.com/cosmos/evm/testutil"
 	testconstants "github.com/cosmos/evm/testutil/constants"
+	epixminttypes "github.com/cosmos/evm/x/epixmint/types"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
@@ -57,6 +58,7 @@ var genesisSetupFunctions = map[string]genSetupFn{
 	feemarkettypes.ModuleName: genStateSetter[*feemarkettypes.GenesisState](feemarkettypes.ModuleName),
 	distrtypes.ModuleName:     genStateSetter[*distrtypes.GenesisState](distrtypes.ModuleName),
 	minttypes.ModuleName:      genStateSetter[*minttypes.GenesisState](minttypes.ModuleName),
+	epixminttypes.ModuleName:  genStateSetter[*epixminttypes.GenesisState](epixminttypes.ModuleName),
 	banktypes.ModuleName:      setBankGenesisState,
 	authtypes.ModuleName:      setAuthGenesisState,
 	consensustypes.ModuleName: func(_ evm.EvmApp, genesisState testutil.GenesisState, _ interface{}) (testutil.GenesisState, error) {
@@ -463,6 +465,26 @@ func setDefaultMintGenesisState(cosmosEVMApp evm.EvmApp, genesisState testutil.G
 	return genesisState
 }
 
+// setDefaultEpixMintGenesisState zeroes out the EpixMint inflation for
+// integration tests. EpixMint mints new aepix every block and
+// auto-distributes 98% to bonded validators via their distribution
+// commission pool. Upstream-shaped tests (e.g. "Should refund leftover
+// gas" in tests/integration/precompiles/staking/test_integration.go)
+// compute balancePre.Sub(balancePost) and assume no between-block
+// inflation — with EpixMint active the delegator's balance grows from
+// validator rewards faster than they spend it, producing a negative-coin
+// panic. Disabling inflation keeps these tests consistent without
+// altering production behaviour. Tests that require non-zero inflation
+// (e.g. distribution/rewards integration tests) opt in by passing a
+// non-zero InitialAnnualMintAmount via CustomGenesisState.
+func setDefaultEpixMintGenesisState(cosmosEVMApp evm.EvmApp, genesisState testutil.GenesisState) testutil.GenesisState {
+	epixmintGen := epixminttypes.DefaultGenesisState()
+	epixmintGen.Params.MintDenom = testconstants.ExampleAttoDenom
+	epixmintGen.Params.InitialAnnualMintAmount = sdkmath.ZeroInt()
+	genesisState[epixminttypes.ModuleName] = cosmosEVMApp.AppCodec().MustMarshalJSON(epixmintGen)
+	return genesisState
+}
+
 func setDefaultErc20GenesisState(cosmosEVMApp evm.EvmApp, evmChainID uint64, genesisState testutil.GenesisState) testutil.GenesisState {
 	// NOTE: here we are using the setup from the example chain
 	erc20Gen := newErc20GenesisState()
@@ -513,6 +535,7 @@ func newDefaultGenesisState(cosmosEVMApp evm.EvmApp, evmChainID uint64, params d
 	genesisState = setDefaultFeeMarketGenesisState(cosmosEVMApp, genesisState, params.feemarket)
 	genesisState = setDefaultSlashingGenesisState(cosmosEVMApp, genesisState, params.slashing)
 	genesisState = setDefaultMintGenesisState(cosmosEVMApp, genesisState, params.mint)
+	genesisState = setDefaultEpixMintGenesisState(cosmosEVMApp, genesisState)
 	genesisState = setDefaultErc20GenesisState(cosmosEVMApp, evmChainID, genesisState)
 	genesisState = setDefaultVMGenesisState(cosmosEVMApp, evmChainID, genesisState)
 

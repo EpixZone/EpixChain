@@ -174,26 +174,32 @@ func NewTestChainWithValSet(tb testing.TB, isEVM bool, coord *Coordinator, chain
 		senderAccs = append(senderAccs, senderAcc)
 	}
 
+	// EpixChain customisation: register bank denom metadata for the chain's
+	// actual base denom (aepix), not the upstream default ("aatom"). EVM's
+	// LoadEvmCoinInfo reads metadata for params.EvmDenom; with EvmDenom now
+	// set to ExampleAttoDenom = "aepix" (see testing_app.go), the bank
+	// metadata must also use aepix or InitEvmCoinInfo cannot resolve the
+	// display denom.
 	metadata := []banktypes.Metadata{{
 		Description: "",
 		DenomUnits: []*banktypes.DenomUnit{
 			{
-				Denom:    types.DefaultEVMExtendedDenom,
+				Denom:    testconstants.ExampleAttoDenom,
 				Exponent: 0,
 				Aliases:  nil,
 			},
 			{
-				Denom:    types.DefaultEVMDisplayDenom,
+				Denom:    testconstants.ExampleDisplayDenom,
 				Exponent: 18,
 				Aliases:  nil,
 			},
 		},
-		Base:    types.DefaultEVMExtendedDenom,
-		Display: types.DefaultEVMDisplayDenom,
-		Name:    types.DefaultEVMDenom,
-		Symbol:  types.DefaultEVMDenom,
-		URI:     types.DefaultEVMDenom,
-		URIHash: types.DefaultEVMDenom,
+		Base:    testconstants.ExampleAttoDenom,
+		Display: testconstants.ExampleDisplayDenom,
+		Name:    testconstants.ExampleDisplayDenom,
+		Symbol:  testconstants.ExampleDisplayDenom,
+		URI:     testconstants.ExampleDisplayDenom,
+		URIHash: testconstants.ExampleDisplayDenom,
 	}}
 
 	app := SetupWithGenesisValSet(tb, valSet, genAccs, chainID, sdk.DefaultPowerReduction, metadata, genBals...)
