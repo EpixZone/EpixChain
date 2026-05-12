@@ -18,6 +18,7 @@ import (
 
 	rpctypes "github.com/cosmos/evm/rpc/types"
 	"github.com/cosmos/evm/testutil/config"
+	testconstants "github.com/cosmos/evm/testutil/constants"
 	"github.com/cosmos/evm/testutil/integration/evm/factory"
 	"github.com/cosmos/evm/testutil/integration/evm/grpc"
 	"github.com/cosmos/evm/testutil/integration/evm/network"
@@ -621,15 +622,15 @@ func (s *KeeperTestSuite) TestApplyTransaction() {
 	s.SetupTest()
 	// set bounded cosmos block gas limit
 	ctx := s.Network.GetContext().WithBlockGasMeter(storetypes.NewGasMeter(1e6))
-	err := s.Network.App.GetBankKeeper().MintCoins(ctx, "mint", sdk.NewCoins(sdk.NewCoin("aatom", sdkmath.NewInt(3e18))))
+	err := s.Network.App.GetBankKeeper().MintCoins(ctx, "mint", sdk.NewCoins(sdk.NewCoin(testconstants.ExampleAttoDenom, sdkmath.NewInt(3e18))))
 	s.Require().NoError(err)
-	err = s.Network.App.GetBankKeeper().SendCoinsFromModuleToModule(ctx, "mint", "fee_collector", sdk.NewCoins(sdk.NewCoin("aatom", sdkmath.NewInt(3e18))))
+	err = s.Network.App.GetBankKeeper().SendCoinsFromModuleToModule(ctx, "mint", "fee_collector", sdk.NewCoins(sdk.NewCoin(testconstants.ExampleAttoDenom, sdkmath.NewInt(3e18))))
 	s.Require().NoError(err)
 	// With virtual fee collection enabled, RefundGas uses virtual balance.
 	// Move the fee collector's real coins into its virtual balance.
 	feeCollectorAddr := authtypes.NewModuleAddress(authtypes.FeeCollectorName)
 	err = s.Network.App.GetBankKeeper().SendCoinsFromAccountToModuleVirtual(
-		ctx, feeCollectorAddr, authtypes.FeeCollectorName, sdk.NewCoins(sdk.NewCoin("aatom", sdkmath.NewInt(3e18))),
+		ctx, feeCollectorAddr, authtypes.FeeCollectorName, sdk.NewCoins(sdk.NewCoin(testconstants.ExampleAttoDenom, sdkmath.NewInt(3e18))),
 	)
 	s.Require().NoError(err)
 	testCases := []struct {
@@ -652,7 +653,7 @@ func (s *KeeperTestSuite) TestApplyTransaction() {
 				GasLimit: tc.gasLimit,
 			})
 			s.Require().NoError(err)
-			initialBalance := s.Network.App.GetBankKeeper().GetBalance(ctx, s.Keyring.GetAccAddr(0), "aatom")
+			initialBalance := s.Network.App.GetBankKeeper().GetBalance(ctx, s.Keyring.GetAccAddr(0), testconstants.ExampleAttoDenom)
 
 			ethMsg := tx.GetMsgs()[0].(*types.MsgEthereumTx)
 			res, err := s.Network.App.GetEVMKeeper().ApplyTransaction(ctx, ethMsg.AsTransaction())
@@ -661,7 +662,7 @@ func (s *KeeperTestSuite) TestApplyTransaction() {
 			// Half of the gas should be refunded based on the protocol refund cap.
 			// Note that the balance should only increment by the refunded amount
 			// because ApplyTransaction does not consume and take the gas from the user.
-			balanceAfterRefund := s.Network.App.GetBankKeeper().GetBalance(ctx, s.Keyring.GetAccAddr(0), "aatom")
+			balanceAfterRefund := s.Network.App.GetBankKeeper().GetBalance(ctx, s.Keyring.GetAccAddr(0), testconstants.ExampleAttoDenom)
 			expectedRefund := new(big.Int).Mul(new(big.Int).SetUint64(6e6/2), s.Network.App.GetEVMKeeper().GetBaseFee(ctx))
 			s.Require().Equal(balanceAfterRefund.Sub(initialBalance).Amount, sdkmath.NewIntFromBigInt(expectedRefund))
 		})
@@ -701,8 +702,8 @@ func (s *KeeperTestSuite) TestApplyTransactionWithTxPostProcessing() {
 				)
 			},
 			func(s *KeeperTestSuite) {
-				senderBefore := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(0), "aatom").Amount
-				recipientBefore := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(1), "aatom").Amount
+				senderBefore := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(0), testconstants.ExampleAttoDenom).Amount
+				recipientBefore := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(1), testconstants.ExampleAttoDenom).Amount
 
 				// Generate a transfer tx message
 				sender := s.Keyring.GetKey(0)
@@ -720,8 +721,8 @@ func (s *KeeperTestSuite) TestApplyTransactionWithTxPostProcessing() {
 				s.Require().NoError(err)
 				s.Require().False(res.Failed())
 
-				senderAfter := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(0), "aatom").Amount
-				recipientAfter := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(1), "aatom").Amount
+				senderAfter := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(0), testconstants.ExampleAttoDenom).Amount
+				recipientAfter := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(1), testconstants.ExampleAttoDenom).Amount
 				s.Require().Equal(senderBefore.Sub(sdkmath.NewIntFromBigInt(transferAmt)), senderAfter)
 				s.Require().Equal(recipientBefore.Add(sdkmath.NewIntFromBigInt(transferAmt)), recipientAfter)
 			},
@@ -751,8 +752,8 @@ func (s *KeeperTestSuite) TestApplyTransactionWithTxPostProcessing() {
 				)
 			},
 			func(s *KeeperTestSuite) {
-				senderBefore := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(0), "aatom").Amount
-				recipientBefore := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(1), "aatom").Amount
+				senderBefore := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(0), testconstants.ExampleAttoDenom).Amount
+				recipientBefore := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(1), testconstants.ExampleAttoDenom).Amount
 
 				// Generate a transfer tx message
 				sender := s.Keyring.GetKey(0)
@@ -770,8 +771,8 @@ func (s *KeeperTestSuite) TestApplyTransactionWithTxPostProcessing() {
 				s.Require().NoError(err)
 				s.Require().True(res.Failed())
 
-				senderAfter := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(0), "aatom").Amount
-				recipientAfter := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(1), "aatom").Amount
+				senderAfter := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(0), testconstants.ExampleAttoDenom).Amount
+				recipientAfter := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(1), testconstants.ExampleAttoDenom).Amount
 				s.Require().Equal(senderBefore, senderAfter)
 				s.Require().Equal(recipientBefore, recipientAfter)
 			},
@@ -793,8 +794,8 @@ func (s *KeeperTestSuite) TestApplyTransactionWithTxPostProcessing() {
 				)
 			},
 			func(s *KeeperTestSuite) {
-				senderBefore := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(0), "aatom").Amount
-				recipientBefore := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(1), "aatom").Amount
+				senderBefore := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(0), testconstants.ExampleAttoDenom).Amount
+				recipientBefore := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(1), testconstants.ExampleAttoDenom).Amount
 
 				// Generate a transfer tx message
 				sender := s.Keyring.GetKey(0)
@@ -812,8 +813,8 @@ func (s *KeeperTestSuite) TestApplyTransactionWithTxPostProcessing() {
 				s.Require().NoError(err)
 				s.Require().True(res.Failed())
 
-				senderAfter := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(0), "aatom").Amount
-				recipientAfter := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(1), "aatom").Amount
+				senderAfter := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(0), testconstants.ExampleAttoDenom).Amount
+				recipientAfter := s.Network.App.GetBankKeeper().GetBalance(s.Network.GetContext(), s.Keyring.GetAccAddr(1), testconstants.ExampleAttoDenom).Amount
 				s.Require().Equal(senderBefore, senderAfter)
 				s.Require().Equal(recipientBefore, recipientAfter)
 			},
@@ -834,9 +835,9 @@ func (s *KeeperTestSuite) TestApplyTransactionWithTxPostProcessing() {
 
 			// set bounded cosmos block gas limit
 			ctx := s.Network.GetContext().WithBlockGasMeter(storetypes.NewGasMeter(1e6))
-			err := s.Network.App.GetBankKeeper().MintCoins(ctx, "mint", sdk.NewCoins(sdk.NewCoin("aatom", sdkmath.NewInt(3e18))))
+			err := s.Network.App.GetBankKeeper().MintCoins(ctx, "mint", sdk.NewCoins(sdk.NewCoin(testconstants.ExampleAttoDenom, sdkmath.NewInt(3e18))))
 			s.Require().NoError(err)
-			err = s.Network.App.GetBankKeeper().SendCoinsFromModuleToModule(ctx, "mint", "fee_collector", sdk.NewCoins(sdk.NewCoin("aatom", sdkmath.NewInt(3e18))))
+			err = s.Network.App.GetBankKeeper().SendCoinsFromModuleToModule(ctx, "mint", "fee_collector", sdk.NewCoins(sdk.NewCoin(testconstants.ExampleAttoDenom, sdkmath.NewInt(3e18))))
 			s.Require().NoError(err)
 
 			tc.do(s)
@@ -1359,16 +1360,16 @@ func (s *KeeperTestSuite) TestApplyMessageWithNegativeAmount() {
 	)
 
 	ctx := s.Network.GetContext()
-	balance0Before := s.Network.App.GetBankKeeper().GetBalance(ctx, s.Keyring.GetAccAddr(0), "aatom")
-	balance1Before := s.Network.App.GetBankKeeper().GetBalance(ctx, s.Keyring.GetAccAddr(1), "aatom")
+	balance0Before := s.Network.App.GetBankKeeper().GetBalance(ctx, s.Keyring.GetAccAddr(0), testconstants.ExampleAttoDenom)
+	balance1Before := s.Network.App.GetBankKeeper().GetBalance(ctx, s.Keyring.GetAccAddr(1), testconstants.ExampleAttoDenom)
 	stateDB := statedb.New(s.Network.GetContext(), s.Network.App.GetEVMKeeper(), statedb.NewEmptyTxConfig())
 
 	res, err := s.Network.App.GetEVMKeeper().ApplyMessage(s.Network.GetContext(), stateDB, *coreMsg, tracer, true, false, false)
 	s.Require().Nil(res)
 	s.Require().Error(err)
 
-	balance0After := s.Network.App.GetBankKeeper().GetBalance(ctx, s.Keyring.GetAccAddr(0), "aatom")
-	balance1After := s.Network.App.GetBankKeeper().GetBalance(ctx, s.Keyring.GetAccAddr(1), "aatom")
+	balance0After := s.Network.App.GetBankKeeper().GetBalance(ctx, s.Keyring.GetAccAddr(0), testconstants.ExampleAttoDenom)
+	balance1After := s.Network.App.GetBankKeeper().GetBalance(ctx, s.Keyring.GetAccAddr(1), testconstants.ExampleAttoDenom)
 
 	s.Require().Equal(balance0Before, balance0After)
 	s.Require().Equal(balance1Before, balance1After)

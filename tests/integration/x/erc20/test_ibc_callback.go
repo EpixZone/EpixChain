@@ -27,6 +27,7 @@ import (
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -37,17 +38,23 @@ var erc20Denom = "erc20:0xdac17f958d2ee523a2206206994597c13d831ec7"
 
 func (s *KeeperTestSuite) TestOnRecvPacketRegistered() {
 	var ctx sdk.Context
+	// EpixChain customisation: bech32-encode local-chain recipient addresses
+	// with the running chain's actual prefix instead of upstream's hardcoded
+	// sdk.Bech32MainPrefix ("cosmos"). Our addrCodec rejects any HRP other
+	// than the configured one ("epix"), so cosmos-prefixed receivers fail
+	// the recipient parse in OnRecvPacket on a forked chain.
+	localPrefix := sdk.GetConfig().GetBech32AccountAddrPrefix()
 	// secp256k1 account
 	secpPk := secp256k1.GenPrivKey()
 	secpAddr := sdk.AccAddress(secpPk.PubKey().Address())
-	secpAddrCosmos := sdk.MustBech32ifyAddressBytes(sdk.Bech32MainPrefix, secpAddr)
+	secpAddrCosmos := sdk.MustBech32ifyAddressBytes(localPrefix, secpAddr)
 
 	// ethsecp256k1 account
 	ethPk, err := ethsecp256k1.GenerateKey()
 	s.Require().Nil(err)
 	ethsecpAddr := sdk.AccAddress(ethPk.PubKey().Address())
 	ethsecpAddrEvmos := sdk.AccAddress(ethPk.PubKey().Address()).String()
-	ethsecpAddrCosmos := sdk.MustBech32ifyAddressBytes(sdk.Bech32MainPrefix, ethsecpAddr)
+	ethsecpAddrCosmos := sdk.MustBech32ifyAddressBytes(localPrefix, ethsecpAddr)
 
 	// Setup Cosmos <=> Cosmos EVM IBC relayer
 	sourceChannel := "channel-292"
@@ -362,7 +369,14 @@ func (s *KeeperTestSuite) TestOnRecvPacketRegistered() {
 
 func (s *KeeperTestSuite) TestConvertCoinToERC20FromPacket() {
 	var ctx sdk.Context
-	senderAddr := "cosmos1x2w87cvt5mqjncav4lxy8yfreynn273x34qlwy"
+	// EpixChain customisation: the upstream test hardcodes a "cosmos1..."
+	// address, but our chain rejects any prefix other than "epix". Re-encode
+	// the same bytes with the chain's configured prefix at runtime so the
+	// test exercises the same address shape on any fork.
+	_, senderBz, err := bech32.DecodeAndConvert("cosmos1x2w87cvt5mqjncav4lxy8yfreynn273x34qlwy")
+	s.Require().NoError(err)
+	senderAddr, err := bech32.ConvertAndEncode(sdk.GetConfig().GetBech32AccountAddrPrefix(), senderBz)
+	s.Require().NoError(err)
 
 	baseDenom, err := sdk.GetBaseDenom()
 	s.Require().NoError(err)

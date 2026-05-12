@@ -16,13 +16,18 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	testconstants "github.com/cosmos/evm/testutil/constants"
 )
 
 // Constants
 const (
-	TxGas    = 100_000
-	feeDenom = "aatom"
+	TxGas = 100_000
 )
+
+// EpixChain customisation: feeDenom must match the chain's actual base denom
+// (aepix), not the upstream default "aatom".
+var feeDenom = testconstants.ExampleAttoDenom
 
 // createCosmosSendTransactionWithKey creates a simple bank send transaction
 // with the specified key, sending 1000aatom
