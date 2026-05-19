@@ -37,9 +37,19 @@ jobs:
           check-latest: true
       
       - uses: actions/checkout@v4
-      
+        with:
+          # depth 2 lets HEAD~1 resolve, used as the diff base on push events
+          # where github.event.before may point at an unreachable commit.
+          fetch-depth: 2
+
+      - name: Resolve diff base for push events
+        id: diff_base
+        if: github.event_name == 'push'
+        run: echo "base=$(git rev-parse HEAD~1)" >> "$GITHUB_OUTPUT"
+
       - uses: technote-space/get-diff-action@v6.1.2
         with:
+          BASE: ${{ steps.diff_base.outputs.base }}
           PATTERNS: |
             .github/workflows/jsonrpc-compatibility.yml
             tests/jsonrpc/**
