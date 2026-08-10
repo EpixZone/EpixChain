@@ -42,8 +42,29 @@ const UpgradeName_v0_5_5 = "v0.5.5"
 //   - optimistic execution
 const UpgradeName_v0_7_0 = "v0.7.0"
 
+// UpgradeName_v0_7_1 syncs the chain to cosmos/evm v0.7.1.
+//
+// The security fix that motivated this sync (rejecting EVM statedb balance
+// writes to module accounts) does NOT ship here — it went out ahead of this
+// as an uncoordinated binary hotfix, because it needs no migration and a
+// gov-gated halt was the wrong shape for a live vulnerability. See
+// docs/upgrades/v0.7.1-security.md.
+//
+// What remains needs a coordinated boundary, because unlike the hotfix these
+// change the outcome of ordinary transactions and a partial rollout would
+// fork the chain under normal traffic:
+//   - EVM signature verification now respects ctx.IsSigverifyTx()
+//   - mempool rejects EVM txs below base fee at admission
+//   - statedb snapshots locked balance on the account, and hardens balance
+//     and event amount handling
+//   - erc20 v2 IBC middleware aligns ack validation with ibc-go
+//
+// No store keys are added or removed and no params gained fields, so the
+// handler is migrations-only.
+const UpgradeName_v0_7_1 = "v0.7.1"
+
 // UpgradeName is the current upgrade (for store upgrades)
-const UpgradeName = UpgradeName_v0_7_0
+const UpgradeName = UpgradeName_v0_7_1
 
 // RegisterUpgradeHandlers registers upgrade handlers for v0.5.1 and v0.5.2
 func (app EVMD) RegisterUpgradeHandlers() {
@@ -230,6 +251,25 @@ func (app EVMD) RegisterUpgradeHandlers() {
 
 			sdkCtx.Logger().Info("EpixChain v0.7.0 upgrade complete")
 			return vm, nil
+		},
+	)
+
+	// Register v0.7.0 -> v0.7.1 upgrade handler (cosmos/evm v0.7.1 sync).
+	// Migrations-only: no store keys change and no params gained fields, so
+	// there is nothing to backfill. The boundary exists purely so every
+	// validator switches transaction-processing behaviour on the same block.
+	app.UpgradeKeeper.SetUpgradeHandler(
+		UpgradeName_v0_7_1,
+		func(ctx context.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+			sdkCtx := sdk.UnwrapSDKContext(ctx)
+			sdkCtx.Logger().Info("Starting EpixChain v0.7.0 -> v0.7.1 upgrade (cosmos/evm v0.7.1)...")
+			sdkCtx.Logger().Info("- EVM signature verification respects ctx.IsSigverifyTx()")
+			sdkCtx.Logger().Info("- mempool rejects EVM txs below base fee at admission")
+			sdkCtx.Logger().Info("- statedb locked-balance snapshot + balance/event amount hardening")
+			sdkCtx.Logger().Info("- erc20 v2 IBC middleware ack validation aligned with ibc-go")
+			sdkCtx.Logger().Info("(the module-account statedb fix shipped earlier as a binary hotfix)")
+
+			return app.ModuleManager.RunMigrations(ctx, app.Configurator(), fromVM)
 		},
 	)
 
