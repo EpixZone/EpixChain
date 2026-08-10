@@ -144,9 +144,19 @@ func (k *Keeper) SetBalance(ctx sdk.Context, addr common.Address, amount *uint25
 	defer func() { evmtrace.EndSpanErr(span, err) }()
 	cosmosAddr := sdk.AccAddress(addr.Bytes())
 
-	// Only check blocked addresses when balance is increasing (receiving funds).
+	// Module accounts must never have their balance written back from the EVM
+	// journal: the precompiles move their funds through the bank keeper, so a
+	// statedb commit carrying a stale cached balance would silently overwrite
+	// that bank-side bookkeeping. Reject the write outright rather than trying
+	// to reconcile it, and hold blocked (non-module) accounts to an exact
+	// no-change rule so a decrease cannot be used the same way.
+	isModule := false
+	if acct := k.accountKeeper.GetAccount(ctx, cosmosAddr); acct != nil {
+		_, isModule = acct.(sdk.ModuleAccountI)
+	}
 	coin := k.bankWrapper.SpendableCoin(ctx, cosmosAddr, types.GetEVMCoinDenom())
-	if amount.ToBig().Cmp(coin.Amount.BigInt()) > 0 && k.bankWrapper.BlockedAddr(cosmosAddr) {
+	isBlockedChange := k.bankWrapper.BlockedAddr(cosmosAddr) && amount.ToBig().Cmp(coin.Amount.BigInt()) != 0
+	if isModule || isBlockedChange {
 		return errorsmod.Wrapf(errortypes.ErrUnauthorized, "%s is not allowed to receive funds", cosmosAddr)
 	}
 
