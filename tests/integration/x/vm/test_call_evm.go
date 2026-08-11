@@ -79,7 +79,7 @@ func (s *KeeperTestSuite) TestCallEVMWithData() {
 	// Deployments run from a dedicated EOA rather than a module account.
 	// Contract creation bumps the sender's nonce, and SetAccount writes nonce
 	// and balance together, so committing a deployment from a module account
-	// now trips the guard in SetBalance.
+	// now trips the module-account guard in SetBalanceWithLocked.
 	deployer := common.BytesToAddress([]byte("vm-test-deployer"))
 	// The sender's sequence is read before the message runs, so the account has to exist.
 	ensureDeployer := func() {
@@ -192,7 +192,7 @@ func (s *KeeperTestSuite) TestCallEVMWithData() {
 			deploy:   true,
 			useNilDB: false,
 			expPass:  false,
-			expError: "",
+			expError: "does not have permission to deploy contracts",
 		},
 		{
 			name: "fail deploy with nil statedb",
