@@ -1,0 +1,18 @@
+{
+  "messages": [
+    {
+      "@type": "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
+      "authority": "epix10d07y265gmmuvt4z0w9aw880jnsr700j0fas3g",
+      "plan": {
+        "name": "v0.7.1",
+        "height": "5130000",
+        "info": "https://github.com/EpixZone/EpixChain/releases/tag/v0.7.1"
+      }
+    }
+  ],
+  "metadata": "EpixChain v0.7.1 Upgrade Proposal",
+  "deposit": "5000000000000000000000aepix",
+  "title": "EpixChain v0.7.1 Upgrade: Transaction Handling Improvements",
+  "summary": "What changes:\n- Transaction signature verification now honours the node's signature-verification mode, removing redundant work on replayed transactions\n- The mempool rejects EVM transactions priced below the current base fee at admission, instead of accepting them and failing later\n- The EVM state database snapshots locked (vesting) balances when an account is loaded, and hardens how balance and event amounts are handled\n- Balance subtraction now fails loudly on underflow rather than wrapping around\n- IBC acknowledgement validation in the ERC20 middleware is aligned with ibc-go",
+  "expedited": true
+}
