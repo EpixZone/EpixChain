@@ -77,9 +77,9 @@ func (s *KeeperTestSuite) TestCallEVMWithData() {
 	wcosmosEVMContract := common.HexToAddress(testconstants.WEVMOSContractMainnet)
 
 	// Deployments run from a dedicated EOA rather than a module account.
-	// It also fails in practice: contract creation bumps the sender's nonce,
-	// SetAccount writes nonce and balance together, and the EVM commit path may
-	// not write a module account's balance.
+	// Contract creation bumps the sender's nonce, and SetAccount writes nonce
+	// and balance together, so committing a deployment from a module account
+	// now trips the module-account guard in SetBalanceWithLocked.
 	deployer := common.BytesToAddress([]byte("vm-test-deployer"))
 	// The sender's sequence is read before the message runs, so the account has to exist.
 	ensureDeployer := func() {

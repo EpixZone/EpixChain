@@ -178,6 +178,12 @@ func (k *Keeper) SetBalanceWithLocked(ctx sdk.Context, addr common.Address, amou
 	defer func() { evmtrace.EndSpanErr(span, err) }()
 	cosmosAddr := sdk.AccAddress(addr.Bytes())
 
+	// Module accounts must never have their balance written back from the EVM
+	// journal: the precompiles move their funds through the bank keeper, so a
+	// statedb commit carrying a stale cached balance would silently overwrite
+	// that bank-side bookkeeping. Reject the write outright rather than trying
+	// to reconcile it, and hold blocked (non-module) accounts to an exact
+	// no-change rule so a decrease cannot be used the same way.
 	isModule := false
 	if acct := k.accountKeeper.GetAccount(ctx, cosmosAddr); acct != nil {
 		_, isModule = acct.(sdk.ModuleAccountI)
