@@ -30,6 +30,7 @@ import (
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 func (s *KeeperTestSuite) TestCreateAccount() {
@@ -1046,6 +1047,70 @@ func (s *KeeperTestSuite) TestSetBalance() {
 			}
 		})
 	}
+}
+
+func (s *KeeperTestSuite) TestSetBalanceRejectsModuleAccounts() {
+	testCases := []struct {
+		name     string
+		prepare  func() common.Address
+		amountFn func(current *uint256.Int) *uint256.Int
+	}{
+		{
+			name: "freshly created module account",
+			prepare: func() common.Address {
+				ctx := s.Network.GetContext()
+				ak := s.Network.App.GetAccountKeeper()
+				acc := authtypes.NewEmptyModuleAccount("test-blocked-stale-overwrite", authtypes.Minter)
+				ak.NewAccount(ctx, acc)
+				ak.SetAccount(ctx, acc)
+				return common.BytesToAddress(acc.GetAddress().Bytes())
+			},
+			amountFn: func(*uint256.Int) *uint256.Int { return uint256.NewInt(12345) },
+		},
+		{
+			name: "bonded tokens pool, balance decrease",
+			prepare: func() common.Address {
+				return common.BytesToAddress(authtypes.NewModuleAddress(stakingtypes.BondedPoolName).Bytes())
+			},
+			amountFn: func(current *uint256.Int) *uint256.Int {
+				if current.IsZero() {
+					return uint256.NewInt(0)
+				}
+				return new(uint256.Int).Sub(current, uint256.NewInt(1))
+			},
+		},
+		{
+			name: "bonded tokens pool, balance unchanged",
+			prepare: func() common.Address {
+				return common.BytesToAddress(authtypes.NewModuleAddress(stakingtypes.BondedPoolName).Bytes())
+			},
+			amountFn: func(current *uint256.Int) *uint256.Int { return new(uint256.Int).Set(current) },
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			addr := tc.prepare()
+			before := s.Network.App.GetEVMKeeper().GetBalance(s.Network.GetContext(), addr)
+
+			err := s.Network.App.GetEVMKeeper().SetBalance(s.Network.GetContext(), addr, tc.amountFn(before))
+			s.Require().Error(err)
+			s.Require().Contains(err.Error(), "is not allowed to receive funds")
+
+			after := s.Network.App.GetEVMKeeper().GetBalance(s.Network.GetContext(), addr)
+			s.Require().Equal(before, after)
+		})
+	}
+}
+
+func (s *KeeperTestSuite) TestSetBalanceAllowsEOA() {
+	s.SetupTest()
+	addr := utiltx.GenerateAddress()
+	amount := uint256.NewInt(12345)
+
+	s.Require().NoError(s.Network.App.GetEVMKeeper().SetBalance(s.Network.GetContext(), addr, amount))
+	s.Require().Equal(amount, s.Network.App.GetEVMKeeper().GetBalance(s.Network.GetContext(), addr))
 }
 
 func (s *KeeperTestSuite) TestDeleteAccount() {
