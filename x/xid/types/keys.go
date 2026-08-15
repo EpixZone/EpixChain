@@ -56,6 +56,10 @@ const (
 	// ed25519 attestation pubkey. Appended at the END so existing prefixes keep
 	// their byte values (state-compat).
 	prefixAttestKey
+	// prefixDigestBlockTime stores the canonical (>=2/3-agreed) block_time the
+	// signed attestations for a digest cover, so the query returns exactly what the
+	// validators signed (not the current block's time).
+	prefixDigestBlockTime
 )
 
 // KVStore key prefixes
@@ -280,6 +284,16 @@ func AttestKeyKey(valcons string) []byte {
 // AttestKeyPrefix is the iteration prefix for all registered attestation keys.
 func AttestKeyPrefix() []byte {
 	return []byte{prefixAttestKey}
+}
+
+// DigestBlockTimeKey returns the store key for a digest's canonical signed
+// block_time: [prefix][sha256(digest)[:8]].
+func DigestBlockTimeKey(digest string) []byte {
+	digestHash := sha256.Sum256([]byte(digest))
+	key := make([]byte, 0, 1+8)
+	key = append(key, prefixDigestBlockTime)
+	key = append(key, digestHash[:8]...)
+	return key
 }
 
 // PrimaryNameKey returns the store key for an owner's primary name: [prefix][owner_bytes(20)]

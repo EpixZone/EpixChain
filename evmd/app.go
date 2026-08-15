@@ -1,6 +1,7 @@
 package evmd
 
 import (
+	"crypto/ed25519"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -174,6 +175,12 @@ type EVMD struct {
 	txConfig          client.TxConfig
 
 	pendingTxListeners []evmante.PendingTxListener
+
+	// xID attestation (ABCI++ vote extensions): the node's ed25519 attest key (nil
+	// if this node is not an attesting signer) and the captured EVM PrepareProposal
+	// handler that the vote-extension wrapper delegates to.
+	attestPrivKey      ed25519.PrivateKey
+	evmPrepareProposal sdk.PrepareProposalHandler
 
 	// keys to access the substores
 	keys  map[string]*storetypes.KVStoreKey
@@ -883,6 +890,12 @@ func NewExampleApp(
 		panic(fmt.Sprintf("failed to configure EVM mempool: %s", err.Error()))
 	}
 
+	// xID attestation: load this node's ed25519 attest key (if configured) and wire
+	// the ABCI++ vote-extension handlers. MUST come after configureEVMMempool so the
+	// PrepareProposal wrapper can delegate to the EVM mempool handler.
+	app.attestPrivKey = loadAttestPrivKey(homePath)
+	app.registerAttestationHandlers()
+
 	// In v0.46, the SDK introduces _postHandlers_. PostHandlers are like
 	// antehandlers, but are run _after_ the `runMsgs` execution. They are also
 	// defined as a chain, and have the same signature as antehandlers.
@@ -1025,7 +1038,12 @@ func (app *EVMD) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci
 	return app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
 }
 
-func (app *EVMD) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
+func (app *EVMD) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
+	// Consume any injected xID vote-extension commit (tx[0]) and persist the signed
+	// attestations BEFORE module PreBlock / BeginBlock run.
+	if req != nil {
+		app.processXidVoteExtensions(ctx, req.Txs)
+	}
 	return app.ModuleManager.PreBlock(ctx)
 }
 

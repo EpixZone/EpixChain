@@ -269,12 +269,22 @@ func (k Keeper) QueryAttestations(goCtx context.Context, req *types.QueryAttesta
 	attestations := k.GetAttestations(ctx, digest)
 	finalized := k.IsDigestFinalized(ctx, digest)
 
-	// block_time / height are the values bound into the attestation sign-bytes;
-	// they live on the (current) StateDigest. total_voting_power is the finality
-	// denominator clients verify signed power against.
+	// Prefer the SIGNED (height, block_time) the attestations actually cover, so
+	// the client reconstructs the exact sign-bytes the validators signed. Falls
+	// back to the current StateDigest for the pre-vote-extension (legacy) path.
+	// total_voting_power is the finality denominator clients verify signed power
+	// against.
 	var blockTime int64
 	var height uint64
-	if sd, found := k.GetStateDigest(ctx); found && sd.Digest == digest {
+	if bt, ok := k.GetDigestBlockTime(ctx, digest); ok {
+		blockTime = bt
+		for _, att := range attestations {
+			if att.VotingPower > 0 {
+				height = att.Height // signed attestations all share the height they signed
+				break
+			}
+		}
+	} else if sd, found := k.GetStateDigest(ctx); found && sd.Digest == digest {
 		blockTime = sd.BlockTime
 		height = sd.Height
 	}
