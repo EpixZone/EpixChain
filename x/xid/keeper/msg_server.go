@@ -348,3 +348,24 @@ func (k Keeper) AttestStateDigest(goCtx context.Context, msg *types.MsgAttestSta
 
 	return &types.MsgAttestStateDigestResponse{}, nil
 }
+
+// RegisterAttestKey binds an ed25519 attestation pubkey to a validator (signed by
+// its operator key). This is the key the chain signs the state digest with via
+// vote extensions and that light clients pin.
+func (k Keeper) RegisterAttestKey(goCtx context.Context, msg *types.MsgRegisterAttestKey) (*types.MsgRegisterAttestKeyResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if err := k.SubmitAttestKey(ctx, msg); err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			"xid_attest_key_registered",
+			sdk.NewAttribute("validator_cons_addr", msg.ValidatorConsAddr),
+			sdk.NewAttribute("ed25519_pubkey", msg.Ed25519Pubkey),
+		),
+	})
+
+	return &types.MsgRegisterAttestKeyResponse{}, nil
+}

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"encoding/hex"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -268,9 +269,22 @@ func (k Keeper) QueryAttestations(goCtx context.Context, req *types.QueryAttesta
 	attestations := k.GetAttestations(ctx, digest)
 	finalized := k.IsDigestFinalized(ctx, digest)
 
+	// block_time / height are the values bound into the attestation sign-bytes;
+	// they live on the (current) StateDigest. total_voting_power is the finality
+	// denominator clients verify signed power against.
+	var blockTime int64
+	var height uint64
+	if sd, found := k.GetStateDigest(ctx); found && sd.Digest == digest {
+		blockTime = sd.BlockTime
+		height = sd.Height
+	}
+
 	return &types.QueryAttestationsResponse{
-		Attestations: attestations,
-		Finalized:    finalized,
+		Attestations:     attestations,
+		Finalized:        finalized,
+		BlockTime:        blockTime,
+		TotalVotingPower: k.totalBondedPower(ctx),
+		Height:           height,
 	}, nil
 }
 
@@ -387,6 +401,9 @@ func (k Keeper) ResolveWithProof(goCtx context.Context, req *types.QueryResolveW
 		},
 		Root:   digest.Digest,
 		Height: digest.Height,
+		// The exact canonical bytes hashed to proof.LeafHash, so the client binds
+		// the returned data to the proven leaf instead of trusting the payload.
+		LeafPreimage: hex.EncodeToString(k.computeLeafPreimage(ctx, req.Tld, req.Name)),
 	}, nil
 }
 

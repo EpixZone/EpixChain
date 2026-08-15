@@ -47,6 +47,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgUnlinkIdentity{},
 		&MsgUpdateContentRoot{},
 		&MsgAttestStateDigest{},
+		&MsgRegisterAttestKey{},
 		&MsgSetPrimaryName{},
 	)
 

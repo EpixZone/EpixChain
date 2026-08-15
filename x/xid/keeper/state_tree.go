@@ -116,9 +116,22 @@ func (k Keeper) SetLeafIndex(ctx sdk.Context, tld, name string, index uint32) {
 // returns its SHA-256 hash. This reuses the same struct as the old flat digest
 // so that the data model is consistent.
 func (k Keeper) computeLeafHash(ctx sdk.Context, tld, name string) [32]byte {
+	pre := k.computeLeafPreimage(ctx, tld, name)
+	if pre == nil {
+		return emptyLeafHash
+	}
+	return sha256.Sum256(pre)
+}
+
+// computeLeafPreimage returns the exact canonical bytes hashed into a domain's
+// leaf — `json.Marshal(domainDigestEntry)` — or nil if the name does not exist.
+// This is served to clients as `leaf_preimage` so they can hash it to bind the
+// returned data to the proven leaf (see docs/xid-lightclient-finality.md). Any
+// change here MUST be mirrored by the client's leaf parser + a frozen KAT.
+func (k Keeper) computeLeafPreimage(ctx sdk.Context, tld, name string) []byte {
 	record, found := k.GetNameRecord(ctx, tld, name)
 	if !found {
-		return emptyLeafHash
+		return nil
 	}
 
 	entry := domainDigestEntry{
@@ -146,7 +159,7 @@ func (k Keeper) computeLeafHash(ctx sdk.Context, tld, name string) [32]byte {
 	}
 
 	bz, _ := json.Marshal(entry)
-	return sha256.Sum256(bz)
+	return bz
 }
 
 // hashPair hashes two 32-byte children into a parent node.

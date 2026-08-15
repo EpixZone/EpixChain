@@ -52,6 +52,10 @@ const (
 	prefixMerkleNode
 	prefixMerkleLeafIndex
 	prefixMerkleMetadata
+	// prefixAttestKey maps a validator consensus address to its registered
+	// ed25519 attestation pubkey. Appended at the END so existing prefixes keep
+	// their byte values (state-compat).
+	prefixAttestKey
 )
 
 // KVStore key prefixes
@@ -265,6 +269,17 @@ func AttestationCountKey(digest string) []byte {
 // AttestationConfigKey returns the store key for attestation config: [prefix]
 func AttestationConfigKey() []byte {
 	return []byte{prefixAttestationConfig}
+}
+
+// AttestKeyKey returns the store key for a validator's registered attestation
+// pubkey: [prefix][valcons].
+func AttestKeyKey(valcons string) []byte {
+	return append([]byte{prefixAttestKey}, []byte(valcons)...)
+}
+
+// AttestKeyPrefix is the iteration prefix for all registered attestation keys.
+func AttestKeyPrefix() []byte {
+	return []byte{prefixAttestKey}
 }
 
 // PrimaryNameKey returns the store key for an owner's primary name: [prefix][owner_bytes(20)]

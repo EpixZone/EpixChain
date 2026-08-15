@@ -28,4 +28,5 @@ var (
 	ErrAlreadyAttested       = errorsmod.Register(ModuleName, 23, "validator has already attested to this digest")
 	ErrInvalidIdentity       = errorsmod.Register(ModuleName, 24, "invalid linked identity")
 	ErrOwnerCountUnderflow   = errorsmod.Register(ModuleName, 25, "owner count is already zero")
+	ErrInvalidAttestKey      = errorsmod.Register(ModuleName, 26, "invalid attestation key registration")
 )
