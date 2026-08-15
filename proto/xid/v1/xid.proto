@@ -120,6 +120,13 @@ message Attestation {
   // voting_power is the attester's voting power at `height` (informational;
   // clients sum PINNED power).
   uint64 voting_power = 7;
+  // vote_extension is the raw ExtendVote payload bytes CometBFT signed. The client
+  // reconstructs CanonicalVoteExtension{extension, height, round, chain_id} over
+  // these and verifies `signature` (CometBFT's ExtensionSignature) against the
+  // pinned CONSENSUS pubkey — so validators need no separate attest key.
+  bytes vote_extension = 8;
+  // round is the commit round, part of the CanonicalVoteExtension sign-bytes.
+  uint64 round = 9;
 }
 
 // AttestationVoteExtension is the payload a validator returns from ExtendVote: its

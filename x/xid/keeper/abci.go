@@ -45,12 +45,12 @@ func (k Keeper) BeginBlock(ctx sdk.Context) error {
 		if validator.GetStatus() != stakingtypes.Bonded {
 			continue
 		}
-		// Validators that registered an attest key attest via the SIGNED
-		// vote-extension path (PreBlocker); don't also write a zero-power
-		// auto:consensus entry that would sit alongside their signed one.
-		if _, ok := k.GetAttestKey(ctx, consAddr.String()); ok {
-			continue
-		}
+		// auto:consensus is the legacy count-based path, kept only so existing
+		// clients keep working BEFORE vote extensions are enabled. Once enabled,
+		// every validator's signed (power-bearing) attestation is written by
+		// PreBlocker and the power path in IsDigestFinalized takes precedence; the
+		// zero-power auto:consensus entry (keyed by account addr, distinct from the
+		// valcons-keyed signed entry) coexists harmlessly and the client ignores it.
 
 		valOperAddr, err := sdk.ValAddressFromBech32(validator.OperatorAddress)
 		if err != nil {

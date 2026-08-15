@@ -167,18 +167,11 @@ func (k Keeper) IsDigestFinalized(ctx sdk.Context, digest string) bool {
 
 // RecordSignedAttestation persists a verified signed attestation for a digest,
 // overwriting any prior entry for the same (digest, validator) so voting power,
-// height and signature stay fresh as the same digest is re-signed each block.
-// Keyed by the consensus address (the client pins valcons -> pubkey/power).
-func (k Keeper) RecordSignedAttestation(ctx sdk.Context, ext types.AttestationVoteExtension, votingPower uint64) {
-	k.SetAttestation(ctx, types.Attestation{
-		ValidatorAddr:     ext.ValidatorConsAddr,
-		Digest:            ext.Digest,
-		Signature:         ext.Signature,
-		Height:            ext.Height,
-		ValidatorConsAddr: ext.ValidatorConsAddr,
-		Ed25519Pubkey:     ext.Ed25519Pubkey,
-		VotingPower:       votingPower,
-	})
+// height, round, extension and signature stay fresh as the same digest is
+// re-signed each block. Keyed by the consensus address (the client pins
+// valcons -> consensus pubkey/power).
+func (k Keeper) RecordSignedAttestation(ctx sdk.Context, att types.Attestation) {
+	k.SetAttestation(ctx, att)
 }
 
 // SetDigestBlockTime stores the canonical (>=2/3-agreed) block_time the signed

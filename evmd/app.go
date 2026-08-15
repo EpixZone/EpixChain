@@ -1,7 +1,6 @@
 package evmd
 
 import (
-	"crypto/ed25519"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -176,10 +175,10 @@ type EVMD struct {
 
 	pendingTxListeners []evmante.PendingTxListener
 
-	// xID attestation (ABCI++ vote extensions): the node's ed25519 attest key (nil
-	// if this node is not an attesting signer) and the captured EVM PrepareProposal
-	// handler that the vote-extension wrapper delegates to.
-	attestPrivKey      ed25519.PrivateKey
+	// xID attestation (ABCI++ vote extensions): the captured EVM PrepareProposal
+	// handler that the vote-extension wrapper delegates to. Validators sign the
+	// digest with their CONSENSUS key (CometBFT ExtensionSignature) — no separate
+	// key is loaded here.
 	evmPrepareProposal sdk.PrepareProposalHandler
 
 	// keys to access the substores
@@ -890,10 +889,10 @@ func NewExampleApp(
 		panic(fmt.Sprintf("failed to configure EVM mempool: %s", err.Error()))
 	}
 
-	// xID attestation: load this node's ed25519 attest key (if configured) and wire
-	// the ABCI++ vote-extension handlers. MUST come after configureEVMMempool so the
-	// PrepareProposal wrapper can delegate to the EVM mempool handler.
-	app.attestPrivKey = loadAttestPrivKey(homePath)
+	// xID attestation: wire the ABCI++ vote-extension handlers. MUST come after
+	// configureEVMMempool so the PrepareProposal wrapper can delegate to the EVM
+	// mempool handler. Validators sign the digest with their consensus key
+	// (CometBFT ExtensionSignature) — nothing to load per-node.
 	app.registerAttestationHandlers()
 
 	// In v0.46, the SDK introduces _postHandlers_. PostHandlers are like
