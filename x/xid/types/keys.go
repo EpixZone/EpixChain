@@ -69,9 +69,9 @@ var (
 	KeyPrefixDNSRecord  = []byte{prefixDNSRecord}
 	KeyPrefixTLDConfig  = []byte{prefixTLDConfig}
 	KeyPrefixParams     = []byte{prefixParams}
-	KeyPrefixOwnerCount     = []byte{prefixOwnerCount}
-	KeyGlobalNameCount      = []byte{prefixGlobalNameCount}
-	KeyGlobalFeesBurned     = []byte{prefixGlobalFeesBurned}
+	KeyPrefixOwnerCount = []byte{prefixOwnerCount}
+	KeyGlobalNameCount  = []byte{prefixGlobalNameCount}
+	KeyGlobalFeesBurned = []byte{prefixGlobalFeesBurned}
 )
 
 // NameRecordKey returns the store key for a name record: [prefix][len(tld)][tld][name]
@@ -273,8 +273,6 @@ func AttestationCountKey(digest string) []byte {
 func AttestationConfigKey() []byte {
 	return []byte{prefixAttestationConfig}
 }
-
-
 
 // DigestBlockTimeKey returns the store key for a digest's canonical signed
 // block_time: [prefix][sha256(digest)[:8]].

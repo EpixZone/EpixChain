@@ -12,12 +12,12 @@ func (n NameRecord) FullName() string {
 
 // DNS record type constants
 const (
-	DNSRecordTypeA     uint32 = 1
-	DNSRecordTypeAAAA  uint32 = 28
-	DNSRecordTypeCNAME uint32 = 5
-	DNSRecordTypeTXT   uint32 = 16
-	DNSRecordTypeMX    uint32 = 15
-	DNSRecordTypeNS    uint32 = 2
-	DNSRecordTypeSRV      uint32 = 33
-	DNSRecordTypeEpixNet  uint32 = 65280 // Private-use range (RFC 6895) for linked identity discovery
+	DNSRecordTypeA       uint32 = 1
+	DNSRecordTypeAAAA    uint32 = 28
+	DNSRecordTypeCNAME   uint32 = 5
+	DNSRecordTypeTXT     uint32 = 16
+	DNSRecordTypeMX      uint32 = 15
+	DNSRecordTypeNS      uint32 = 2
+	DNSRecordTypeSRV     uint32 = 33
+	DNSRecordTypeEpixNet uint32 = 65280 // Private-use range (RFC 6895) for linked identity discovery
 )

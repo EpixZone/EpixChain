@@ -246,7 +246,6 @@ func (msg *MsgAttestStateDigest) ValidateBasic() error {
 	return nil
 }
 
-
 // GetSigners returns the expected signers for MsgLinkIdentity.
 func (msg *MsgLinkIdentity) GetSigners() []sdk.AccAddress {
 	signer, _ := sdk.AccAddressFromBech32(msg.Owner)
