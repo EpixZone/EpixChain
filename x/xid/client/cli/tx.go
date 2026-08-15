@@ -27,8 +27,81 @@ func NewTxCmd() *cobra.Command {
 		NewUpdateProfileCmd(),
 		NewSetDNSRecordCmd(),
 		NewDeleteDNSRecordCmd(),
+		NewLinkIdentityCmd(),
+		NewUnlinkIdentityCmd(),
 	)
 	return txCmd
+}
+
+// NewLinkIdentityCmd returns the command for linking (authorizing) an identity
+// address to a name — e.g. a device/linked-identity for channel delivery.
+func NewLinkIdentityCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "link-identity [name] [tld] [address] [label]",
+		Short: "Link an identity address to a name (e.g., link-identity alice epix epix1... phone)",
+		Args:  cobra.RangeArgs(3, 4),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			label := ""
+			if len(args) == 4 {
+				label = args[3]
+			}
+
+			msg := &types.MsgLinkIdentity{
+				Owner: clientCtx.GetFromAddress().String(),
+				Name:  args[0],
+				Tld:   args[1],
+				Identity: types.LinkedIdentity{
+					Address: args[2],
+					Label:   label,
+				},
+			}
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// NewUnlinkIdentityCmd returns the command for revoking a linked identity from a name.
+func NewUnlinkIdentityCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "unlink-identity [name] [tld] [address]",
+		Short: "Revoke a linked identity from a name (e.g., unlink-identity alice epix epix1...)",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgUnlinkIdentity{
+				Owner:   clientCtx.GetFromAddress().String(),
+				Name:    args[0],
+				Tld:     args[1],
+				Address: args[2],
+			}
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
 }
 
 // NewRegisterNameCmd returns the command for registering a name
