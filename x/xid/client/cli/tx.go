@@ -27,41 +27,8 @@ func NewTxCmd() *cobra.Command {
 		NewUpdateProfileCmd(),
 		NewSetDNSRecordCmd(),
 		NewDeleteDNSRecordCmd(),
-		NewRegisterAttestKeyCmd(),
 	)
 	return txCmd
-}
-
-// NewRegisterAttestKeyCmd binds an ed25519 attestation pubkey to a validator (the
-// key the node signs the xID state digest with via vote extensions). Signed by the
-// validator's operator/account key (--from).
-func NewRegisterAttestKeyCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "register-attest-key [validator-cons-addr] [ed25519-pubkey-hex]",
-		Short: "Register an ed25519 attestation pubkey for a validator (signed by its operator key)",
-		Args:  cobra.ExactArgs(2),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			msg := &types.MsgRegisterAttestKey{
-				Signer:            clientCtx.GetFromAddress().String(),
-				ValidatorConsAddr: args[0],
-				Ed25519Pubkey:     args[1],
-			}
-
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-	return cmd
 }
 
 // NewRegisterNameCmd returns the command for registering a name

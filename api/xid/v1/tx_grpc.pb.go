@@ -31,7 +31,6 @@ const (
 	Msg_UnlinkIdentity_FullMethodName    = "/xid.v1.Msg/UnlinkIdentity"
 	Msg_UpdateContentRoot_FullMethodName = "/xid.v1.Msg/UpdateContentRoot"
 	Msg_AttestStateDigest_FullMethodName = "/xid.v1.Msg/AttestStateDigest"
-	Msg_RegisterAttestKey_FullMethodName = "/xid.v1.Msg/RegisterAttestKey"
 	Msg_SetPrimaryName_FullMethodName    = "/xid.v1.Msg/SetPrimaryName"
 )
 
@@ -65,11 +64,6 @@ type MsgClient interface {
 	UpdateContentRoot(ctx context.Context, in *MsgUpdateContentRoot, opts ...grpc.CallOption) (*MsgUpdateContentRootResponse, error)
 	// AttestStateDigest allows a validator to attest to the current xID state digest.
 	AttestStateDigest(ctx context.Context, in *MsgAttestStateDigest, opts ...grpc.CallOption) (*MsgAttestStateDigestResponse, error)
-	// RegisterAttestKey binds an ed25519 attestation pubkey to a validator, signed
-	// by the validator's operator/account key. This is the key the chain signs the
-	// state digest with (via vote extensions) and that light clients pin — so the
-	// consensus key is never reused for app-level attestations.
-	RegisterAttestKey(ctx context.Context, in *MsgRegisterAttestKey, opts ...grpc.CallOption) (*MsgRegisterAttestKeyResponse, error)
 	// SetPrimaryName sets the primary name for an address.
 	SetPrimaryName(ctx context.Context, in *MsgSetPrimaryName, opts ...grpc.CallOption) (*MsgSetPrimaryNameResponse, error)
 }
@@ -202,16 +196,6 @@ func (c *msgClient) AttestStateDigest(ctx context.Context, in *MsgAttestStateDig
 	return out, nil
 }
 
-func (c *msgClient) RegisterAttestKey(ctx context.Context, in *MsgRegisterAttestKey, opts ...grpc.CallOption) (*MsgRegisterAttestKeyResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(MsgRegisterAttestKeyResponse)
-	err := c.cc.Invoke(ctx, Msg_RegisterAttestKey_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *msgClient) SetPrimaryName(ctx context.Context, in *MsgSetPrimaryName, opts ...grpc.CallOption) (*MsgSetPrimaryNameResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(MsgSetPrimaryNameResponse)
@@ -252,11 +236,6 @@ type MsgServer interface {
 	UpdateContentRoot(context.Context, *MsgUpdateContentRoot) (*MsgUpdateContentRootResponse, error)
 	// AttestStateDigest allows a validator to attest to the current xID state digest.
 	AttestStateDigest(context.Context, *MsgAttestStateDigest) (*MsgAttestStateDigestResponse, error)
-	// RegisterAttestKey binds an ed25519 attestation pubkey to a validator, signed
-	// by the validator's operator/account key. This is the key the chain signs the
-	// state digest with (via vote extensions) and that light clients pin — so the
-	// consensus key is never reused for app-level attestations.
-	RegisterAttestKey(context.Context, *MsgRegisterAttestKey) (*MsgRegisterAttestKeyResponse, error)
 	// SetPrimaryName sets the primary name for an address.
 	SetPrimaryName(context.Context, *MsgSetPrimaryName) (*MsgSetPrimaryNameResponse, error)
 	mustEmbedUnimplementedMsgServer()
@@ -304,9 +283,6 @@ func (UnimplementedMsgServer) UpdateContentRoot(context.Context, *MsgUpdateConte
 }
 func (UnimplementedMsgServer) AttestStateDigest(context.Context, *MsgAttestStateDigest) (*MsgAttestStateDigestResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AttestStateDigest not implemented")
-}
-func (UnimplementedMsgServer) RegisterAttestKey(context.Context, *MsgRegisterAttestKey) (*MsgRegisterAttestKeyResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RegisterAttestKey not implemented")
 }
 func (UnimplementedMsgServer) SetPrimaryName(context.Context, *MsgSetPrimaryName) (*MsgSetPrimaryNameResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetPrimaryName not implemented")
@@ -548,24 +524,6 @@ func _Msg_AttestStateDigest_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_RegisterAttestKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgRegisterAttestKey)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).RegisterAttestKey(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Msg_RegisterAttestKey_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).RegisterAttestKey(ctx, req.(*MsgRegisterAttestKey))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Msg_SetPrimaryName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MsgSetPrimaryName)
 	if err := dec(in); err != nil {
@@ -638,10 +596,6 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AttestStateDigest",
 			Handler:    _Msg_AttestStateDigest_Handler,
-		},
-		{
-			MethodName: "RegisterAttestKey",
-			Handler:    _Msg_RegisterAttestKey_Handler,
 		},
 		{
 			MethodName: "SetPrimaryName",

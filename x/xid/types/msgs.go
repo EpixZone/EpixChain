@@ -246,20 +246,6 @@ func (msg *MsgAttestStateDigest) ValidateBasic() error {
 	return nil
 }
 
-// ValidateBasic validates the MsgRegisterAttestKey message.
-func (msg *MsgRegisterAttestKey) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(msg.Signer); err != nil {
-		return err
-	}
-	if _, err := sdk.ConsAddressFromBech32(msg.ValidatorConsAddr); err != nil {
-		return ErrInvalidAttestKey.Wrap("validator_cons_addr must be a valid consensus address")
-	}
-	pk, err := hex.DecodeString(msg.Ed25519Pubkey)
-	if err != nil || len(pk) != 32 {
-		return ErrInvalidAttestKey.Wrap("ed25519_pubkey must be a 32-byte hex key")
-	}
-	return nil
-}
 
 // GetSigners returns the expected signers for MsgLinkIdentity.
 func (msg *MsgLinkIdentity) GetSigners() []sdk.AccAddress {

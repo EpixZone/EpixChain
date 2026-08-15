@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/binary"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -254,54 +253,6 @@ func (k Keeper) SetAttestationConfig(ctx sdk.Context, config types.AttestationCo
 // ---------------------------------------------------------------------------
 // Attestation keys (valcons -> ed25519 attestation pubkey)
 // ---------------------------------------------------------------------------
-
-// SubmitAttestKey validates a MsgRegisterAttestKey and stores the binding. The
-// signer's operator/account key must own the consensus address, and the pubkey
-// must be a 32-byte hex ed25519 key. This is the key the chain signs digests with
-// (via vote extensions) and that light clients pin — the consensus key is never
-// reused for app-level attestations.
-func (k Keeper) SubmitAttestKey(ctx sdk.Context, msg *types.MsgRegisterAttestKey) error {
-	pk, err := hex.DecodeString(msg.Ed25519Pubkey)
-	if err != nil || len(pk) != 32 {
-		return errorsmod.Wrap(types.ErrInvalidAttestKey, "ed25519_pubkey must be 32-byte hex")
-	}
-	consAddr, err := sdk.ConsAddressFromBech32(msg.ValidatorConsAddr)
-	if err != nil {
-		return errorsmod.Wrap(types.ErrInvalidAttestKey, "invalid validator_cons_addr")
-	}
-	validator, err := k.stakingKeeper.GetValidatorByConsAddr(ctx, consAddr)
-	if err != nil {
-		return errorsmod.Wrapf(types.ErrNotValidator, "no validator for consensus address %s", msg.ValidatorConsAddr)
-	}
-	valOper, err := sdk.ValAddressFromBech32(validator.GetOperator())
-	if err != nil {
-		return err
-	}
-	signer, err := sdk.AccAddressFromBech32(msg.Signer)
-	if err != nil {
-		return err
-	}
-	// Operator address and account address share the same 20 key bytes.
-	if !sdk.AccAddress(valOper.Bytes()).Equals(signer) {
-		return errorsmod.Wrap(types.ErrInvalidAttestKey, "signer is not the validator operator for that consensus address")
-	}
-	k.SetAttestKey(ctx, msg.ValidatorConsAddr, msg.Ed25519Pubkey)
-	return nil
-}
-
-// SetAttestKey stores a validator's registered ed25519 attestation pubkey (hex).
-func (k Keeper) SetAttestKey(ctx sdk.Context, valcons, pubkeyHex string) {
-	ctx.KVStore(k.storeKey).Set(types.AttestKeyKey(valcons), []byte(pubkeyHex))
-}
-
-// GetAttestKey returns a validator's registered attestation pubkey (hex), if any.
-func (k Keeper) GetAttestKey(ctx sdk.Context, valcons string) (string, bool) {
-	bz := ctx.KVStore(k.storeKey).Get(types.AttestKeyKey(valcons))
-	if bz == nil {
-		return "", false
-	}
-	return string(bz), true
-}
 
 // totalBondedPower returns the total consensus voting power of all bonded
 // validators — the denominator light clients verify signed power against.

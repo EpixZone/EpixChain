@@ -52,9 +52,8 @@ const (
 	prefixMerkleNode
 	prefixMerkleLeafIndex
 	prefixMerkleMetadata
-	// prefixAttestKey maps a validator consensus address to its registered
-	// ed25519 attestation pubkey. Appended at the END so existing prefixes keep
-	// their byte values (state-compat).
+	// prefixAttestKey is RESERVED (was the attest-key registry; finality now uses
+	// CometBFT consensus-key vote-ext signatures, so nothing writes it).
 	prefixAttestKey
 	// prefixDigestBlockTime stores the canonical (>=2/3-agreed) block_time the
 	// signed attestations for a digest cover, so the query returns exactly what the
@@ -275,16 +274,7 @@ func AttestationConfigKey() []byte {
 	return []byte{prefixAttestationConfig}
 }
 
-// AttestKeyKey returns the store key for a validator's registered attestation
-// pubkey: [prefix][valcons].
-func AttestKeyKey(valcons string) []byte {
-	return append([]byte{prefixAttestKey}, []byte(valcons)...)
-}
 
-// AttestKeyPrefix is the iteration prefix for all registered attestation keys.
-func AttestKeyPrefix() []byte {
-	return []byte{prefixAttestKey}
-}
 
 // DigestBlockTimeKey returns the store key for a digest's canonical signed
 // block_time: [prefix][sha256(digest)[:8]].
