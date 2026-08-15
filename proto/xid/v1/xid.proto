@@ -121,3 +121,17 @@ message Attestation {
   // clients sum PINNED power).
   uint64 voting_power = 7;
 }
+
+// AttestationVoteExtension is the payload a validator returns from ExtendVote: its
+// signature over AttestationSignBytes(chain_id, height, block_time, digest) plus the
+// exact (height, block_time, digest) it signed so a verifier — which does NOT get a
+// time in VerifyVoteExtension — can reconstruct the sign-bytes. Deterministically
+// (proto) encoded.
+message AttestationVoteExtension {
+  uint64 height = 1;
+  int64 block_time = 2;
+  string digest = 3;
+  string validator_cons_addr = 4;
+  string ed25519_pubkey = 5;
+  string signature = 6;
+}
