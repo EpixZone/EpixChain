@@ -240,6 +240,14 @@ func setupTestDenomMetadata(t *testing.T) func(genesis []byte) []byte {
 		genesis, err = sjson.SetBytes(genesis, "app_state.gov.params.expedited_min_deposit.0.denom", "atest")
 		require.NoError(t, err)
 
+		// EpixChain's ante handler (ante/min_validator_delegation.go) rejects any
+		// MsgCreateValidator whose self-delegation is below epixmint's network
+		// minimum (1,000,000 EPIX in prod). The systemtest framework funds its
+		// validators with a tiny stake, so its genesis gentx would be rejected and
+		// the chain would never start. Relax the minimum to 0 for system tests.
+		genesis, err = sjson.SetBytes(genesis, "app_state.epixmint.params.min_validator_self_delegation", "0")
+		require.NoError(t, err)
+
 		return genesis
 	}
 }
