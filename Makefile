@@ -154,6 +154,13 @@ test-race: ARGS=-race
 test-race: TEST_PACKAGES=$(PACKAGES_UNIT)
 test-race: run-tests
 
+# Lightweight race detection on the concurrency-sensitive packages only
+# (streams, mempool, rpc, indexer, server). Excludes the chain-spinning
+# integration suites that make -race exhaust the CI runner — those run without
+# -race in test-unit-cover. Fast enough to run on a standard hosted runner.
+test-race-lite:
+	@go test -race -tags=test -timeout=20m ./rpc/... ./mempool/... ./indexer/... ./server/...
+
 test-epixd: ARGS=-timeout=30m
 test-epixd:
 	@cd evmd && go test -count=1 -race -tags=test -mod=readonly $(ARGS) $(EXTRA_ARGS) $(PACKAGES_EVMD)
@@ -194,7 +201,7 @@ test-solidity:
 	@echo "Beginning solidity tests..."
 	./scripts/run-solidity-tests.sh
 
-.PHONY: run-tests test test-all $(TEST_TARGETS)
+.PHONY: run-tests test test-all test-race-lite $(TEST_TARGETS)
 
 benchmark:
 	@go test -race -tags=test -mod=readonly -bench=. $(PACKAGES_NOSIMULATION)

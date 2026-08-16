@@ -61,6 +61,36 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
+  # Race detector on the concurrency-sensitive packages only. test-unit-cover
+  # drops -race (whole-repo coverage + -race OOMs the runner), so this keeps CI
+  # race coverage where it matters (streams/mempool/rpc/indexer/server) at a
+  # fraction of the cost — runs in ~1 minute.
+  test-race:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          check-latest: true
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Resolve diff base for push events
+        id: diff_base
+        if: github.event_name == 'push'
+        run: echo "base=$(git rev-parse HEAD~1)" >> "$GITHUB_OUTPUT"
+      - uses: technote-space/get-diff-action@v6.1.2
+        with:
+          BASE: ${{ steps.diff_base.outputs.base }}
+          PATTERNS: |
+            **/**.go
+            go.mod
+            go.sum
+      - name: Race detector (concurrency-sensitive packages)
+        run: make test-race-lite
+        if: env.GIT_DIFF
+
   test-scripts:
     runs-on: ubuntu-latest
     steps:
