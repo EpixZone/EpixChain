@@ -23,9 +23,9 @@ jobs:
       matrix:
         include:
           - goarch: amd64
-            runner: depot-ubuntu-22.04-4
+            runner: ubuntu-22.04
           - goarch: arm64
-            runner: depot-ubuntu-22.04-arm-4
+            runner: ubuntu-22.04-arm
 
     steps:
       - name: Checkout repository
