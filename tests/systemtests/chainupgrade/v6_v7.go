@@ -22,7 +22,11 @@ import (
 
 const (
 	upgradeHeight int64 = 22
-	upgradeName         = "v0.6.0-to-v0.7.0" // must match UpgradeName in evmd/upgrades.go
+	// The gov upgrade name must match a handler registered in evmd/upgrades.go.
+	// EpixChain's pre-v0.7 release (v0.6.x codebase) is tagged v0.5.5; the
+	// migration off it into the cosmos/evm v0.7 codebase is UpgradeName_v0_7_0
+	// ("v0.7.0"), which also deletes the precisebank store — the real "v6->v7".
+	upgradeName = "v0.7.0"
 
 	// Contended-account workload — multiple senders, single recipient.
 	// SendEthLegacyTx hard-codes the recipient to acc3 and the value to 1000 wei,

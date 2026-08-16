@@ -380,9 +380,14 @@ test-system: build-v06 build
 	cd tests/systemtests/Counter && forge build
 	$(MAKE) -C tests/systemtests test
 
+# Build the pre-v0.7 ("v0.6.x codebase") legacy binary for the chain-upgrade
+# system test. EpixChain never released a v0.6.x tag — its v0.5.5 release is
+# built from the upstream cosmos/evm v0.6.x codebase (it still registers the
+# precisebank store), so v0.5.5 is the correct binary to upgrade FROM into the
+# v0.7 line. See UpgradeName_v0_7_0 in evmd/upgrades.go.
 build-v06:
 	mkdir -p ./tests/systemtests/binaries/v0.6
-	git checkout v0.6.0
+	git checkout v0.5.5
 	make build
 	cp $(BUILDDIR)/epixd ./tests/systemtests/binaries/v0.6
 	git checkout -
