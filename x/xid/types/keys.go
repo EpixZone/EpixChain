@@ -52,9 +52,6 @@ const (
 	prefixMerkleNode
 	prefixMerkleLeafIndex
 	prefixMerkleMetadata
-	// prefixAttestKey is RESERVED (was the attest-key registry; finality now uses
-	// CometBFT consensus-key vote-ext signatures, so nothing writes it).
-	prefixAttestKey
 	// prefixDigestBlockTime stores the canonical (>=2/3-agreed) block_time the
 	// signed attestations for a digest cover, so the query returns exactly what the
 	// validators signed (not the current block's time).
