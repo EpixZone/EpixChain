@@ -6,18 +6,22 @@ import (
 	io "io"
 	math_bits "math/bits"
 
-	grpc1 "github.com/cosmos/gogoproto/grpc"
-	proto "github.com/cosmos/gogoproto/proto"
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+
+	_ "google.golang.org/genproto/googleapis/api/annotations"
+
+	grpc1 "github.com/cosmos/gogoproto/grpc"
+	proto "github.com/cosmos/gogoproto/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
-var _ = proto.Marshal
-var _ = fmt.Errorf
-var _ = math_bits.Len64
+var (
+	_ = proto.Marshal
+	_ = fmt.Errorf
+	_ = math_bits.Len64
+)
 
 // QueryGetBeaconRequest is the request type for the Query/GetBeacon RPC method.
 type QueryGetBeaconRequest struct {
@@ -260,13 +264,15 @@ func (*QueryLatestBeaconRequest) ProtoMessage()    {}
 func (m *QueryLatestBeaconRequest) Marshal() (dAtA []byte, err error) {
 	return nil, nil
 }
+
 func (m *QueryLatestBeaconRequest) MarshalTo(dAtA []byte) (int, error) {
 	return 0, nil
 }
+
 func (m *QueryLatestBeaconRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA), nil
 }
-func (m *QueryLatestBeaconRequest) Size() int     { return 0 }
+func (m *QueryLatestBeaconRequest) Size() int                   { return 0 }
 func (m *QueryLatestBeaconRequest) Unmarshal(dAtA []byte) error { return nil }
 
 // QueryLatestBeaconResponse is the response type for the Query/LatestBeacon RPC method.
@@ -405,13 +411,15 @@ func (*QueryParamsRequest) ProtoMessage()    {}
 func (m *QueryParamsRequest) Marshal() (dAtA []byte, err error) {
 	return nil, nil
 }
+
 func (m *QueryParamsRequest) MarshalTo(dAtA []byte) (int, error) {
 	return 0, nil
 }
+
 func (m *QueryParamsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA), nil
 }
-func (m *QueryParamsRequest) Size() int     { return 0 }
+func (m *QueryParamsRequest) Size() int                   { return 0 }
 func (m *QueryParamsRequest) Unmarshal(dAtA []byte) error { return nil }
 
 // QueryParamsResponse is the response type for the Query/Params RPC method.
@@ -547,9 +555,11 @@ type UnimplementedQueryServer struct{}
 func (*UnimplementedQueryServer) GetBeacon(ctx context.Context, req *QueryGetBeaconRequest) (*QueryGetBeaconResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBeacon not implemented")
 }
+
 func (*UnimplementedQueryServer) LatestBeacon(ctx context.Context, req *QueryLatestBeaconRequest) (*QueryLatestBeaconResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LatestBeacon not implemented")
 }
+
 func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
 }
@@ -612,27 +622,29 @@ func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
-var Query_serviceDesc = _Query_serviceDesc
-var _Query_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "vrf.v1.Query",
-	HandlerType: (*QueryServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GetBeacon",
-			Handler:    _Query_GetBeacon_Handler,
+var (
+	Query_serviceDesc  = _Query_serviceDesc
+	_Query_serviceDesc = grpc.ServiceDesc{
+		ServiceName: "vrf.v1.Query",
+		HandlerType: (*QueryServer)(nil),
+		Methods: []grpc.MethodDesc{
+			{
+				MethodName: "GetBeacon",
+				Handler:    _Query_GetBeacon_Handler,
+			},
+			{
+				MethodName: "LatestBeacon",
+				Handler:    _Query_LatestBeacon_Handler,
+			},
+			{
+				MethodName: "Params",
+				Handler:    _Query_Params_Handler,
+			},
 		},
-		{
-			MethodName: "LatestBeacon",
-			Handler:    _Query_LatestBeacon_Handler,
-		},
-		{
-			MethodName: "Params",
-			Handler:    _Query_Params_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "vrf/v1/query.proto",
-}
+		Streams:  []grpc.StreamDesc{},
+		Metadata: "vrf/v1/query.proto",
+	}
+)
 
 // QueryClient is the client API for the Query service.
 type QueryClient interface {

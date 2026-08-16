@@ -6,15 +6,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
-
-	"github.com/cosmos/cosmos-sdk/testutil"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
 	"github.com/cosmos/evm/x/vrf"
 	"github.com/cosmos/evm/x/vrf/keeper"
 	"github.com/cosmos/evm/x/vrf/types"
+
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
+	"github.com/cosmos/cosmos-sdk/testutil"
+	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 func setupKeeper(t *testing.T) (keeper.Keeper, storetypes.StoreKey, testutil.TestContext) {

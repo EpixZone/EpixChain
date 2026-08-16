@@ -5,8 +5,9 @@ import (
 	"encoding/hex"
 	"strconv"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/evm/x/vrf/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // EndBlock computes and stores a new random beacon each block.

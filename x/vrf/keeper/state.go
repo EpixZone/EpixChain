@@ -4,8 +4,9 @@ import (
 	"encoding/binary"
 	"encoding/json"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/evm/x/vrf/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // SetBeacon stores a random beacon at a given height

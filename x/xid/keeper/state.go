@@ -4,12 +4,14 @@ import (
 	"encoding/binary"
 	"encoding/json"
 
+	"github.com/cosmos/evm/x/xid/types"
+
 	"cosmossdk.io/math"
+
 	prefix "github.com/cosmos/cosmos-sdk/store/v2/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/cosmos/evm/x/xid/types"
 )
 
 // ---------------------------------------------------------------------------

@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cosmos/evm/x/xid/types"
+
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/evm/x/xid/types"
 )
 
 var _ types.MsgServer = &Keeper{}

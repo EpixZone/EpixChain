@@ -4,9 +4,9 @@ import (
 	"os"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/cosmos/evm/testutil/constants"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // TestMain configures the global SDK bech32 prefix to match the test

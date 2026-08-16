@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	abci "github.com/cometbft/cometbft/abci/types"
+
 	"github.com/cosmos/evm/x/xid/client/cli"
 	"github.com/cosmos/evm/x/xid/keeper"
 	"github.com/cosmos/evm/x/xid/types"
@@ -25,11 +26,11 @@ import (
 const ConsensusVersion = 1
 
 var (
-	_ module.AppModule           = AppModule{}
-	_ module.AppModuleBasic      = AppModuleBasic{}
-	_ module.HasABCIGenesis      = AppModule{}
-	_ appmodule.AppModule        = AppModule{}
-	_ appmodule.HasBeginBlocker  = AppModule{}
+	_ module.AppModule          = AppModule{}
+	_ module.AppModuleBasic     = AppModuleBasic{}
+	_ module.HasABCIGenesis     = AppModule{}
+	_ appmodule.AppModule       = AppModule{}
+	_ appmodule.HasBeginBlocker = AppModule{}
 )
 
 // ----------------------------------------------------------------------------

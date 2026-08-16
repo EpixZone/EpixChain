@@ -5,10 +5,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/cosmos/evm/x/vrf/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
-	"github.com/cosmos/evm/x/vrf/types"
 )
 
 func TestMsgUpdateParamsValidateBasic(t *testing.T) {

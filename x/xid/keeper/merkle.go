@@ -5,9 +5,9 @@ import (
 	"encoding/hex"
 	"sort"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/cosmos/evm/x/xid/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // ComputePeerMerkleRoot computes a SHA-256 Merkle root from the active linked

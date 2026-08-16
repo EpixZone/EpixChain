@@ -4,9 +4,13 @@ import (
 	"context"
 	"encoding/json"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
+
+	abci "github.com/cometbft/cometbft/abci/types"
+
+	"github.com/cosmos/evm/x/topholders/keeper"
+	"github.com/cosmos/evm/x/topholders/types"
 
 	"cosmossdk.io/core/appmodule"
 
@@ -15,9 +19,6 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-
-	"github.com/cosmos/evm/x/topholders/keeper"
-	"github.com/cosmos/evm/x/topholders/types"
 )
 
 // ConsensusVersion defines the current module consensus version.

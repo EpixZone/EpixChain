@@ -1,10 +1,10 @@
 package keeper_test
 
 import (
+	"github.com/cosmos/evm/x/vrf/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
-	"github.com/cosmos/evm/x/vrf/types"
 )
 
 func (s *KeeperTestSuite) TestUpdateParams_Success() {

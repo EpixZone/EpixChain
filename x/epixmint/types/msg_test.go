@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"cosmossdk.io/math"
-
 	"github.com/cosmos/evm/x/epixmint/types"
+
+	"cosmossdk.io/math"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"

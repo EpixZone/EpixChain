@@ -7,19 +7,20 @@ import (
 	"fmt"
 	"sort"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/evm/x/xid/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // domainDigestEntry is the canonical representation of a single domain for digest computation.
 type domainDigestEntry struct {
-	Name        string              `json:"name"`
-	Tld         string              `json:"tld"`
-	Owner       string              `json:"owner"`
-	Profile     *types.Profile      `json:"profile,omitempty"`
-	DNS         []types.DNSRecord   `json:"dns,omitempty"`
+	Name        string                 `json:"name"`
+	Tld         string                 `json:"tld"`
+	Owner       string                 `json:"owner"`
+	Profile     *types.Profile         `json:"profile,omitempty"`
+	DNS         []types.DNSRecord      `json:"dns,omitempty"`
 	Identities  []types.LinkedIdentity `json:"identities,omitempty"`
-	ContentRoot string              `json:"content_root,omitempty"`
+	ContentRoot string                 `json:"content_root,omitempty"`
 }
 
 // ComputeStateDigest computes a deterministic SHA-256 digest of all xID state.

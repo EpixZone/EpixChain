@@ -7,6 +7,7 @@ import (
 
 	"github.com/cometbft/cometbft/crypto/tmhash"
 
+	testconstants "github.com/cosmos/evm/testutil/constants"
 	"github.com/cosmos/evm/testutil/integration/base/factory"
 	"github.com/cosmos/evm/testutil/keyring"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
@@ -16,8 +17,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
-	testconstants "github.com/cosmos/evm/testutil/constants"
 )
 
 // Constants

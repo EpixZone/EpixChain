@@ -7,9 +7,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	sdkmath "cosmossdk.io/math"
-
 	"github.com/cosmos/evm/x/epixmint/types"
+
+	sdkmath "cosmossdk.io/math"
 )
 
 type IntegrationTestSuite struct {

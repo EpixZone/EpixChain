@@ -3,9 +3,10 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/cosmos/evm/x/xid/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/evm/x/xid/types"
 )
 
 // NewQueryCmd returns the xid module's root query command

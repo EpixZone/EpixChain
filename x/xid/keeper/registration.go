@@ -3,9 +3,11 @@ package keeper
 import (
 	"strings"
 
-	errorsmod "cosmossdk.io/errors"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/evm/x/xid/types"
+
+	errorsmod "cosmossdk.io/errors"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // CalculateRegistrationFee calculates the fee for registering a name under a TLD

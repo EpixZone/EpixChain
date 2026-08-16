@@ -22,6 +22,7 @@ func (*RandomBeacon) ProtoMessage()    {}
 func (m *RandomBeacon) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *RandomBeacon) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_RandomBeacon.Marshal(b, m, deterministic)
@@ -34,12 +35,15 @@ func (m *RandomBeacon) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
+
 func (m *RandomBeacon) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_RandomBeacon.Merge(m, src)
 }
+
 func (m *RandomBeacon) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *RandomBeacon) XXX_DiscardUnknown() {
 	xxx_messageInfo_RandomBeacon.DiscardUnknown(m)
 }
@@ -270,6 +274,7 @@ func (*Params) ProtoMessage()    {}
 func (m *Params) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *Params) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_Params.Marshal(b, m, deterministic)
@@ -282,12 +287,15 @@ func (m *Params) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
+
 func (m *Params) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_Params.Merge(m, src)
 }
+
 func (m *Params) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *Params) XXX_DiscardUnknown() {
 	xxx_messageInfo_Params.DiscardUnknown(m)
 }
@@ -440,6 +448,7 @@ func (*GenesisState) ProtoMessage()    {}
 func (m *GenesisState) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
+
 func (m *GenesisState) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_GenesisState.Marshal(b, m, deterministic)
@@ -452,12 +461,15 @@ func (m *GenesisState) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
+
 func (m *GenesisState) XXX_Merge(src proto.Message) {
 	xxx_messageInfo_GenesisState.Merge(m, src)
 }
+
 func (m *GenesisState) XXX_Size() int {
 	return m.Size()
 }
+
 func (m *GenesisState) XXX_DiscardUnknown() {
 	xxx_messageInfo_GenesisState.DiscardUnknown(m)
 }

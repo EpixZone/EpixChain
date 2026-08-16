@@ -1,9 +1,10 @@
 package xid
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/evm/x/xid/keeper"
 	"github.com/cosmos/evm/x/xid/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InitGenesis initializes the xid module's state from a provided genesis state.
@@ -82,8 +83,8 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	var names []types.NameEntry
 	k.IterateNameRecords(ctx, func(record types.NameRecord) bool {
 		entry := types.NameEntry{
-			Record:       record,
-			DnsRecords:   k.GetAllDNSRecords(ctx, record.Tld, record.Name),
+			Record:           record,
+			DnsRecords:       k.GetAllDNSRecords(ctx, record.Tld, record.Name),
 			LinkedIdentities: k.GetAllLinkedIdentities(ctx, record.Tld, record.Name),
 		}
 

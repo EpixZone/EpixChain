@@ -6,8 +6,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/evm/x/topholders/types"
+
+	"github.com/cosmos/cosmos-sdk/types/query"
 )
 
 var _ types.QueryServer = (*Keeper)(nil)

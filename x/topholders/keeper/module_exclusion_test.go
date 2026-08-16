@@ -3,11 +3,12 @@ package keeper
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIsModuleAddress(t *testing.T) {

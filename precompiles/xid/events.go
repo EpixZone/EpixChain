@@ -12,15 +12,15 @@ import (
 
 const (
 	// Event names matching abi.json
-	EventNameRegistered   = "NameRegistered"
-	EventNameTransferred  = "NameTransferred"
-	EventProfileUpdated   = "ProfileUpdated"
-	EventDNSRecordSet        = "DNSRecordSet"
-	EventDNSRecordDeleted    = "DNSRecordDeleted"
-	EventIdentityLinked      = "IdentityLinked"
-	EventIdentityUnlinked    = "IdentityUnlinked"
-	EventContentRootUpdated  = "ContentRootUpdated"
-	EventPrimaryNameSet      = "PrimaryNameSet"
+	EventNameRegistered     = "NameRegistered"
+	EventNameTransferred    = "NameTransferred"
+	EventProfileUpdated     = "ProfileUpdated"
+	EventDNSRecordSet       = "DNSRecordSet"
+	EventDNSRecordDeleted   = "DNSRecordDeleted"
+	EventIdentityLinked     = "IdentityLinked"
+	EventIdentityUnlinked   = "IdentityUnlinked"
+	EventContentRootUpdated = "ContentRootUpdated"
+	EventPrimaryNameSet     = "PrimaryNameSet"
 )
 
 // EmitNameRegistered emits a NameRegistered event to the EVM state DB.

@@ -27,9 +27,9 @@ import (
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )

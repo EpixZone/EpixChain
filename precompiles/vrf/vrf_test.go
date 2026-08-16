@@ -9,16 +9,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
-
-	"github.com/cosmos/cosmos-sdk/testutil"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
+	vrfprecompile "github.com/cosmos/evm/precompiles/vrf"
 	"github.com/cosmos/evm/x/vrf/keeper"
 	"github.com/cosmos/evm/x/vrf/types"
 
-	vrfprecompile "github.com/cosmos/evm/precompiles/vrf"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
+	"github.com/cosmos/cosmos-sdk/testutil"
+	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 func setupPrecompile(t *testing.T) (*vrfprecompile.Precompile, keeper.Keeper, testutil.TestContext) {

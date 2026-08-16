@@ -1,12 +1,12 @@
 package keeper_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/cosmos/evm/x/vrf/types"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (s *KeeperTestSuite) TestGRPCGetBeacon_Found() {

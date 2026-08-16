@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
+
+	abci "github.com/cometbft/cometbft/abci/types"
 
 	"github.com/cosmos/evm/x/epixmint/client/cli"
 	"github.com/cosmos/evm/x/epixmint/keeper"

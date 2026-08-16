@@ -1,10 +1,10 @@
 package topholders
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/cosmos/evm/x/topholders/keeper"
 	"github.com/cosmos/evm/x/topholders/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // GenesisState defines the topholders module's genesis state.

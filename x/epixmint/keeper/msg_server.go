@@ -3,9 +3,9 @@ package keeper
 import (
 	"context"
 
-	errorsmod "cosmossdk.io/errors"
-
 	"github.com/cosmos/evm/x/epixmint/types"
+
+	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
