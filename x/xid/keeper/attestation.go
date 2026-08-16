@@ -226,6 +226,11 @@ func (k Keeper) ClearAttestationsForDigest(ctx sdk.Context, digest string) {
 
 	// Delete the count
 	store.Delete(types.AttestationCountKey(digest))
+
+	// Delete the canonical block_time for this digest. Once the attestations are
+	// gone the digest is unverifiable, so its block_time is dead weight — without
+	// this it would orphan one small entry per superseded digest forever.
+	store.Delete(types.DigestBlockTimeKey(digest))
 }
 
 // GetAttestationConfig retrieves the attestation configuration.
