@@ -46,7 +46,7 @@ func (k Keeper) SubmitAttestation(ctx sdk.Context, msg *types.MsgAttestStateDige
 		ValidatorAddr: msg.Signer,
 		Digest:        msg.Digest,
 		Signature:     msg.Signature,
-		Height:        uint64(ctx.BlockHeight()),
+		Height:        uint64(ctx.BlockHeight()), //nolint:gosec // G115
 	}
 	k.SetAttestation(ctx, att)
 	k.IncrementAttestationCount(ctx, msg.Digest)
@@ -179,7 +179,7 @@ func (k Keeper) RecordSignedAttestation(ctx sdk.Context, att types.Attestation) 
 // attestations for a digest cover.
 func (k Keeper) SetDigestBlockTime(ctx sdk.Context, digest string, blockTime int64) {
 	bz := make([]byte, 8)
-	binary.BigEndian.PutUint64(bz, uint64(blockTime)) //nolint:gosec // G115: unix block_time is non-negative
+	binary.BigEndian.PutUint64(bz, uint64(blockTime)) //nolint:gosec // G115
 	ctx.KVStore(k.storeKey).Set(types.DigestBlockTimeKey(digest), bz)
 }
 
@@ -189,7 +189,7 @@ func (k Keeper) GetDigestBlockTime(ctx sdk.Context, digest string) (int64, bool)
 	if len(bz) < 8 {
 		return 0, false
 	}
-	return int64(binary.BigEndian.Uint64(bz)), true //nolint:gosec // G115: round-trips a non-negative int64
+	return int64(binary.BigEndian.Uint64(bz)), true //nolint:gosec // G115
 }
 
 // countBondedValidators returns the number of bonded validators.

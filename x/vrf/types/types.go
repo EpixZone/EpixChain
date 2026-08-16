@@ -26,14 +26,13 @@ func (m *RandomBeacon) XXX_Unmarshal(b []byte) error {
 func (m *RandomBeacon) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_RandomBeacon.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
 	}
+	b = b[:cap(b)]
+	n, err := m.MarshalToSizedBuffer(b)
+	if err != nil {
+		return nil, err
+	}
+	return b[:n], nil
 }
 
 func (m *RandomBeacon) XXX_Merge(src proto.Message) {
@@ -97,7 +96,7 @@ func (m *RandomBeacon) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	// field 4: timestamp (int64, varint)
 	if m.Timestamp != 0 {
-		i = encodeVarintTypes(dAtA, i, uint64(m.Timestamp))
+		i = encodeVarintTypes(dAtA, i, uint64(m.Timestamp)) //nolint:gosec // G115
 		i--
 		dAtA[i] = 0x20
 	}
@@ -140,7 +139,7 @@ func (m *RandomBeacon) Size() (n int) {
 		n += 1 + len(m.Proposer) + sovTypes(uint64(len(m.Proposer)))
 	}
 	if m.Timestamp != 0 {
-		n += 1 + sovTypes(uint64(m.Timestamp))
+		n += 1 + sovTypes(uint64(m.Timestamp)) //nolint:gosec // G115
 	}
 	return n
 }
@@ -162,7 +161,7 @@ func (m *RandomBeacon) Unmarshal(dAtA []byte) error {
 				break
 			}
 		}
-		fieldNum := int32(wire >> 3)
+		fieldNum := int32(wire >> 3) //nolint:gosec // G115
 		wireType := int(wire & 0x7)
 		switch fieldNum {
 		case 1: // height
@@ -197,7 +196,7 @@ func (m *RandomBeacon) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-			postIndex := iNdEx + int(stringLen)
+			postIndex := iNdEx + int(stringLen) //nolint:gosec // G115
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -219,7 +218,7 @@ func (m *RandomBeacon) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-			postIndex := iNdEx + int(stringLen)
+			postIndex := iNdEx + int(stringLen) //nolint:gosec // G115
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -278,14 +277,13 @@ func (m *Params) XXX_Unmarshal(b []byte) error {
 func (m *Params) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_Params.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
 	}
+	b = b[:cap(b)]
+	n, err := m.MarshalToSizedBuffer(b)
+	if err != nil {
+		return nil, err
+	}
+	return b[:n], nil
 }
 
 func (m *Params) XXX_Merge(src proto.Message) {
@@ -379,7 +377,7 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				break
 			}
 		}
-		fieldNum := int32(wire >> 3)
+		fieldNum := int32(wire >> 3) //nolint:gosec // G115
 		wireType := int(wire & 0x7)
 		switch fieldNum {
 		case 1: // enabled
@@ -452,14 +450,13 @@ func (m *GenesisState) XXX_Unmarshal(b []byte) error {
 func (m *GenesisState) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
 		return xxx_messageInfo_GenesisState.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
 	}
+	b = b[:cap(b)]
+	n, err := m.MarshalToSizedBuffer(b)
+	if err != nil {
+		return nil, err
+	}
+	return b[:n], nil
 }
 
 func (m *GenesisState) XXX_Merge(src proto.Message) {
@@ -515,7 +512,7 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				return 0, err
 			}
 			i -= size
-			i = encodeVarintTypes(dAtA, i, uint64(size))
+			i = encodeVarintTypes(dAtA, i, uint64(size)) //nolint:gosec // G115
 		}
 		i--
 		dAtA[i] = 0x12
@@ -527,7 +524,7 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			return 0, err
 		}
 		i -= size
-		i = encodeVarintTypes(dAtA, i, uint64(size))
+		i = encodeVarintTypes(dAtA, i, uint64(size)) //nolint:gosec // G115
 	}
 	i--
 	dAtA[i] = 0xa
@@ -539,10 +536,10 @@ func (m *GenesisState) Size() (n int) {
 		return 0
 	}
 	l := m.Params.Size()
-	n += 1 + l + sovTypes(uint64(l))
+	n += 1 + l + sovTypes(uint64(l)) //nolint:gosec // G115
 	for _, e := range m.Beacons {
 		l = e.Size()
-		n += 1 + l + sovTypes(uint64(l))
+		n += 1 + l + sovTypes(uint64(l)) //nolint:gosec // G115
 	}
 	return n
 }
@@ -564,7 +561,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				break
 			}
 		}
-		fieldNum := int32(wire >> 3)
+		fieldNum := int32(wire >> 3) //nolint:gosec // G115
 		wireType := int(wire & 0x7)
 		switch fieldNum {
 		case 1: // params
@@ -647,7 +644,7 @@ func encodeVarintTypes(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTypes(v)
 	base := offset
 	for v >= 1<<7 {
-		dAtA[offset] = uint8(v&0x7f | 0x80)
+		dAtA[offset] = uint8(v&0x7f | 0x80) //nolint:gosec // G115
 		v >>= 7
 		offset++
 	}

@@ -77,7 +77,7 @@ func NameRecordKey(tld, name string) []byte {
 	nameBytes := []byte(name)
 	key := make([]byte, 0, 1+1+len(tldBytes)+len(nameBytes))
 	key = append(key, prefixNameRecord)
-	key = append(key, byte(len(tldBytes)))
+	key = append(key, byte(len(tldBytes))) //nolint:gosec // G115
 	key = append(key, tldBytes...)
 	key = append(key, nameBytes...)
 	return key
@@ -90,7 +90,7 @@ func OwnerIndexKey(owner []byte, tld, name string) []byte {
 	key := make([]byte, 0, 1+20+1+len(tldBytes)+len(nameBytes))
 	key = append(key, prefixOwnerIndex)
 	key = append(key, padOrTruncate(owner, 20)...)
-	key = append(key, byte(len(tldBytes)))
+	key = append(key, byte(len(tldBytes))) //nolint:gosec // G115
 	key = append(key, tldBytes...)
 	key = append(key, nameBytes...)
 	return key
@@ -110,7 +110,7 @@ func ProfileKey(tld, name string) []byte {
 	nameBytes := []byte(name)
 	key := make([]byte, 0, 1+1+len(tldBytes)+len(nameBytes))
 	key = append(key, prefixProfile)
-	key = append(key, byte(len(tldBytes)))
+	key = append(key, byte(len(tldBytes))) //nolint:gosec // G115
 	key = append(key, tldBytes...)
 	key = append(key, nameBytes...)
 	return key
@@ -122,12 +122,12 @@ func DNSRecordKey(tld, name string, recordType uint32) []byte {
 	nameBytes := []byte(name)
 	key := make([]byte, 0, 1+1+len(tldBytes)+1+len(nameBytes)+2)
 	key = append(key, prefixDNSRecord)
-	key = append(key, byte(len(tldBytes)))
+	key = append(key, byte(len(tldBytes))) //nolint:gosec // G115
 	key = append(key, tldBytes...)
-	key = append(key, byte(len(nameBytes)))
+	key = append(key, byte(len(nameBytes))) //nolint:gosec // G115
 	key = append(key, nameBytes...)
 	rt := make([]byte, 2)
-	binary.BigEndian.PutUint16(rt, uint16(recordType))
+	binary.BigEndian.PutUint16(rt, uint16(recordType)) //nolint:gosec // G115
 	key = append(key, rt...)
 	return key
 }
@@ -138,9 +138,9 @@ func DNSRecordPrefix(tld, name string) []byte {
 	nameBytes := []byte(name)
 	key := make([]byte, 0, 1+1+len(tldBytes)+1+len(nameBytes))
 	key = append(key, prefixDNSRecord)
-	key = append(key, byte(len(tldBytes)))
+	key = append(key, byte(len(tldBytes))) //nolint:gosec // G115
 	key = append(key, tldBytes...)
-	key = append(key, byte(len(nameBytes)))
+	key = append(key, byte(len(nameBytes))) //nolint:gosec // G115
 	key = append(key, nameBytes...)
 	return key
 }
@@ -185,9 +185,9 @@ func LinkedIdentityKey(tld, name, address string) []byte {
 	addrHash := sha256.Sum256([]byte(address))
 	key := make([]byte, 0, 1+1+len(tldBytes)+1+len(nameBytes)+8)
 	key = append(key, prefixLinkedIdentity)
-	key = append(key, byte(len(tldBytes)))
+	key = append(key, byte(len(tldBytes))) //nolint:gosec // G115
 	key = append(key, tldBytes...)
-	key = append(key, byte(len(nameBytes)))
+	key = append(key, byte(len(nameBytes))) //nolint:gosec // G115
 	key = append(key, nameBytes...)
 	key = append(key, addrHash[:8]...)
 	return key
@@ -199,9 +199,9 @@ func LinkedIdentityPrefix(tld, name string) []byte {
 	nameBytes := []byte(name)
 	key := make([]byte, 0, 1+1+len(tldBytes)+1+len(nameBytes))
 	key = append(key, prefixLinkedIdentity)
-	key = append(key, byte(len(tldBytes)))
+	key = append(key, byte(len(tldBytes))) //nolint:gosec // G115
 	key = append(key, tldBytes...)
-	key = append(key, byte(len(nameBytes)))
+	key = append(key, byte(len(nameBytes))) //nolint:gosec // G115
 	key = append(key, nameBytes...)
 	return key
 }
@@ -223,7 +223,7 @@ func ContentRootKey(tld, name string) []byte {
 	nameBytes := []byte(name)
 	key := make([]byte, 0, 1+1+len(tldBytes)+len(nameBytes))
 	key = append(key, prefixContentRoot)
-	key = append(key, byte(len(tldBytes)))
+	key = append(key, byte(len(tldBytes))) //nolint:gosec // G115
 	key = append(key, tldBytes...)
 	key = append(key, nameBytes...)
 	return key
@@ -306,7 +306,7 @@ func MerkleLeafIndexKey(tld, name string) []byte {
 	nameBytes := []byte(name)
 	key := make([]byte, 0, 1+1+len(tldBytes)+len(nameBytes))
 	key = append(key, prefixMerkleLeafIndex)
-	key = append(key, byte(len(tldBytes)))
+	key = append(key, byte(len(tldBytes))) //nolint:gosec // G115
 	key = append(key, tldBytes...)
 	key = append(key, nameBytes...)
 	return key
@@ -318,7 +318,7 @@ func MerkleMetadataKey() []byte {
 }
 
 // padOrTruncate ensures the byte slice is exactly the desired length
-func padOrTruncate(b []byte, length int) []byte {
+func padOrTruncate(b []byte, length int) []byte { //nolint:unparam // generic helper, currently only called with 20
 	if len(b) >= length {
 		return b[:length]
 	}

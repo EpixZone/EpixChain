@@ -96,7 +96,7 @@ func (k Keeper) SetMerkleNode(ctx sdk.Context, level uint16, index uint32, hash 
 func (k Keeper) GetLeafIndex(ctx sdk.Context, tld, name string) (uint32, bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.MerkleLeafIndexKey(tld, name))
-	if bz == nil || len(bz) < 4 {
+	if len(bz) < 4 {
 		return 0, false
 	}
 	return binary.BigEndian.Uint32(bz), true
@@ -317,7 +317,7 @@ func (k Keeper) RebuildTree(ctx sdk.Context) string {
 		return ki < kj
 	})
 
-	numLeaves := uint32(len(keys))
+	numLeaves := uint32(len(keys)) //nolint:gosec // G115
 	// Capacity must be a power of 2, minimum 2
 	capacity := uint32(2)
 	for capacity < numLeaves {
@@ -360,7 +360,7 @@ func (k Keeper) RebuildTree(ctx sdk.Context) string {
 	// Update the state digest with the Merkle root
 	sd := types.StateDigest{
 		Digest:   rootHex,
-		Height:   uint64(ctx.BlockHeight()),
+		Height:   uint64(ctx.BlockHeight()), //nolint:gosec // G115
 		NumNames: uint64(numLeaves),
 	}
 	k.SetStateDigest(ctx, sd)
@@ -381,7 +381,7 @@ func (k Keeper) UpdateDomainInTree(ctx sdk.Context, tld, name string) {
 
 	sd := types.StateDigest{
 		Digest:   rootHex,
-		Height:   uint64(ctx.BlockHeight()),
+		Height:   uint64(ctx.BlockHeight()), //nolint:gosec // G115
 		NumNames: uint64(meta.NumLeaves),
 	}
 	k.SetStateDigest(ctx, sd)

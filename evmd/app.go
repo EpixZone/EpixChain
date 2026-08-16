@@ -689,7 +689,7 @@ func NewExampleApp(
 
 	// Conditionally add TopHolders module if enabled
 	if topHoldersEnabled {
-		modules = append(modules, topholders.NewAppModule(app.TopHoldersKeeper))
+		modules = append(modules, topholders.NewAppModule(&app.TopHoldersKeeper))
 	}
 
 	app.ModuleManager = module.NewManager(modules...)

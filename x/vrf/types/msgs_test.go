@@ -7,7 +7,6 @@ import (
 
 	"github.com/cosmos/evm/x/vrf/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
@@ -73,5 +72,5 @@ func TestMsgUpdateParamsGetSigners(t *testing.T) {
 	}
 	signers := msg.GetSigners()
 	require.Len(t, signers, 1)
-	require.Equal(t, sdk.AccAddress(authority), signers[0])
+	require.Equal(t, authority, signers[0])
 }

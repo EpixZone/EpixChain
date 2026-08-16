@@ -17,6 +17,7 @@ import (
 )
 
 func setupKeeper(t *testing.T) (keeper.Keeper, storetypes.StoreKey, testutil.TestContext) {
+	t.Helper()
 	encCfg := moduletestutil.MakeTestEncodingConfig()
 	key := storetypes.NewKVStoreKey(types.StoreKey)
 	testCtx := testutil.DefaultContextWithDB(t, key, storetypes.NewTransientStoreKey("transient_test"))

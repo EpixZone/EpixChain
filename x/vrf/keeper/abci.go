@@ -23,7 +23,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 		return nil
 	}
 
-	height := uint64(ctx.BlockHeight())
+	height := uint64(ctx.BlockHeight()) //nolint:gosec // G115
 
 	// Get previous beacon (empty string for genesis block)
 	prevBeacon := ""

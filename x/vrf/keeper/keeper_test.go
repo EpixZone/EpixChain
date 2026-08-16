@@ -47,7 +47,7 @@ func makeBeacon(height uint64) types.RandomBeacon {
 		Height:    height,
 		Beacon:    strings.Repeat("ab", 32),
 		Proposer:  "cosmosvalcons1test",
-		Timestamp: int64(height) * 1000,
+		Timestamp: int64(height) * 1000, //nolint:gosec // G115
 	}
 }
 

@@ -414,7 +414,7 @@ func (k Keeper) SetLinkedIdentityEntry(ctx sdk.Context, tld, name string, identi
 		}
 	}
 
-	identity.AddedAt = uint64(ctx.BlockHeight())
+	identity.AddedAt = uint64(ctx.BlockHeight()) //nolint:gosec // G115
 	identity.Active = true
 	identity.RevokedAt = 0
 	identity.RevokedAtTime = 0
@@ -459,7 +459,7 @@ func (k Keeper) RevokeLinkedIdentityEntry(ctx sdk.Context, tld, name, address st
 	}
 
 	identity.Active = false
-	identity.RevokedAt = uint64(ctx.BlockHeight())
+	identity.RevokedAt = uint64(ctx.BlockHeight()) //nolint:gosec // G115
 	identity.RevokedAtTime = ctx.BlockTime().Unix()
 
 	updated, _ := json.Marshal(identity)

@@ -18,7 +18,7 @@ func (k Keeper) CalculateRegistrationFee(ctx sdk.Context, tld, name string) (sdk
 	}
 
 	params := k.GetParams(ctx)
-	nameLen := uint32(len(name))
+	nameLen := uint32(len(name)) //nolint:gosec // G115
 
 	// Find the matching price tier (tiers are sorted by max_length ascending)
 	for _, tier := range tldConfig.PriceTiers {
@@ -49,10 +49,10 @@ func (k Keeper) RegisterNameRecord(ctx sdk.Context, ownerAddr sdk.AccAddress, tl
 
 	// Validate name length against params
 	params := k.GetParams(ctx)
-	if uint32(len(name)) < params.MinNameLength {
+	if uint32(len(name)) < params.MinNameLength { //nolint:gosec // G115
 		return errorsmod.Wrapf(types.ErrInvalidName, "name must be at least %d characters", params.MinNameLength)
 	}
-	if uint32(len(name)) > params.MaxNameLength {
+	if uint32(len(name)) > params.MaxNameLength { //nolint:gosec // G115
 		return errorsmod.Wrapf(types.ErrInvalidName, "name must be at most %d characters", params.MaxNameLength)
 	}
 

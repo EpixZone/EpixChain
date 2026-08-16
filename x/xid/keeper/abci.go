@@ -18,7 +18,7 @@ func (k Keeper) BeginBlock(ctx sdk.Context) error {
 	// signed attestations and the client's freshness check. Runs unconditionally
 	// (even before attestation is enabled) so the digest is ready when it turns on.
 	if sd, found := k.GetStateDigest(ctx); found {
-		sd.Height = uint64(ctx.BlockHeight()) //nolint:gosec // G115: block height is always non-negative
+		sd.Height = uint64(ctx.BlockHeight()) //nolint:gosec // G115
 		sd.BlockTime = ctx.BlockTime().Unix()
 		k.SetStateDigest(ctx, sd)
 	}
@@ -68,7 +68,7 @@ func (k Keeper) BeginBlock(ctx sdk.Context) error {
 			ValidatorAddr: addrStr,
 			Digest:        currentDigest.Digest,
 			Signature:     "auto:consensus",
-			Height:        uint64(ctx.BlockHeight()),
+			Height:        uint64(ctx.BlockHeight()), //nolint:gosec // G115
 		}
 		k.SetAttestation(ctx, att)
 		k.IncrementAttestationCount(ctx, currentDigest.Digest)

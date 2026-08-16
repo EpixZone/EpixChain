@@ -31,7 +31,7 @@ func (gs GenesisState) Validate() error {
 
 // InitGenesis initializes the topholders module's state from a provided genesis
 // state.
-func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState *GenesisState) {
+func InitGenesis(ctx sdk.Context, k *keeper.Keeper, genState *GenesisState) {
 	if genState.Cache != nil {
 		if err := k.SetTopHoldersCache(ctx, *genState.Cache); err != nil {
 			panic(err)
@@ -40,7 +40,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState *GenesisState) {
 }
 
 // ExportGenesis returns the topholders module's exported genesis.
-func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *GenesisState {
+func ExportGenesis(ctx sdk.Context, k *keeper.Keeper) *GenesisState {
 	cache, found := k.GetTopHoldersCache(ctx)
 	if !found {
 		return DefaultGenesis()

@@ -41,7 +41,9 @@ func (k Keeper) ComputePeerMerkleRoot(ctx sdk.Context, tld, name string) string 
 		var next [][]byte
 		for i := 0; i < len(hashes); i += 2 {
 			if i+1 < len(hashes) {
-				combined := append(hashes[i], hashes[i+1]...)
+				combined := make([]byte, 0, len(hashes[i])+len(hashes[i+1]))
+				combined = append(combined, hashes[i]...)
+				combined = append(combined, hashes[i+1]...)
 				h := sha256.Sum256(combined)
 				next = append(next, h[:])
 			} else {
@@ -65,7 +67,7 @@ func (k Keeper) RecomputeAndStoreContentRoot(ctx sdk.Context, tld, name string) 
 	root := k.ComputePeerMerkleRoot(ctx, tld, name)
 	contentRoot := types.ContentRoot{
 		Root:      root,
-		UpdatedAt: uint64(ctx.BlockHeight()),
+		UpdatedAt: uint64(ctx.BlockHeight()), //nolint:gosec // G115
 	}
 	k.SetContentRoot(ctx, tld, name, contentRoot)
 	return root

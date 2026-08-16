@@ -83,11 +83,7 @@ func validateMintDenom(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if err := sdk.ValidateDenom(v); err != nil {
-		return err
-	}
-
-	return nil
+	return sdk.ValidateDenom(v)
 }
 
 func validateInitialAnnualMintAmount(i interface{}) error {

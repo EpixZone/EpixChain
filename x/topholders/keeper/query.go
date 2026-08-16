@@ -54,7 +54,7 @@ func (k *Keeper) TopHolders(ctx context.Context, req *types.QueryTopHoldersReque
 			},
 			cache.LastUpdated,
 			cache.BlockHeight,
-			uint32(len(cache.Holders)),
+			uint32(len(cache.Holders)), //nolint:gosec // G115
 		), nil
 	}
 
@@ -80,7 +80,7 @@ func (k *Keeper) TopHolders(ctx context.Context, req *types.QueryTopHoldersReque
 		pageResponse,
 		cache.LastUpdated,
 		cache.BlockHeight,
-		uint32(len(cache.Holders)),
+		uint32(len(cache.Holders)), //nolint:gosec // G115
 	), nil
 }
 
@@ -98,7 +98,7 @@ func (k *Keeper) CacheStatus(ctx context.Context, req *types.QueryCacheStatusReq
 	return types.NewQueryCacheStatusResponse(
 		cache.LastUpdated,
 		cache.BlockHeight,
-		uint32(len(cache.Holders)),
+		uint32(len(cache.Holders)), //nolint:gosec // G115
 		k.IsUpdating(),
 	), nil
 }

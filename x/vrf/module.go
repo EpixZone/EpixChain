@@ -26,7 +26,7 @@ import (
 const ConsensusVersion = 1
 
 var (
-	_ module.AppModule        = AppModule{}
+	_ module.AppModule        = AppModule{} //nolint:staticcheck // deprecated but functional; matches upstream modules
 	_ module.AppModuleBasic   = AppModuleBasic{}
 	_ module.HasABCIGenesis   = AppModule{}
 	_ appmodule.AppModule     = AppModule{}
