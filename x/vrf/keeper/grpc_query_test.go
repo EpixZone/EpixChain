@@ -5,7 +5,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/cosmos/evm/x/vrf/types"
-
 )
 
 func (s *KeeperTestSuite) TestGRPCGetBeacon_Found() {

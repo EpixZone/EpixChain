@@ -16,7 +16,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
-func setupKeeper(t *testing.T) (keeper.Keeper, storetypes.StoreKey, testutil.TestContext) {
+func setupKeeper(t *testing.T) (keeper.Keeper, storetypes.StoreKey, testutil.TestContext) { //nolint:unparam // test helper returns the key for symmetry with other setups
 	t.Helper()
 	encCfg := moduletestutil.MakeTestEncodingConfig()
 	key := storetypes.NewKVStoreKey(types.StoreKey)
