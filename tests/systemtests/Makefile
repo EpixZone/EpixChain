@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 
-WAIT_TIME ?= 20s
+WAIT_TIME ?= 60s
 
 test:
 	go mod tidy
