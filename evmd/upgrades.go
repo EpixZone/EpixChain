@@ -12,6 +12,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	channeltypes "github.com/cosmos/ibc-go/v11/modules/core/04-channel/types"
 
 	"github.com/cosmos/evm/config"
@@ -26,45 +28,21 @@ const UpgradeName_v0_5_2 = "v0.5.2"
 const UpgradeName_v0_5_3 = "v0.5.3"
 const UpgradeName_v0_5_4 = "v0.5.4"
 const UpgradeName_v0_5_5 = "v0.5.5"
-
-// UpgradeName_v0_7_0 marks the migration to v0.7.0. The chain's current
-// mainnet binary is labelled "v0.5.5" on the Epix side but is built from
-// the upstream cosmos/evm v0.6.x codebase (confirmed via on-chain probe:
-// abci_info reports `epixd v0.5.5`, the `precisebank` store key is
-// registered with `aepix` as MintDenom, and the v0.5.5 release tag wires
-// `PreciseBankKeeper` into app.go). The upgrade therefore handles all the
-// changes upstream documents for v0.6.x → v0.7.0:
-//   - drop x/precisebank (chain is 18-decimal; the store has a zero remainder)
-//   - drop x/ibc/transfer override
-//   - ibc-go v10 → v11, cosmos-sdk v0.53 → v0.54, cometbft v0.38 → v0.39
-//   - Krakatoa app-side mempool (replaces ExperimentalEVMMempool)
-//   - BlockSTM parallel execution + virtual fee collection
-//   - optimistic execution
 const UpgradeName_v0_7_0 = "v0.7.0"
-
-// UpgradeName_v0_7_1 syncs the chain to cosmos/evm v0.7.1.
-//
-// The security fix that motivated this sync (rejecting EVM statedb balance
-// writes to module accounts) does NOT ship here — it went out ahead of this
-// as an uncoordinated binary hotfix, because it needs no migration and a
-// gov-gated halt was the wrong shape for a live vulnerability. See
-// docs/upgrades/v0.7.1-security.md.
-//
-// What remains needs a coordinated boundary, because unlike the hotfix these
-// change the outcome of ordinary transactions and a partial rollout would
-// fork the chain under normal traffic:
-//   - EVM signature verification now respects ctx.IsSigverifyTx()
-//   - mempool rejects EVM txs below base fee at admission
-//   - statedb snapshots locked balance on the account, and hardens balance
-//     and event amount handling
-//   - erc20 v2 IBC middleware aligns ack validation with ibc-go
-//
-// No store keys are added or removed and no params gained fields, so the
-// handler is migrations-only.
 const UpgradeName_v0_7_1 = "v0.7.1"
 
+// UpgradeName_v0_7_2 activates xID chain-attested finality.
+//
+// The vote-extension machinery (ExtendVote / VerifyVoteExtension /
+// PrepareProposal injection / PreBlocker enabling vote extensions changes what
+// CometBFT collects during voting, so all validators have to switch on the same
+// height or consensus would fork. No store keys change (the xid store key has
+// existed since v0.5.5) and no params gained fields — the only state change is
+// the consensus-params enable height.
+const UpgradeName_v0_7_2 = "v0.7.2"
+
 // UpgradeName is the current upgrade (for store upgrades)
-const UpgradeName = UpgradeName_v0_7_1
+const UpgradeName = UpgradeName_v0_7_2
 
 // RegisterUpgradeHandlers registers upgrade handlers for v0.5.1 and v0.5.2
 func (app EVMD) RegisterUpgradeHandlers() {
@@ -270,6 +248,47 @@ func (app EVMD) RegisterUpgradeHandlers() {
 			sdkCtx.Logger().Info("(the module-account statedb fix shipped earlier as a binary hotfix)")
 
 			return app.ModuleManager.RunMigrations(ctx, app.Configurator(), fromVM)
+		},
+	)
+
+	// Register v0.7.1 -> v0.7.2 upgrade handler - activate xID finality attestation.
+	// Migrations run first, then vote extensions are switched on by setting the
+	// consensus-params enable height to the next block. baseapp returns the current
+	// consensus params as ConsensusParamUpdates at the end of every FinalizeBlock, so
+	// writing the enable height here is what tells CometBFT to start collecting the
+	// per-validator digest attestations. No store keys change.
+	app.UpgradeKeeper.SetUpgradeHandler(
+		UpgradeName_v0_7_2,
+		func(ctx context.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+			sdkCtx := sdk.UnwrapSDKContext(ctx)
+			sdkCtx.Logger().Info("Starting EpixChain v0.7.1 -> v0.7.2 upgrade - xID finality attestation...")
+
+			vm, err := app.ModuleManager.RunMigrations(ctx, app.Configurator(), fromVM)
+			if err != nil {
+				return nil, err
+			}
+
+			// Enable ABCI++ vote extensions from the next block. CometBFT requires the
+			// enable height to be strictly greater than the height that produces the
+			// param update (this block), so +1 is the earliest valid value and the
+			// feature turns on the block immediately after the upgrade.
+			cp := app.GetConsensusParams(sdkCtx)
+			enableHeight := sdkCtx.BlockHeight() + 1
+			if cp.Abci == nil {
+				cp.Abci = &cmtproto.ABCIParams{}
+			}
+			if cp.Abci.VoteExtensionsEnableHeight == 0 {
+				cp.Abci.VoteExtensionsEnableHeight = enableHeight
+				if err := app.StoreConsensusParams(sdkCtx, cp); err != nil {
+					return nil, fmt.Errorf("failed to enable vote extensions: %w", err)
+				}
+				sdkCtx.Logger().Info(fmt.Sprintf("xID finality: vote extensions enabled from height %d", enableHeight))
+			} else {
+				sdkCtx.Logger().Info(fmt.Sprintf("xID finality: vote extensions already enabled at height %d (no change)", cp.Abci.VoteExtensionsEnableHeight))
+			}
+
+			sdkCtx.Logger().Info("EpixChain v0.7.2 upgrade complete")
+			return vm, nil
 		},
 	)
 
