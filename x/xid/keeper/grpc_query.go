@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/hex"
 
+	"github.com/cosmos/evm/x/xid/types"
+
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/cosmos/evm/x/xid/types"
 )
 
 const maxPageSize uint64 = 10

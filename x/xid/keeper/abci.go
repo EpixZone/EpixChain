@@ -3,9 +3,10 @@ package keeper
 import (
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
+	"github.com/cosmos/evm/x/xid/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/evm/x/xid/types"
 )
 
 // BeginBlock auto-attests the current state digest for all bonded validators
