@@ -130,8 +130,13 @@ func (s *Stream[V]) ReadBlocking(ctx context.Context, offset int) ([]V, int) {
 			return items, offset
 		}
 
+		// Capture the notify channel while still holding the read lock, so a
+		// Broadcast that races in after we release it closes THIS channel and
+		// wakes us. Otherwise the notification for the last item could be lost
+		// and the reader would block forever.
+		ch := s.cond.NotifyChan()
 		s.mutex.RUnlock()
-		r := s.cond.Wait(ctx)
+		r := WaitChan(ctx, ch)
 		s.mutex.RLock()
 
 		if !r {
