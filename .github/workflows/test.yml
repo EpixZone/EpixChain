@@ -20,11 +20,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: "1.25"
           check-latest: true
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # depth 2 lets HEAD~1 resolve, used as the diff base on push events
           # where github.event.before may point at an unreachable commit
@@ -69,11 +69,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: "1.25"
           check-latest: true
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 2
       - name: Resolve diff base for push events
@@ -94,7 +94,7 @@ jobs:
   test-scripts:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 2
       - name: Resolve diff base for push events
@@ -108,7 +108,7 @@ jobs:
             .github/workflows/test.yml
             ./scripts/**
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
         if: env.GIT_DIFF

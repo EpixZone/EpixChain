@@ -19,15 +19,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: "1.25"
           check-latest: true
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Cache Go modules
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cache/go-build
@@ -60,7 +60,7 @@ jobs:
     steps:
       # Standard checkout for all cases
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # Only run if markdown or configs changed
       - uses: technote-space/get-diff-action@v6.1.2
@@ -71,7 +71,7 @@ jobs:
             .markdownlintignore
 
       # Stable Node
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         if: env.GIT_DIFF
         with:
           node-version: "20"

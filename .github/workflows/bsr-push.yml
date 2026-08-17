@@ -19,7 +19,7 @@ jobs:
   push:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: bufbuild/buf-setup-action@v1.50.0
       # Push Cosmos EVM protos to the Buf Schema Registry
       - uses: bufbuild/buf-push-action@v1.2.0
