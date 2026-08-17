@@ -133,6 +133,21 @@ func (app *EVMD) processXidVoteExtensions(ctx sdk.Context, txs [][]byte) {
 	if err := ec.Unmarshal(txs[0]); err != nil {
 		return
 	}
+
+	// Vote extensions are processed one block AFTER they are signed (ExtendVote at
+	// H-1 -> injected into H's proposal -> consumed here in H's PreBlocker). At a
+	// digest transition the previous block's votes therefore carry the OLD digest:
+	// if a name changed in H-1, UpdateDomainInTree already cleared that digest's
+	// attestations, and recording these stale votes would repopulate it, leaking a
+	// residual attestation set (+ block_time) that never gets cleaned. Only ever
+	// record attestations for the digest that is current NOW; the client only
+	// verifies against the current finalized digest, so stale-digest votes are
+	// useless. (Costs a just-changed digest one extra block to finalize.)
+	curDigest, hasCur := app.XIDKeeper.GetStateDigest(ctx)
+	if !hasCur || curDigest.Digest == "" {
+		return
+	}
+
 	chainID := ctx.ChainID()
 	signedHeight := ctx.BlockHeight() - 1 // the extensions were signed at the previous height
 	round := int64(ec.Round)
@@ -160,6 +175,10 @@ func (app *EVMD) processXidVoteExtensions(ctx sdk.Context, txs [][]byte) {
 		}
 		var ext xidtypes.AttestationVoteExtension
 		if err := ext.Unmarshal(vote.VoteExtension); err != nil {
+			continue
+		}
+		// Skip votes signed over a since-superseded digest (see curDigest above).
+		if ext.Digest != curDigest.Digest {
 			continue
 		}
 		valcons := sdk.ConsAddress(vote.Validator.Address)
