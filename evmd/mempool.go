@@ -62,7 +62,9 @@ func (app *EVMD) configureEVMMempool(appOpts servertypes.AppOptions, logger log.
 	reapTxsHandler := mempool.NewReapTxsHandler()
 	checkTxHandler := mempool.NewCheckTxHandler(app.TxDecode, checkTxTimeout)
 
-	// set handlers and the mempool
+	// set handlers and the mempool. Capture the EVM PrepareProposal so the xID
+	// vote-extension wrapper (registerAttestationHandlers) can delegate to it.
+	app.evmPrepareProposal = prepareProposalHandler
 	app.SetPrepareProposal(prepareProposalHandler)
 	app.SetInsertTxHandler(insertTxHandler)
 	app.SetReapTxsHandler(reapTxsHandler)

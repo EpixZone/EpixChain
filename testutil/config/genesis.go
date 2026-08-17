@@ -3,13 +3,15 @@ package config
 import (
 	"encoding/json"
 
-	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	testconstants "github.com/cosmos/evm/testutil/constants"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 )
 
 // GenesisState of the blockchain is represented here as a map of raw json

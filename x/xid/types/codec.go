@@ -11,7 +11,7 @@ var (
 	amino = codec.NewLegacyAmino()
 
 	// AminoCdc references the global x/xid module codec.
-	AminoCdc = codec.NewAminoCodec(amino)
+	AminoCdc = codec.NewAminoCodec(amino) //nolint:staticcheck // deprecated but functional; matches upstream modules
 )
 
 // RegisterLegacyAminoCodec registers the necessary x/xid interfaces and concrete types

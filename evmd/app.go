@@ -175,6 +175,12 @@ type EVMD struct {
 
 	pendingTxListeners []evmante.PendingTxListener
 
+	// xID attestation (ABCI++ vote extensions): the captured EVM PrepareProposal
+	// handler that the vote-extension wrapper delegates to. Validators sign the
+	// digest with their CONSENSUS key (CometBFT ExtensionSignature) — no separate
+	// key is loaded here.
+	evmPrepareProposal sdk.PrepareProposalHandler
+
 	// keys to access the substores
 	keys  map[string]*storetypes.KVStoreKey
 	oKeys map[string]*storetypes.ObjectStoreKey
@@ -683,7 +689,7 @@ func NewExampleApp(
 
 	// Conditionally add TopHolders module if enabled
 	if topHoldersEnabled {
-		modules = append(modules, topholders.NewAppModule(app.TopHoldersKeeper))
+		modules = append(modules, topholders.NewAppModule(&app.TopHoldersKeeper))
 	}
 
 	app.ModuleManager = module.NewManager(modules...)
@@ -883,6 +889,12 @@ func NewExampleApp(
 		panic(fmt.Sprintf("failed to configure EVM mempool: %s", err.Error()))
 	}
 
+	// xID attestation: wire the ABCI++ vote-extension handlers. MUST come after
+	// configureEVMMempool so the PrepareProposal wrapper can delegate to the EVM
+	// mempool handler. Validators sign the digest with their consensus key
+	// (CometBFT ExtensionSignature) — nothing to load per-node.
+	app.registerAttestationHandlers()
+
 	// In v0.46, the SDK introduces _postHandlers_. PostHandlers are like
 	// antehandlers, but are run _after_ the `runMsgs` execution. They are also
 	// defined as a chain, and have the same signature as antehandlers.
@@ -1025,7 +1037,12 @@ func (app *EVMD) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci
 	return app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
 }
 
-func (app *EVMD) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
+func (app *EVMD) PreBlocker(ctx sdk.Context, req *abci.RequestFinalizeBlock) (*sdk.ResponsePreBlock, error) {
+	// Consume any injected xID vote-extension commit (tx[0]) and persist the signed
+	// attestations BEFORE module PreBlock / BeginBlock run.
+	if req != nil {
+		app.processXidVoteExtensions(ctx, req.Txs)
+	}
 	return app.ModuleManager.PreBlock(ctx)
 }
 

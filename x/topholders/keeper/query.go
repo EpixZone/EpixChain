@@ -6,8 +6,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/evm/x/topholders/types"
+
+	"github.com/cosmos/cosmos-sdk/types/query"
 )
 
 var _ types.QueryServer = (*Keeper)(nil)
@@ -53,7 +54,7 @@ func (k *Keeper) TopHolders(ctx context.Context, req *types.QueryTopHoldersReque
 			},
 			cache.LastUpdated,
 			cache.BlockHeight,
-			uint32(len(cache.Holders)),
+			uint32(len(cache.Holders)), //nolint:gosec // G115
 		), nil
 	}
 
@@ -79,7 +80,7 @@ func (k *Keeper) TopHolders(ctx context.Context, req *types.QueryTopHoldersReque
 		pageResponse,
 		cache.LastUpdated,
 		cache.BlockHeight,
-		uint32(len(cache.Holders)),
+		uint32(len(cache.Holders)), //nolint:gosec // G115
 	), nil
 }
 
@@ -97,7 +98,7 @@ func (k *Keeper) CacheStatus(ctx context.Context, req *types.QueryCacheStatusReq
 	return types.NewQueryCacheStatusResponse(
 		cache.LastUpdated,
 		cache.BlockHeight,
-		uint32(len(cache.Holders)),
+		uint32(len(cache.Holders)), //nolint:gosec // G115
 		k.IsUpdating(),
 	), nil
 }

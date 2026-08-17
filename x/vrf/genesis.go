@@ -1,9 +1,10 @@
 package vrf
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/evm/x/vrf/keeper"
 	"github.com/cosmos/evm/x/vrf/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InitGenesis initializes the vrf module's state from a provided genesis state.

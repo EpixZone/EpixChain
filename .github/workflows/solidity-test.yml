@@ -12,33 +12,33 @@ jobs:
   test-solidity:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: '1.25'
           check-latest: true
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # depth 2 lets HEAD~1 resolve, used as the diff base on push events
           # where github.event.before may point at an unreachable commit.
           fetch-depth: 2
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '20'
       - name: Resolve diff base for push events
         id: diff_base
         if: github.event_name == 'push'
         run: echo "base=$(git rev-parse HEAD~1)" >> "$GITHUB_OUTPUT"
-      - uses: technote-space/get-diff-action@v6.1.2
+      - uses: ./.github/actions/changed-files
         with:
-          BASE: ${{ steps.diff_base.outputs.base }}
-          PATTERNS: |
+          base: ${{ steps.diff_base.outputs.base }}
+          patterns: |
             **/**.sol
             **/**.go
             go.mod
             go.sum
             *.toml
       - name: Cache yarn dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: tests/solidity/node_modules
           key: ${{ runner.os }}-yarn-${{ hashFiles('tests/solidity/yarn.lock') }}

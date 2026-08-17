@@ -10,10 +10,10 @@ jobs:
   markdown-link-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: technote-space/get-diff-action@v6.1.2
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/changed-files
         with:
-          PATTERNS: |
+          patterns: |
             **.md
       - uses: gaurav-nelson/github-action-markdown-link-check@master
         with:

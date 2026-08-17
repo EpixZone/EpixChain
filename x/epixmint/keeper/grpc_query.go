@@ -3,12 +3,12 @@ package keeper
 import (
 	"context"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/cosmos/evm/x/epixmint/types"
 
 	"cosmossdk.io/math"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 var _ types.QueryServer = Keeper{}

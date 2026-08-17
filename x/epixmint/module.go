@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
+
+	abci "github.com/cometbft/cometbft/abci/types"
 
 	"github.com/cosmos/evm/x/epixmint/client/cli"
 	"github.com/cosmos/evm/x/epixmint/keeper"
@@ -25,7 +26,7 @@ import (
 const ConsensusVersion = 1
 
 var (
-	_ module.AppModule      = AppModule{}
+	_ module.AppModule      = AppModule{} //nolint:staticcheck // deprecated but functional; matches upstream modules
 	_ module.AppModuleBasic = AppModuleBasic{}
 	_ module.HasABCIGenesis = AppModule{}
 

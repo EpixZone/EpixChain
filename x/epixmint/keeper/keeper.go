@@ -3,13 +3,13 @@ package keeper
 import (
 	"context"
 
+	"github.com/cosmos/evm/x/epixmint/types"
+
 	"cosmossdk.io/math"
-	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/cosmos/evm/x/epixmint/types"
 )
 
 // Keeper of the epixmint store

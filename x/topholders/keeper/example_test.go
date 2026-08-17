@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"testing"
 
-	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/evm/testutil/config"
 	"github.com/cosmos/evm/x/topholders/types"
+
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 )
 
 func TestNewFeatures(t *testing.T) {

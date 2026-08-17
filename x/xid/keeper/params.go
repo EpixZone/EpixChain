@@ -3,8 +3,9 @@ package keeper
 import (
 	"encoding/json"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/evm/x/xid/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // GetParams returns the current module parameters

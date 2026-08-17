@@ -23,18 +23,18 @@ jobs:
       matrix:
         include:
           - goarch: amd64
-            runner: depot-ubuntu-22.04-4
+            runner: ubuntu-latest
           - goarch: arm64
-            runner: depot-ubuntu-22.04-arm-4
+            runner: ubuntu-24.04-arm
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0  # Required for git describe to get version tags
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: "1.25"
           check-latest: true
@@ -90,7 +90,7 @@ jobs:
           sha256sum "${BINARY_NAME}" > "${BINARY_NAME}.sha256"
 
       - name: Upload binary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: evmd-${{ steps.version.outputs.branch }}-${{ steps.version.outputs.commit_short }}-linux-${{ matrix.goarch }}
           path: |

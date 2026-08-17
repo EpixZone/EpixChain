@@ -3,10 +3,11 @@ package keeper
 import (
 	"context"
 
-	sdkmath "cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/cosmos/evm/x/epixmint/types"
+
+	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // MaxDecayYears is the maximum number of years to calculate decay for.
@@ -30,7 +31,7 @@ func calculateDecayFactorAndBlocksPerYear(ctx context.Context, params types.Para
 
 	// Calculate blocks per year based on configured block time
 	blocksPerYear := calculateBlocksPerYear(params.BlockTimeSeconds)
-	blocksPerYearDec = sdkmath.LegacyNewDec(int64(blocksPerYear))
+	blocksPerYearDec = sdkmath.LegacyNewDec(int64(blocksPerYear)) //nolint:gosec // G115
 	currentHeightDec := sdkmath.LegacyNewDec(currentHeight)
 
 	// Calculate years elapsed (can be fractional)

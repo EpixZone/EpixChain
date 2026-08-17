@@ -16,7 +16,7 @@ var (
 	//
 	// The actual codec used for serialization should be provided to x/epixmint and
 	// defined at the application level.
-	AminoCdc = codec.NewAminoCodec(amino)
+	AminoCdc = codec.NewAminoCodec(amino) //nolint:staticcheck // deprecated but functional; matches upstream modules
 )
 
 // RegisterLegacyAminoCodec registers the necessary x/epixmint interfaces and concrete types

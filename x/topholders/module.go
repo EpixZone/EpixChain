@@ -4,9 +4,13 @@ import (
 	"context"
 	"encoding/json"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
+
+	abci "github.com/cometbft/cometbft/abci/types"
+
+	"github.com/cosmos/evm/x/topholders/keeper"
+	"github.com/cosmos/evm/x/topholders/types"
 
 	"cosmossdk.io/core/appmodule"
 
@@ -15,16 +19,13 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-
-	"github.com/cosmos/evm/x/topholders/keeper"
-	"github.com/cosmos/evm/x/topholders/types"
 )
 
 // ConsensusVersion defines the current module consensus version.
 const ConsensusVersion = 1
 
 var (
-	_ module.AppModule      = AppModule{}
+	_ module.AppModule      = AppModule{} //nolint:staticcheck // deprecated but functional; matches upstream modules
 	_ module.AppModuleBasic = AppModuleBasic{}
 	_ module.HasABCIGenesis = AppModule{}
 
@@ -100,12 +101,12 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper keeper.Keeper
+	keeper *keeper.Keeper
 }
 
 // NewAppModule creates a new AppModule object
 func NewAppModule(
-	keeper keeper.Keeper,
+	keeper *keeper.Keeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(),
@@ -121,7 +122,7 @@ func (am AppModule) Name() string {
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterQueryServer(cfg.QueryServer(), &am.keeper)
+	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
 }
 
 // InitGenesis performs topholders module's genesis initialization.

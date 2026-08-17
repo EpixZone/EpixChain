@@ -12,20 +12,20 @@ jobs:
   dependency-review:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: '1.25'
           check-latest: true
       - name: "Checkout Repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           # depth 2 so HEAD^ resolves on scheduled / dispatch runs where
           # the dependency-review action diffs the latest commit against
           # its parent (default depth=1 truncates history to one commit).
           fetch-depth: 2
-      - uses: technote-space/get-diff-action@v6.1.2
+      - uses: ./.github/actions/changed-files
         with:
-          PATTERNS: |
+          patterns: |
             **/**.go
             go.mod
             go.sum
@@ -42,10 +42,10 @@ jobs:
           echo "head=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: "Dependency Review (PR / merge_group)"
         if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v5
       - name: "Dependency Review (scheduled / dispatch)"
         if: github.event_name != 'pull_request' && github.event_name != 'merge_group'
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v5
         with:
           base-ref: ${{ steps.refs.outputs.base }}
           head-ref: ${{ steps.refs.outputs.head }}

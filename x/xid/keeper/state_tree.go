@@ -8,8 +8,9 @@ import (
 	"fmt"
 	"sort"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/evm/x/xid/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // emptyLeafHash is the sentinel hash for unoccupied Merkle tree leaves.
@@ -95,7 +96,7 @@ func (k Keeper) SetMerkleNode(ctx sdk.Context, level uint16, index uint32, hash 
 func (k Keeper) GetLeafIndex(ctx sdk.Context, tld, name string) (uint32, bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.MerkleLeafIndexKey(tld, name))
-	if bz == nil || len(bz) < 4 {
+	if len(bz) < 4 {
 		return 0, false
 	}
 	return binary.BigEndian.Uint32(bz), true
@@ -116,9 +117,22 @@ func (k Keeper) SetLeafIndex(ctx sdk.Context, tld, name string, index uint32) {
 // returns its SHA-256 hash. This reuses the same struct as the old flat digest
 // so that the data model is consistent.
 func (k Keeper) computeLeafHash(ctx sdk.Context, tld, name string) [32]byte {
+	pre := k.computeLeafPreimage(ctx, tld, name)
+	if pre == nil {
+		return emptyLeafHash
+	}
+	return sha256.Sum256(pre)
+}
+
+// computeLeafPreimage returns the exact canonical bytes hashed into a domain's
+// leaf — `json.Marshal(domainDigestEntry)` — or nil if the name does not exist.
+// This is served to clients as `leaf_preimage` so they can hash it to bind the
+// returned data to the proven leaf (see docs/xid-lightclient-finality.md). Any
+// change here MUST be mirrored by the client's leaf parser + a frozen KAT.
+func (k Keeper) computeLeafPreimage(ctx sdk.Context, tld, name string) []byte {
 	record, found := k.GetNameRecord(ctx, tld, name)
 	if !found {
-		return emptyLeafHash
+		return nil
 	}
 
 	entry := domainDigestEntry{
@@ -146,7 +160,7 @@ func (k Keeper) computeLeafHash(ctx sdk.Context, tld, name string) [32]byte {
 	}
 
 	bz, _ := json.Marshal(entry)
-	return sha256.Sum256(bz)
+	return bz
 }
 
 // hashPair hashes two 32-byte children into a parent node.
@@ -303,7 +317,7 @@ func (k Keeper) RebuildTree(ctx sdk.Context) string {
 		return ki < kj
 	})
 
-	numLeaves := uint32(len(keys))
+	numLeaves := uint32(len(keys)) //nolint:gosec // G115
 	// Capacity must be a power of 2, minimum 2
 	capacity := uint32(2)
 	for capacity < numLeaves {
@@ -346,7 +360,7 @@ func (k Keeper) RebuildTree(ctx sdk.Context) string {
 	// Update the state digest with the Merkle root
 	sd := types.StateDigest{
 		Digest:   rootHex,
-		Height:   uint64(ctx.BlockHeight()),
+		Height:   uint64(ctx.BlockHeight()), //nolint:gosec // G115
 		NumNames: uint64(numLeaves),
 	}
 	k.SetStateDigest(ctx, sd)
@@ -367,7 +381,7 @@ func (k Keeper) UpdateDomainInTree(ctx sdk.Context, tld, name string) {
 
 	sd := types.StateDigest{
 		Digest:   rootHex,
-		Height:   uint64(ctx.BlockHeight()),
+		Height:   uint64(ctx.BlockHeight()), //nolint:gosec // G115
 		NumNames: uint64(meta.NumLeaves),
 	}
 	k.SetStateDigest(ctx, sd)

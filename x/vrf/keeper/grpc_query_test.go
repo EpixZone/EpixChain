@@ -1,19 +1,17 @@
 package keeper_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/cosmos/evm/x/vrf/types"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/cosmos/evm/x/vrf/types"
 )
 
 func (s *KeeperTestSuite) TestGRPCGetBeacon_Found() {
 	beacon := makeBeacon(50)
 	s.keeper.SetBeacon(s.ctx, beacon)
 
-	resp, err := s.keeper.GetBeacon(sdk.WrapSDKContext(s.ctx), &types.QueryGetBeaconRequest{Height: 50})
+	resp, err := s.keeper.GetBeacon(s.ctx, &types.QueryGetBeaconRequest{Height: 50})
 	s.Require().NoError(err)
 	s.Require().NotNil(resp.Beacon)
 	s.Require().Equal(uint64(50), resp.Beacon.Height)
@@ -23,7 +21,7 @@ func (s *KeeperTestSuite) TestGRPCGetBeacon_Found() {
 }
 
 func (s *KeeperTestSuite) TestGRPCGetBeacon_NotFound() {
-	_, err := s.keeper.GetBeacon(sdk.WrapSDKContext(s.ctx), &types.QueryGetBeaconRequest{Height: 999})
+	_, err := s.keeper.GetBeacon(s.ctx, &types.QueryGetBeaconRequest{Height: 999})
 	s.Require().Error(err)
 
 	st, ok := status.FromError(err)
@@ -32,7 +30,7 @@ func (s *KeeperTestSuite) TestGRPCGetBeacon_NotFound() {
 }
 
 func (s *KeeperTestSuite) TestGRPCGetBeacon_NilRequest() {
-	_, err := s.keeper.GetBeacon(sdk.WrapSDKContext(s.ctx), nil)
+	_, err := s.keeper.GetBeacon(s.ctx, nil)
 	s.Require().Error(err)
 
 	st, ok := status.FromError(err)
@@ -46,14 +44,14 @@ func (s *KeeperTestSuite) TestGRPCLatestBeacon_Found() {
 	s.keeper.SetBeacon(s.ctx, makeBeacon(30))
 	s.keeper.SetLatestHeight(s.ctx, 30)
 
-	resp, err := s.keeper.LatestBeacon(sdk.WrapSDKContext(s.ctx), &types.QueryLatestBeaconRequest{})
+	resp, err := s.keeper.LatestBeacon(s.ctx, &types.QueryLatestBeaconRequest{})
 	s.Require().NoError(err)
 	s.Require().NotNil(resp.Beacon)
 	s.Require().Equal(uint64(30), resp.Beacon.Height)
 }
 
 func (s *KeeperTestSuite) TestGRPCLatestBeacon_Empty() {
-	_, err := s.keeper.LatestBeacon(sdk.WrapSDKContext(s.ctx), &types.QueryLatestBeaconRequest{})
+	_, err := s.keeper.LatestBeacon(s.ctx, &types.QueryLatestBeaconRequest{})
 	s.Require().Error(err)
 
 	st, ok := status.FromError(err)
@@ -66,14 +64,14 @@ func (s *KeeperTestSuite) TestGRPCParams() {
 	err := s.keeper.SetParams(s.ctx, custom)
 	s.Require().NoError(err)
 
-	resp, err := s.keeper.Params(sdk.WrapSDKContext(s.ctx), &types.QueryParamsRequest{})
+	resp, err := s.keeper.Params(s.ctx, &types.QueryParamsRequest{})
 	s.Require().NoError(err)
 	s.Require().Equal(false, resp.Params.Enabled)
 	s.Require().Equal(uint64(512), resp.Params.LookbackBlocks)
 }
 
 func (s *KeeperTestSuite) TestGRPCParams_Default() {
-	resp, err := s.keeper.Params(sdk.WrapSDKContext(s.ctx), &types.QueryParamsRequest{})
+	resp, err := s.keeper.Params(s.ctx, &types.QueryParamsRequest{})
 	s.Require().NoError(err)
 	s.Require().Equal(types.DefaultParams().Enabled, resp.Params.Enabled)
 	s.Require().Equal(types.DefaultParams().LookbackBlocks, resp.Params.LookbackBlocks)

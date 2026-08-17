@@ -6,9 +6,10 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/cosmos/evm/x/vrf/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/evm/x/vrf/types"
 )
 
 // NewQueryCmd returns the CLI query commands for the vrf module

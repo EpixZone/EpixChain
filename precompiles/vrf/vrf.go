@@ -15,14 +15,13 @@ import (
 	"github.com/cosmos/evm/x/vrf/keeper"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Method names matching the ABI
 const (
-	GetBeaconMethod          = "getBeacon"
-	LatestBeaconMethod       = "latestBeacon"
+	GetBeaconMethod           = "getBeacon"
+	LatestBeaconMethod        = "latestBeacon"
 	GetMultiBlockBeaconMethod = "getMultiBlockBeacon"
 )
 

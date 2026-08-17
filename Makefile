@@ -141,7 +141,7 @@ PACKAGES_UNIT := $(shell go list ./... | grep -v '/tests/e2e$$' | grep -v '/simu
 PACKAGES_EVMD := $(shell cd evmd && go list ./... | grep -v '/simulation')
 COVERPKG_EVM  := $(shell go list ./... | grep -v '/tests/e2e$$' | grep -v '/simulation' | paste -sd, -)
 COVERPKG_ALL  := $(COVERPKG_EVM)
-COMMON_COVER_ARGS := -timeout=15m -covermode=atomic
+COMMON_COVER_ARGS := -timeout=40m -covermode=atomic
 
 TEST_PACKAGES := ./...
 TEST_TARGETS := test-unit test-epixd test-unit-cover test-race
@@ -154,17 +154,24 @@ test-race: ARGS=-race
 test-race: TEST_PACKAGES=$(PACKAGES_UNIT)
 test-race: run-tests
 
+# Lightweight race detection on the concurrency-sensitive packages only
+# (streams, mempool, rpc, indexer, server). Excludes the chain-spinning
+# integration suites that make -race exhaust the CI runner — those run without
+# -race in test-unit-cover. Fast enough to run on a standard hosted runner.
+test-race-lite:
+	@go test -race -tags=test -timeout=20m ./rpc/... ./mempool/... ./indexer/... ./server/...
+
 test-epixd: ARGS=-timeout=30m
 test-epixd:
 	@cd evmd && go test -count=1 -race -tags=test -mod=readonly $(ARGS) $(EXTRA_ARGS) $(PACKAGES_EVMD)
 
-test-unit-cover: ARGS=-timeout=15m -coverprofile=coverage.txt -covermode=atomic
+test-unit-cover: ARGS=-timeout=40m -coverprofile=coverage.txt -covermode=atomic
 test-unit-cover: TEST_PACKAGES=$(PACKAGES_UNIT)
 test-unit-cover: run-tests
 	@echo "🔍 Running evm (root) coverage..."
-	@go test -race -tags=test $(COMMON_COVER_ARGS) -coverpkg=$(COVERPKG_ALL) -coverprofile=coverage.txt ./...
+	@go test -tags=test $(COMMON_COVER_ARGS) -coverpkg=$(COVERPKG_ALL) -coverprofile=coverage.txt ./...
 	@echo "🔍 Running epixd coverage..."
-	@cd evmd && go test -race -tags=test $(COMMON_COVER_ARGS) -coverpkg=$(COVERPKG_ALL) -coverprofile=coverage_evmd.txt ./...
+	@cd evmd && go test -tags=test $(COMMON_COVER_ARGS) -coverpkg=$(COVERPKG_ALL) -coverprofile=coverage_evmd.txt ./...
 	@echo "🔀 Merging epixd coverage into root coverage..."
 	@tail -n +2 evmd/coverage_evmd.txt >> coverage.txt && rm evmd/coverage_evmd.txt
 	@echo "🧹 Filtering ignored files from coverage.txt..."
@@ -194,7 +201,7 @@ test-solidity:
 	@echo "Beginning solidity tests..."
 	./scripts/run-solidity-tests.sh
 
-.PHONY: run-tests test test-all $(TEST_TARGETS)
+.PHONY: run-tests test test-all test-race-lite $(TEST_TARGETS)
 
 benchmark:
 	@go test -race -tags=test -mod=readonly -bench=. $(PACKAGES_NOSIMULATION)
@@ -380,9 +387,14 @@ test-system: build-v06 build
 	cd tests/systemtests/Counter && forge build
 	$(MAKE) -C tests/systemtests test
 
+# Build the pre-v0.7 ("v0.6.x codebase") legacy binary for the chain-upgrade
+# system test. EpixChain never released a v0.6.x tag — its v0.5.5 release is
+# built from the upstream cosmos/evm v0.6.x codebase (it still registers the
+# precisebank store), so v0.5.5 is the correct binary to upgrade FROM into the
+# v0.7 line. See UpgradeName_v0_7_0 in evmd/upgrades.go.
 build-v06:
 	mkdir -p ./tests/systemtests/binaries/v0.6
-	git checkout v0.6.0
+	git checkout v0.5.5
 	make build
 	cp $(BUILDDIR)/epixd ./tests/systemtests/binaries/v0.6
 	git checkout -

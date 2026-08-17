@@ -1,0 +1,17 @@
+{
+  "messages": [
+    {
+      "@type": "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
+      "authority": "epix10d07y265gmmuvt4z0w9aw880jnsr700j0fas3g",
+      "plan": {
+        "name": "v0.7.2",
+        "height": "5360000",
+        "info": "https://github.com/EpixZone/EpixChain/releases/tag/v0.7.2"
+      }
+    }
+  ],
+  "metadata": "EpixChain v0.7.2 Upgrade Proposal",
+  "deposit": "5000000000000000000000aepix",
+  "title": "EpixChain v0.7.2 Upgrade: xID Chain-Attested Finality",
+  "summary": "What changes:\n- Activates client-verifiable finality for xID identities. From this upgrade on, every bonded validator attests the current xID state digest with its consensus key each block, and the chain records the attestations backed by more than two-thirds of voting power.\n- This lets any client verify an xID name resolution end to end: a name-to-digest Merkle proof anchored to a digest that the validator set has signed, with no need to trust the RPC endpoint it queried.\n- Technically this switches on CometBFT ABCI++ vote extensions at the block after the upgrade height. The vote-extension code already ships in the v0.7.1 binary but stays dormant until this coordinated boundary enables it."
+}

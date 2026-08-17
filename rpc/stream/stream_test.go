@@ -55,46 +55,68 @@ func TestStreamReadNonBlocking(t *testing.T) {
 }
 
 func TestStreamReadBlocking(t *testing.T) {
+	const (
+		total       = 32
+		subscribers = 10
+	)
 	stream := NewStream[int](16, 31)
 
-	wg := sync.WaitGroup{}
-
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	// subscriber
-	subscribers := 10
+	// Each subscriber reads from the beginning (offset 0) so it deterministically
+	// receives every published item regardless of goroutine scheduling: the ring
+	// buffer retains all `total` items (they fit in 2 segments, so nothing is
+	// pruned). This avoids the timing races of the old version, which relied on
+	// fixed sleeps to (a) have every subscriber blocked before the publisher ran
+	// and (b) have every subscriber drained before cancel — both of which are
+	// unreliable under load / -race (a late subscriber caught only the last few
+	// items). A completion barrier replaces the drain sleep.
 	result := make([][]int, subscribers)
-	for i := 0; i < 10; i++ {
+	var wg sync.WaitGroup
+	done := make(chan struct{}, subscribers)
+
+	for i := 0; i < subscribers; i++ {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-
-			require.NoError(t, stream.Subscribe(ctx, func(items []int, offset int) error {
+			offset := 0
+			for len(result[i]) < total {
+				items, next := stream.ReadBlocking(ctx, offset)
+				if len(items) == 0 {
+					return // context canceled
+				}
 				result[i] = append(result[i], items...)
-				return nil
-			}))
+				offset = next
+			}
+			done <- struct{}{}
 		}(i)
 	}
 
-	// wait for subscribers to setup
-	time.Sleep(100 * time.Millisecond)
-
 	// publisher
-	for i := 0; i < 32; i++ {
+	for i := 0; i < total; i++ {
 		require.Equal(t, i+1, stream.Add(i))
 	}
 
-	// wait for subscribers to finish
-	time.Sleep(100 * time.Millisecond)
+	// wait until every subscriber has received all items (generous upper bound)
+	deadline := time.After(30 * time.Second)
+	for got := 0; got < subscribers; got++ {
+		select {
+		case <-done:
+		case <-deadline:
+			t.Fatalf("timed out waiting for subscribers: %d/%d completed", got, subscribers)
+		}
+	}
+
 	cancel()
 	wg.Wait()
 
-	// check result
+	// check result: each subscriber saw the full, in-order sequence
 	for i := 0; i < subscribers; i++ {
-		require.Equal(t, 32, len(result[i]))
-		require.Equal(t, 31, result[i][len(result[i])-1])
-		for j, n := range result[i][:len(result[i])-1] {
-			require.Equal(t, n+1, result[i][j+1])
+		require.Equal(t, total, len(result[i]))
+		require.Equal(t, total-1, result[i][len(result[i])-1])
+		for j := 0; j < len(result[i])-1; j++ {
+			require.Equal(t, result[i][j]+1, result[i][j+1])
 		}
 	}
 }

@@ -103,6 +103,10 @@ linters:
       - third_party$
       - builtin$
       - examples$
+      # Generated protobuf code is not hand-maintained; don't lint it.
+      - '.*\.pb\.go$'
+      - '.*\.pb\.gw\.go$'
+      - '.*\.pulsar\.go$'
 issues:
   max-issues-per-linter: 10000
   max-same-issues: 10000

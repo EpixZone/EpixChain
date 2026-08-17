@@ -35,10 +35,7 @@ func (msg *MsgRegisterName) ValidateBasic() error {
 	if err := ValidateName(msg.Name); err != nil {
 		return err
 	}
-	if err := ValidateTLD(msg.Tld); err != nil {
-		return err
-	}
-	return nil
+	return ValidateTLD(msg.Tld)
 }
 
 // GetSigners returns the expected signers for MsgTransferName.
@@ -65,10 +62,7 @@ func (msg *MsgTransferName) ValidateBasic() error {
 	if err := ValidateName(msg.Name); err != nil {
 		return err
 	}
-	if err := ValidateTLD(msg.Tld); err != nil {
-		return err
-	}
-	return nil
+	return ValidateTLD(msg.Tld)
 }
 
 // GetSigners returns the expected signers for MsgUpdateProfile.
@@ -88,10 +82,7 @@ func (msg *MsgUpdateProfile) ValidateBasic() error {
 	if err := ValidateTLD(msg.Tld); err != nil {
 		return err
 	}
-	if err := ValidateProfile(msg.Profile); err != nil {
-		return err
-	}
-	return nil
+	return ValidateProfile(msg.Profile)
 }
 
 // GetSigners returns the expected signers for MsgSetDNSRecord.
@@ -120,10 +111,7 @@ func (msg *MsgSetDNSRecord) ValidateBasic() error {
 	if len(msg.Record.Value) > MaxDNSValueLength {
 		return ErrInvalidDNSRecord.Wrapf("record value exceeds maximum length of %d characters", MaxDNSValueLength)
 	}
-	if err := ValidateDNSTTL(msg.Record.Ttl); err != nil {
-		return err
-	}
-	return nil
+	return ValidateDNSTTL(msg.Record.Ttl)
 }
 
 // GetSigners returns the expected signers for MsgDeleteDNSRecord.
@@ -163,10 +151,7 @@ func (msg *MsgCreateTLD) ValidateBasic() error {
 	if err := ValidateTLD(msg.TldConfig.Tld); err != nil {
 		return err
 	}
-	if err := ValidatePriceTiers(msg.TldConfig.PriceTiers); err != nil {
-		return err
-	}
-	return nil
+	return ValidatePriceTiers(msg.TldConfig.PriceTiers)
 }
 
 // GetSigners returns the expected signers for MsgUpdateTLDConfig.
@@ -183,10 +168,7 @@ func (msg *MsgUpdateTLDConfig) ValidateBasic() error {
 	if err := ValidateTLD(msg.TldConfig.Tld); err != nil {
 		return err
 	}
-	if err := ValidatePriceTiers(msg.TldConfig.PriceTiers); err != nil {
-		return err
-	}
-	return nil
+	return ValidatePriceTiers(msg.TldConfig.PriceTiers)
 }
 
 // GetSigners returns the expected signers for MsgUpdateParams.
@@ -217,10 +199,7 @@ func (msg *MsgSetPrimaryName) ValidateBasic() error {
 	if err := ValidateName(msg.Name); err != nil {
 		return err
 	}
-	if err := ValidateTLD(msg.Tld); err != nil {
-		return err
-	}
-	return nil
+	return ValidateTLD(msg.Tld)
 }
 
 // GetSigners returns the expected signers for MsgAttestStateDigest.

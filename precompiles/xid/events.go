@@ -12,15 +12,15 @@ import (
 
 const (
 	// Event names matching abi.json
-	EventNameRegistered   = "NameRegistered"
-	EventNameTransferred  = "NameTransferred"
-	EventProfileUpdated   = "ProfileUpdated"
-	EventDNSRecordSet        = "DNSRecordSet"
-	EventDNSRecordDeleted    = "DNSRecordDeleted"
-	EventIdentityLinked      = "IdentityLinked"
-	EventIdentityUnlinked    = "IdentityUnlinked"
-	EventContentRootUpdated  = "ContentRootUpdated"
-	EventPrimaryNameSet      = "PrimaryNameSet"
+	EventNameRegistered     = "NameRegistered"
+	EventNameTransferred    = "NameTransferred"
+	EventProfileUpdated     = "ProfileUpdated"
+	EventDNSRecordSet       = "DNSRecordSet"
+	EventDNSRecordDeleted   = "DNSRecordDeleted"
+	EventIdentityLinked     = "IdentityLinked"
+	EventIdentityUnlinked   = "IdentityUnlinked"
+	EventContentRootUpdated = "ContentRootUpdated"
+	EventPrimaryNameSet     = "PrimaryNameSet"
 )
 
 // EmitNameRegistered emits a NameRegistered event to the EVM state DB.
@@ -54,7 +54,7 @@ func (p Precompile) EmitNameRegistered(
 		Address:     p.Address(),
 		Topics:      topics,
 		Data:        packed,
-		BlockNumber: uint64(ctx.BlockHeight()),
+		BlockNumber: uint64(ctx.BlockHeight()), //nolint:gosec // G115
 	})
 
 	return nil
@@ -94,7 +94,7 @@ func (p Precompile) EmitNameTransferred(
 		Address:     p.Address(),
 		Topics:      topics,
 		Data:        packed,
-		BlockNumber: uint64(ctx.BlockHeight()),
+		BlockNumber: uint64(ctx.BlockHeight()), //nolint:gosec // G115
 	})
 
 	return nil
@@ -128,7 +128,7 @@ func (p Precompile) EmitProfileUpdated(
 		Address:     p.Address(),
 		Topics:      topics,
 		Data:        packed,
-		BlockNumber: uint64(ctx.BlockHeight()),
+		BlockNumber: uint64(ctx.BlockHeight()), //nolint:gosec // G115
 	})
 
 	return nil
@@ -157,7 +157,7 @@ func (p Precompile) EmitDNSRecordSet(
 		Address:     p.Address(),
 		Topics:      topics,
 		Data:        packed,
-		BlockNumber: uint64(ctx.BlockHeight()),
+		BlockNumber: uint64(ctx.BlockHeight()), //nolint:gosec // G115
 	})
 
 	return nil
@@ -185,7 +185,7 @@ func (p Precompile) EmitDNSRecordDeleted(
 		Address:     p.Address(),
 		Topics:      topics,
 		Data:        packed,
-		BlockNumber: uint64(ctx.BlockHeight()),
+		BlockNumber: uint64(ctx.BlockHeight()), //nolint:gosec // G115
 	})
 
 	return nil
@@ -212,7 +212,7 @@ func (p Precompile) EmitIdentityLinked(
 		Address:     p.Address(),
 		Topics:      topics,
 		Data:        packed,
-		BlockNumber: uint64(ctx.BlockHeight()),
+		BlockNumber: uint64(ctx.BlockHeight()), //nolint:gosec // G115
 	})
 
 	return nil
@@ -239,7 +239,7 @@ func (p Precompile) EmitIdentityUnlinked(
 		Address:     p.Address(),
 		Topics:      topics,
 		Data:        packed,
-		BlockNumber: uint64(ctx.BlockHeight()),
+		BlockNumber: uint64(ctx.BlockHeight()), //nolint:gosec // G115
 	})
 
 	return nil
@@ -273,7 +273,7 @@ func (p Precompile) EmitPrimaryNameSet(
 		Address:     p.Address(),
 		Topics:      topics,
 		Data:        packed,
-		BlockNumber: uint64(ctx.BlockHeight()),
+		BlockNumber: uint64(ctx.BlockHeight()), //nolint:gosec // G115
 	})
 
 	return nil
@@ -300,7 +300,7 @@ func (p Precompile) EmitContentRootUpdated(
 		Address:     p.Address(),
 		Topics:      topics,
 		Data:        packed,
-		BlockNumber: uint64(ctx.BlockHeight()),
+		BlockNumber: uint64(ctx.BlockHeight()), //nolint:gosec // G115
 	})
 
 	return nil

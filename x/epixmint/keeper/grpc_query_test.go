@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"cosmossdk.io/math"
-
 	"github.com/cosmos/evm/x/epixmint/types"
+
+	"cosmossdk.io/math"
 )
 
 func TestQueryParams(t *testing.T) {

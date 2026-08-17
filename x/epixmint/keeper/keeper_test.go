@@ -6,19 +6,19 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
+	"github.com/cosmos/evm/x/epixmint"
+	"github.com/cosmos/evm/x/epixmint/keeper"
+	"github.com/cosmos/evm/x/epixmint/types"
+
 	"cosmossdk.io/math"
-	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
-	"github.com/cosmos/evm/x/epixmint"
-	"github.com/cosmos/evm/x/epixmint/keeper"
-	"github.com/cosmos/evm/x/epixmint/types"
 )
 
 type KeeperTestSuite struct {

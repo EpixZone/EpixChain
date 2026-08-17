@@ -14,11 +14,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: technote-space/get-diff-action@v6.1.2
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/changed-files
         id: git_diff
         with:
-          PATTERNS: |
+          patterns: |
             **/**.proto
             **/buf.yaml
             buf.work.yaml
@@ -31,7 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: bufbuild/buf-setup-action@v1.50.0
       - uses: bufbuild/buf-lint-action@v1
         with:
@@ -40,7 +40,7 @@ jobs:
   break-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: bufbuild/buf-setup-action@v1.50.0
       - uses: bufbuild/buf-breaking-action@v1
         with:

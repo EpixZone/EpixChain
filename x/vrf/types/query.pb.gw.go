@@ -18,13 +18,15 @@ import (
 )
 
 // Suppress "imported and not used" errors
-var _ codes.Code
-var _ io.Reader
-var _ status.Status
-var _ = runtime.String
-var _ = utilities.NewDoubleArray
-var _ = descriptor.ForMessage
-var _ = metadata.Join
+var (
+	_ codes.Code
+	_ io.Reader
+	_ status.Status
+	_ = runtime.String
+	_ = utilities.NewDoubleArray
+	_ = descriptor.ForMessage
+	_ = metadata.Join
+)
 
 func request_Query_GetBeacon_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QueryGetBeaconRequest
@@ -94,7 +96,6 @@ func local_request_Query_Params_0(ctx context.Context, marshaler runtime.Marshal
 
 // RegisterQueryHandlerServer registers the http handlers for service Query to "mux".
 func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, server QueryServer) error {
-
 	mux.Handle("GET", pattern_Query_GetBeacon_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -184,7 +185,6 @@ func RegisterQueryHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc
 
 // RegisterQueryHandlerClient registers the http handlers for service Query to "mux".
 func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, client QueryClient) error {
-
 	mux.Handle("GET", pattern_Query_GetBeacon_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()

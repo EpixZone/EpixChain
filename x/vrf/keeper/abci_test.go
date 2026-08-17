@@ -9,9 +9,9 @@ import (
 
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/cosmos/evm/x/vrf/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // ctxWithBlock builds a context with realistic block header data for EndBlock testing.

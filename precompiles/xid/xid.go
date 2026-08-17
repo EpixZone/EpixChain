@@ -15,7 +15,6 @@ import (
 	"github.com/cosmos/evm/x/xid/keeper"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -34,19 +33,19 @@ const (
 	SetPrimaryNameMethod = "setPrimaryName"
 
 	// Queries
-	ResolveMethod            = "resolve"
-	ReverseResolveMethod     = "reverseResolve"
-	GetProfileMethod         = "getProfile"
-	GetDNSRecordMethod       = "getDNSRecord"
-	GetRegistrationFeeMethod = "getRegistrationFee"
-	GetLinkedIdentitiesMethod        = "getLinkedIdentities"
-	GetContentRootMethod            = "getContentRoot"
-	ReverseResolveBech32Method      = "reverseResolveBech32"
-	GetStateDigestMethod            = "getStateDigest"
-	GetAttestationsMethod           = "getAttestations"
-	AttestStateDigestMethod         = "attestStateDigest"
-	GetPrimaryNameMethod            = "getPrimaryName"
-	ReverseResolveByIdentityMethod  = "reverseResolveByIdentity"
+	ResolveMethod                  = "resolve"
+	ReverseResolveMethod           = "reverseResolve"
+	GetProfileMethod               = "getProfile"
+	GetDNSRecordMethod             = "getDNSRecord"
+	GetRegistrationFeeMethod       = "getRegistrationFee"
+	GetLinkedIdentitiesMethod      = "getLinkedIdentities"
+	GetContentRootMethod           = "getContentRoot"
+	ReverseResolveBech32Method     = "reverseResolveBech32"
+	GetStateDigestMethod           = "getStateDigest"
+	GetAttestationsMethod          = "getAttestations"
+	AttestStateDigestMethod        = "attestStateDigest"
+	GetPrimaryNameMethod           = "getPrimaryName"
+	ReverseResolveByIdentityMethod = "reverseResolveByIdentity"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}

@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/cosmos/evm/x/xid/types"
+
 	errorsmod "cosmossdk.io/errors"
+
 	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/evm/x/xid/types"
 )
 
 // SubmitAttestation validates and stores an attestation from a validator.
@@ -44,7 +46,7 @@ func (k Keeper) SubmitAttestation(ctx sdk.Context, msg *types.MsgAttestStateDige
 		ValidatorAddr: msg.Signer,
 		Digest:        msg.Digest,
 		Signature:     msg.Signature,
-		Height:        uint64(ctx.BlockHeight()),
+		Height:        uint64(ctx.BlockHeight()), //nolint:gosec // G115
 	}
 	k.SetAttestation(ctx, att)
 	k.IncrementAttestationCount(ctx, msg.Digest)
@@ -139,20 +141,55 @@ func (k Keeper) IsDigestFinalized(ctx sdk.Context, digest string) bool {
 		return false
 	}
 
-	count := k.GetAttestationCount(ctx, digest)
+	// Signed path: sum the voting power of attestations carrying a real signature
+	// (the vote-extension signers). "auto:consensus" telemetry entries store zero
+	// VotingPower and never satisfy this branch. Strict > 2/3 of bonded power.
+	var signedPower uint64
+	for _, att := range k.GetAttestations(ctx, digest) {
+		signedPower += att.VotingPower
+	}
+	if signedPower > 0 {
+		if config.Threshold > 0 {
+			return signedPower >= config.Threshold
+		}
+		total := k.totalBondedPower(ctx)
+		return total > 0 && signedPower*3 > total*2
+	}
 
-	// Use explicit threshold override if set
+	// Legacy count path (auto:consensus) — kept so existing clients keep working
+	// until vote extensions are enabled and validators register attest keys.
+	count := k.GetAttestationCount(ctx, digest)
 	if config.Threshold > 0 {
 		return count >= config.Threshold
 	}
-
-	// Default: require 2/3+ of bonded validators
 	bondedCount := k.countBondedValidators(ctx)
-	if bondedCount == 0 {
-		return false
+	return bondedCount > 0 && count*3 > bondedCount*2
+}
+
+// RecordSignedAttestation persists a verified signed attestation for a digest,
+// overwriting any prior entry for the same (digest, validator) so voting power,
+// height, round, extension and signature stay fresh as the same digest is
+// re-signed each block. Keyed by the consensus address (the client pins
+// valcons -> consensus pubkey/power).
+func (k Keeper) RecordSignedAttestation(ctx sdk.Context, att types.Attestation) {
+	k.SetAttestation(ctx, att)
+}
+
+// SetDigestBlockTime stores the canonical (>=2/3-agreed) block_time the signed
+// attestations for a digest cover.
+func (k Keeper) SetDigestBlockTime(ctx sdk.Context, digest string, blockTime int64) {
+	bz := make([]byte, 8)
+	binary.BigEndian.PutUint64(bz, uint64(blockTime)) //nolint:gosec // G115
+	ctx.KVStore(k.storeKey).Set(types.DigestBlockTimeKey(digest), bz)
+}
+
+// GetDigestBlockTime returns the canonical signed block_time for a digest, if any.
+func (k Keeper) GetDigestBlockTime(ctx sdk.Context, digest string) (int64, bool) {
+	bz := ctx.KVStore(k.storeKey).Get(types.DigestBlockTimeKey(digest))
+	if len(bz) < 8 {
+		return 0, false
 	}
-	// 2/3 threshold: count * 3 > bondedCount * 2 (avoids floating point)
-	return count*3 > bondedCount*2
+	return int64(binary.BigEndian.Uint64(bz)), true //nolint:gosec // G115
 }
 
 // countBondedValidators returns the number of bonded validators.
@@ -189,6 +226,11 @@ func (k Keeper) ClearAttestationsForDigest(ctx sdk.Context, digest string) {
 
 	// Delete the count
 	store.Delete(types.AttestationCountKey(digest))
+
+	// Delete the canonical block_time for this digest. Once the attestations are
+	// gone the digest is unverifiable, so its block_time is dead weight — without
+	// this it would orphan one small entry per superseded digest forever.
+	store.Delete(types.DigestBlockTimeKey(digest))
 }
 
 // GetAttestationConfig retrieves the attestation configuration.
@@ -213,4 +255,27 @@ func (k Keeper) SetAttestationConfig(ctx sdk.Context, config types.AttestationCo
 		panic(fmt.Sprintf("failed to marshal attestation config: %v", err))
 	}
 	store.Set(types.AttestationConfigKey(), bz)
+}
+
+// ---------------------------------------------------------------------------
+// Attestation keys (valcons -> ed25519 attestation pubkey)
+// ---------------------------------------------------------------------------
+
+// totalBondedPower returns the total consensus voting power of all bonded
+// validators — the denominator light clients verify signed power against.
+func (k Keeper) totalBondedPower(ctx sdk.Context) uint64 {
+	validators, err := k.stakingKeeper.GetAllValidators(ctx)
+	if err != nil {
+		return 0
+	}
+	var total int64
+	for _, val := range validators {
+		if val.GetStatus() == stakingtypes.Bonded {
+			total += val.GetConsensusPower(sdk.DefaultPowerReduction)
+		}
+	}
+	if total < 0 {
+		return 0
+	}
+	return uint64(total)
 }

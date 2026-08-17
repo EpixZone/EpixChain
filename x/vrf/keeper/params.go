@@ -3,8 +3,9 @@ package keeper
 import (
 	"encoding/json"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/evm/x/vrf/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // SetParams sets the VRF module parameters

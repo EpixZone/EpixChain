@@ -5,8 +5,9 @@ import (
 	"math"
 	"testing"
 
-	"github.com/cosmos/evm/x/epixmint/keeper"
 	"github.com/stretchr/testify/require"
+
+	"github.com/cosmos/evm/x/epixmint/keeper"
 
 	sdkmath "cosmossdk.io/math"
 )

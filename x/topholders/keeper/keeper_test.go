@@ -3,12 +3,14 @@ package keeper_test
 import (
 	"testing"
 
-	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/evm/testutil/config"
 	"github.com/cosmos/evm/x/topholders/types"
+
+	"cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestHolderInfoValidation(t *testing.T) {

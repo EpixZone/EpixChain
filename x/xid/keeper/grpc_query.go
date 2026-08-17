@@ -2,11 +2,14 @@ package keeper
 
 import (
 	"context"
+	"encoding/hex"
+
+	"github.com/cosmos/evm/x/xid/types"
 
 	errorsmod "cosmossdk.io/errors"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/cosmos/evm/x/xid/types"
 )
 
 const maxPageSize uint64 = 10
@@ -268,9 +271,32 @@ func (k Keeper) QueryAttestations(goCtx context.Context, req *types.QueryAttesta
 	attestations := k.GetAttestations(ctx, digest)
 	finalized := k.IsDigestFinalized(ctx, digest)
 
+	// Prefer the SIGNED (height, block_time) the attestations actually cover, so
+	// the client reconstructs the exact sign-bytes the validators signed. Falls
+	// back to the current StateDigest for the pre-vote-extension (legacy) path.
+	// total_voting_power is the finality denominator clients verify signed power
+	// against.
+	var blockTime int64
+	var height uint64
+	if bt, ok := k.GetDigestBlockTime(ctx, digest); ok {
+		blockTime = bt
+		for _, att := range attestations {
+			if att.VotingPower > 0 {
+				height = att.Height // signed attestations all share the height they signed
+				break
+			}
+		}
+	} else if sd, found := k.GetStateDigest(ctx); found && sd.Digest == digest {
+		blockTime = sd.BlockTime
+		height = sd.Height
+	}
+
 	return &types.QueryAttestationsResponse{
-		Attestations: attestations,
-		Finalized:    finalized,
+		Attestations:     attestations,
+		Finalized:        finalized,
+		BlockTime:        blockTime,
+		TotalVotingPower: k.totalBondedPower(ctx),
+		Height:           height,
 	}, nil
 }
 
@@ -387,6 +413,9 @@ func (k Keeper) ResolveWithProof(goCtx context.Context, req *types.QueryResolveW
 		},
 		Root:   digest.Digest,
 		Height: digest.Height,
+		// The exact canonical bytes hashed to proof.LeafHash, so the client binds
+		// the returned data to the proven leaf instead of trusting the payload.
+		LeafPreimage: hex.EncodeToString(k.computeLeafPreimage(ctx, req.Tld, req.Name)),
 	}, nil
 }
 

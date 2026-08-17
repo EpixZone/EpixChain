@@ -9,19 +9,18 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
-
-	"github.com/cosmos/cosmos-sdk/testutil"
-	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
+	vrfprecompile "github.com/cosmos/evm/precompiles/vrf"
 	"github.com/cosmos/evm/x/vrf/keeper"
 	"github.com/cosmos/evm/x/vrf/types"
 
-	vrfprecompile "github.com/cosmos/evm/precompiles/vrf"
+	storetypes "github.com/cosmos/cosmos-sdk/store/v2/types"
+	"github.com/cosmos/cosmos-sdk/testutil"
+	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 func setupPrecompile(t *testing.T) (*vrfprecompile.Precompile, keeper.Keeper, testutil.TestContext) {
+	t.Helper()
 	encCfg := moduletestutil.MakeTestEncodingConfig()
 	key := storetypes.NewKVStoreKey(types.StoreKey)
 	testCtx := testutil.DefaultContextWithDB(t, key, storetypes.NewTransientStoreKey("transient_test"))
@@ -35,7 +34,7 @@ func makeTestBeacon(height uint64, beaconHex string) types.RandomBeacon {
 		Height:    height,
 		Beacon:    beaconHex,
 		Proposer:  "cosmosvalcons1test",
-		Timestamp: int64(height) * 1000,
+		Timestamp: int64(height) * 1000, //nolint:gosec // G115
 	}
 }
 
@@ -43,26 +42,26 @@ func TestABIParsing(t *testing.T) {
 	p, _, _ := setupPrecompile(t)
 
 	// Should have 3 methods
-	require.NotNil(t, p.ABI.Methods["getBeacon"])
-	require.NotNil(t, p.ABI.Methods["latestBeacon"])
-	require.NotNil(t, p.ABI.Methods["getMultiBlockBeacon"])
+	require.NotNil(t, p.Methods["getBeacon"])
+	require.NotNil(t, p.Methods["latestBeacon"])
+	require.NotNil(t, p.Methods["getMultiBlockBeacon"])
 
 	// getBeacon: 1 input (uint64), 1 output (bytes32)
-	m := p.ABI.Methods["getBeacon"]
+	m := p.Methods["getBeacon"]
 	require.Len(t, m.Inputs, 1)
 	require.Equal(t, "uint64", m.Inputs[0].Type.String())
 	require.Len(t, m.Outputs, 1)
 	require.Equal(t, "bytes32", m.Outputs[0].Type.String())
 
 	// latestBeacon: 0 inputs, 2 outputs (bytes32, uint64)
-	m = p.ABI.Methods["latestBeacon"]
+	m = p.Methods["latestBeacon"]
 	require.Len(t, m.Inputs, 0)
 	require.Len(t, m.Outputs, 2)
 	require.Equal(t, "bytes32", m.Outputs[0].Type.String())
 	require.Equal(t, "uint64", m.Outputs[1].Type.String())
 
 	// getMultiBlockBeacon: 2 inputs (uint64, uint64), 1 output (bytes32)
-	m = p.ABI.Methods["getMultiBlockBeacon"]
+	m = p.Methods["getMultiBlockBeacon"]
 	require.Len(t, m.Inputs, 2)
 	require.Equal(t, "uint64", m.Inputs[0].Type.String())
 	require.Equal(t, "uint64", m.Inputs[1].Type.String())
@@ -73,7 +72,7 @@ func TestIsTransaction(t *testing.T) {
 	p, _, _ := setupPrecompile(t)
 
 	for _, name := range []string{"getBeacon", "latestBeacon", "getMultiBlockBeacon"} {
-		m := p.ABI.Methods[name]
+		m := p.Methods[name]
 		require.False(t, p.IsTransaction(&m), "%s should not be a transaction", name)
 	}
 }
@@ -85,7 +84,7 @@ func TestGetBeacon_Found(t *testing.T) {
 	beaconHex := strings.Repeat("ab", 32)
 	k.SetBeacon(ctx, makeTestBeacon(42, beaconHex))
 
-	method := p.ABI.Methods["getBeacon"]
+	method := p.Methods["getBeacon"]
 	bz, err := p.GetBeacon(ctx, &method, []interface{}{uint64(42)})
 	require.NoError(t, err)
 
@@ -105,7 +104,7 @@ func TestGetBeacon_NotFound(t *testing.T) {
 	p, _, testCtx := setupPrecompile(t)
 	ctx := testCtx.Ctx
 
-	method := p.ABI.Methods["getBeacon"]
+	method := p.Methods["getBeacon"]
 	bz, err := p.GetBeacon(ctx, &method, []interface{}{uint64(999)})
 	require.NoError(t, err)
 
@@ -122,7 +121,7 @@ func TestGetBeacon_BigIntArg(t *testing.T) {
 	beaconHex := strings.Repeat("cd", 32)
 	k.SetBeacon(ctx, makeTestBeacon(42, beaconHex))
 
-	method := p.ABI.Methods["getBeacon"]
+	method := p.Methods["getBeacon"]
 	bz, err := p.GetBeacon(ctx, &method, []interface{}{big.NewInt(42)})
 	require.NoError(t, err)
 
@@ -135,7 +134,7 @@ func TestGetBeacon_BigIntArg(t *testing.T) {
 func TestGetBeacon_InvalidArgs(t *testing.T) {
 	p, _, testCtx := setupPrecompile(t)
 	ctx := testCtx.Ctx
-	method := p.ABI.Methods["getBeacon"]
+	method := p.Methods["getBeacon"]
 
 	// Wrong arg count
 	_, err := p.GetBeacon(ctx, &method, []interface{}{})
@@ -159,7 +158,7 @@ func TestLatestBeacon_Found(t *testing.T) {
 	k.SetBeacon(ctx, makeTestBeacon(100, beaconHex))
 	k.SetLatestHeight(ctx, 100)
 
-	method := p.ABI.Methods["latestBeacon"]
+	method := p.Methods["latestBeacon"]
 	bz, err := p.LatestBeacon(ctx, &method, []interface{}{})
 	require.NoError(t, err)
 
@@ -178,7 +177,7 @@ func TestLatestBeacon_NotFound(t *testing.T) {
 	p, _, testCtx := setupPrecompile(t)
 	ctx := testCtx.Ctx
 
-	method := p.ABI.Methods["latestBeacon"]
+	method := p.Methods["latestBeacon"]
 	bz, err := p.LatestBeacon(ctx, &method, []interface{}{})
 	require.NoError(t, err)
 
@@ -202,7 +201,7 @@ func TestGetMultiBlockBeacon_Success(t *testing.T) {
 	k.SetBeacon(ctx, makeTestBeacon(9, beacon9))
 	k.SetBeacon(ctx, makeTestBeacon(10, beacon10))
 
-	method := p.ABI.Methods["getMultiBlockBeacon"]
+	method := p.Methods["getMultiBlockBeacon"]
 	bz, err := p.GetMultiBlockBeacon(ctx, &method, []interface{}{uint64(10), uint64(3)})
 	require.NoError(t, err)
 
@@ -228,7 +227,7 @@ func TestGetMultiBlockBeacon_SingleBlock(t *testing.T) {
 	beacon10 := strings.Repeat("dd", 32)
 	k.SetBeacon(ctx, makeTestBeacon(10, beacon10))
 
-	method := p.ABI.Methods["getMultiBlockBeacon"]
+	method := p.Methods["getMultiBlockBeacon"]
 	bz, err := p.GetMultiBlockBeacon(ctx, &method, []interface{}{uint64(10), uint64(1)})
 	require.NoError(t, err)
 
@@ -253,7 +252,7 @@ func TestGetMultiBlockBeacon_MissingInRange(t *testing.T) {
 	k.SetBeacon(ctx, makeTestBeacon(8, strings.Repeat("aa", 32)))
 	k.SetBeacon(ctx, makeTestBeacon(10, strings.Repeat("cc", 32)))
 
-	method := p.ABI.Methods["getMultiBlockBeacon"]
+	method := p.Methods["getMultiBlockBeacon"]
 	bz, err := p.GetMultiBlockBeacon(ctx, &method, []interface{}{uint64(10), uint64(3)})
 	require.NoError(t, err)
 
@@ -266,7 +265,7 @@ func TestGetMultiBlockBeacon_MissingInRange(t *testing.T) {
 func TestGetMultiBlockBeacon_InvalidBlocks(t *testing.T) {
 	p, _, testCtx := setupPrecompile(t)
 	ctx := testCtx.Ctx
-	method := p.ABI.Methods["getMultiBlockBeacon"]
+	method := p.Methods["getMultiBlockBeacon"]
 
 	// blocks = 0
 	_, err := p.GetMultiBlockBeacon(ctx, &method, []interface{}{uint64(10), uint64(0)})
@@ -282,7 +281,7 @@ func TestGetMultiBlockBeacon_InvalidBlocks(t *testing.T) {
 func TestGetMultiBlockBeacon_EndHeightLessThanBlocks(t *testing.T) {
 	p, _, testCtx := setupPrecompile(t)
 	ctx := testCtx.Ctx
-	method := p.ABI.Methods["getMultiBlockBeacon"]
+	method := p.Methods["getMultiBlockBeacon"]
 
 	_, err := p.GetMultiBlockBeacon(ctx, &method, []interface{}{uint64(2), uint64(5)})
 	require.Error(t, err)
@@ -296,7 +295,7 @@ func TestGetMultiBlockBeacon_BigIntArgs(t *testing.T) {
 	beacon10 := strings.Repeat("ee", 32)
 	k.SetBeacon(ctx, makeTestBeacon(10, beacon10))
 
-	method := p.ABI.Methods["getMultiBlockBeacon"]
+	method := p.Methods["getMultiBlockBeacon"]
 	bz, err := p.GetMultiBlockBeacon(ctx, &method, []interface{}{big.NewInt(10), big.NewInt(1)})
 	require.NoError(t, err)
 
@@ -323,19 +322,19 @@ func TestRequiredGas(t *testing.T) {
 	require.Equal(t, uint64(0), p.RequiredGas([]byte{1, 2, 3}))
 
 	// Valid method ID for getBeacon
-	input, err := p.ABI.Pack("getBeacon", uint64(42))
+	input, err := p.Pack("getBeacon", uint64(42))
 	require.NoError(t, err)
 	gas := p.RequiredGas(input)
 	require.Greater(t, gas, uint64(0))
 
 	// Valid method ID for latestBeacon
-	input, err = p.ABI.Pack("latestBeacon")
+	input, err = p.Pack("latestBeacon")
 	require.NoError(t, err)
 	gas = p.RequiredGas(input)
 	require.Greater(t, gas, uint64(0))
 
 	// Valid method ID for getMultiBlockBeacon
-	input, err = p.ABI.Pack("getMultiBlockBeacon", uint64(10), uint64(3))
+	input, err = p.Pack("getMultiBlockBeacon", uint64(10), uint64(3))
 	require.NoError(t, err)
 	gas = p.RequiredGas(input)
 	require.Greater(t, gas, uint64(0))

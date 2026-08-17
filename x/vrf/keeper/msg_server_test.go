@@ -1,10 +1,9 @@
 package keeper_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-
 	"github.com/cosmos/evm/x/vrf/types"
+
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 func (s *KeeperTestSuite) TestUpdateParams_Success() {
@@ -16,7 +15,7 @@ func (s *KeeperTestSuite) TestUpdateParams_Success() {
 		Params:    newParams,
 	}
 
-	resp, err := s.keeper.UpdateParams(sdk.WrapSDKContext(s.ctx), msg)
+	resp, err := s.keeper.UpdateParams(s.ctx, msg)
 	s.Require().NoError(err)
 	s.Require().NotNil(resp)
 
@@ -31,7 +30,7 @@ func (s *KeeperTestSuite) TestUpdateParams_Unauthorized() {
 		Params:    types.DefaultParams(),
 	}
 
-	_, err := s.keeper.UpdateParams(sdk.WrapSDKContext(s.ctx), msg)
+	_, err := s.keeper.UpdateParams(s.ctx, msg)
 	s.Require().Error(err)
 	s.Require().Contains(err.Error(), "unauthorized")
 }
@@ -43,7 +42,7 @@ func (s *KeeperTestSuite) TestUpdateParams_InvalidParams() {
 		Params:    types.Params{Enabled: true, LookbackBlocks: 0},
 	}
 
-	_, err := s.keeper.UpdateParams(sdk.WrapSDKContext(s.ctx), msg)
+	_, err := s.keeper.UpdateParams(s.ctx, msg)
 	s.Require().Error(err)
 	s.Require().Contains(err.Error(), "lookback_blocks must be greater than 0")
 }

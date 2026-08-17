@@ -5,8 +5,9 @@ import (
 	"encoding/hex"
 	"strconv"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/evm/x/vrf/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // EndBlock computes and stores a new random beacon each block.
@@ -22,7 +23,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) error {
 		return nil
 	}
 
-	height := uint64(ctx.BlockHeight())
+	height := uint64(ctx.BlockHeight()) //nolint:gosec // G115
 
 	// Get previous beacon (empty string for genesis block)
 	prevBeacon := ""

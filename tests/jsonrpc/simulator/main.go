@@ -1,9 +1,10 @@
 package main
 
 import (
-	_ "embed"
 	"flag"
 	"log"
+
+	_ "embed"
 
 	"github.com/cosmos/evm/tests/jsonrpc/simulator/report"
 	"github.com/cosmos/evm/tests/jsonrpc/simulator/runner"

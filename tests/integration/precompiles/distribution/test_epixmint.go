@@ -7,9 +7,9 @@ import (
 	"github.com/holiman/uint256"
 	"github.com/stretchr/testify/suite"
 
+	evmaddress "github.com/cosmos/evm/encoding/address"
 	cmn "github.com/cosmos/evm/precompiles/common"
 	"github.com/cosmos/evm/precompiles/distribution"
-	evmaddress "github.com/cosmos/evm/encoding/address"
 	testconstants "github.com/cosmos/evm/testutil/constants"
 	"github.com/cosmos/evm/testutil/integration/evm/factory"
 	"github.com/cosmos/evm/testutil/integration/evm/grpc"
@@ -231,7 +231,7 @@ func (s *EpixMintDistributionTestSuite) TestWithdrawDelegatorRewardFromEpixMint(
 	s.Require().NoError(err)
 	var pending []cmn.DecCoin
 	s.Require().NoError(s.precompile.UnpackIntoInterface(&pending, distribution.DelegationRewardsMethod, delRewBz))
-	var pendingAepix = sdkmath.ZeroInt()
+	pendingAepix := sdkmath.ZeroInt()
 	for _, c := range pending {
 		if c.Denom == s.bondDenom {
 			pendingAepix = sdkmath.NewIntFromBigInt(c.Amount)
@@ -317,4 +317,3 @@ func (s *EpixMintDistributionTestSuite) totalValidatorOutstandingAepix(ctx sdk.C
 	}
 	return total
 }
-

@@ -211,8 +211,14 @@ message QueryAttestationsRequest {
 
 // QueryAttestationsResponse is the response type for the Query/QueryAttestations RPC method.
 message QueryAttestationsResponse {
-  repeated Attestation attestations = 1;
+  repeated Attestation attestations = 1 [(gogoproto.nullable) = false];
   bool finalized = 2;
+  // block_time is the unix-seconds time bound into the attestation sign-bytes.
+  int64 block_time = 3;
+  // total_voting_power is the total bonded voting power (finality denominator).
+  uint64 total_voting_power = 4;
+  // height is the block height the digest was computed at.
+  uint64 height = 5;
 }
 
 // QueryStateSnapshotRequest is the request type for the Query/QueryStateSnapshot RPC method.
@@ -222,16 +228,16 @@ message QueryStateSnapshotRequest {
 
 // DomainSnapshot contains the full state of a single domain.
 message DomainSnapshot {
-  NameRecord record = 1;
+  NameRecord record = 1 [(gogoproto.nullable) = false];
   Profile profile = 2;
-  repeated DNSRecord dns_records = 3;
-  repeated LinkedIdentity identities = 4;
+  repeated DNSRecord dns_records = 3 [(gogoproto.nullable) = false];
+  repeated LinkedIdentity identities = 4 [(gogoproto.nullable) = false];
   string content_root = 5;
 }
 
 // QueryStateSnapshotResponse is the response type for the Query/QueryStateSnapshot RPC method.
 message QueryStateSnapshotResponse {
-  repeated DomainSnapshot domains = 1;
+  repeated DomainSnapshot domains = 1 [(gogoproto.nullable) = false];
   string digest = 2;
   uint64 height = 3;
   cosmos.base.query.v1beta1.PageResponse pagination = 4;
@@ -253,10 +259,14 @@ message QueryResolveWithProofRequest {
 
 // QueryResolveWithProofResponse is the response type for the Query/ResolveWithProof RPC method.
 message QueryResolveWithProofResponse {
-  DomainSnapshot domain = 1;
-  MerkleProof proof = 2;
+  DomainSnapshot domain = 1 [(gogoproto.nullable) = false];
+  MerkleProof proof = 2 [(gogoproto.nullable) = false];
   string root = 3;
   uint64 height = 4;
+  // leaf_preimage is the exact canonical bytes hashed to `proof.leaf_hash`
+  // (Go json.Marshal(domainDigestEntry)), hex-encoded. Clients hash it to bind
+  // the returned data to the proven leaf, then parse the snapshot from it.
+  string leaf_preimage = 5;
 }
 
 // QueryReverseResolveByIdentityRequest is the request type for the Query/ReverseResolveByIdentity RPC method.
