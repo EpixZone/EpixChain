@@ -1,0 +1,79 @@
+name: "Changed files gate"
+description: >
+  Native (git + bash, no JS runtime) replacement for
+  technote-space/get-diff-action. Sets the GIT_DIFF environment variable to
+  "true" when any file matching `patterns` changed between the base and HEAD, so
+  downstream steps can keep guarding with `if: env.GIT_DIFF`. Fails safe: if the
+  base cannot be determined or the diff errors, GIT_DIFF is set (steps run).
+
+inputs:
+  patterns:
+    description: "Newline-separated globs (get-diff-action PATTERNS syntax)."
+    required: true
+  base:
+    description: >
+      Explicit base ref to diff against. If empty, resolved from the event
+      (pull_request.base.sha / merge_group.base_sha) else HEAD~1.
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Compute changed-files gate
+      shell: bash
+      env:
+        INPUT_PATTERNS: ${{ inputs.patterns }}
+        INPUT_BASE: ${{ inputs.base }}
+      run: |
+        set -euo pipefail
+
+        run_all() { echo "GIT_DIFF=true" >> "$GITHUB_ENV"; echo "gate: running (fail-safe: $1)"; exit 0; }
+
+        # --- resolve the base commit -------------------------------------------
+        BASE="${INPUT_BASE:-}"
+        if [ -z "$BASE" ]; then
+          case "${GITHUB_EVENT_NAME:-}" in
+            pull_request|pull_request_target)
+              BASE="$(jq -r '.pull_request.base.sha // empty' "$GITHUB_EVENT_PATH" 2>/dev/null || true)" ;;
+            merge_group)
+              BASE="$(jq -r '.merge_group.base_sha // empty' "$GITHUB_EVENT_PATH" 2>/dev/null || true)" ;;
+          esac
+        fi
+        [ -z "$BASE" ] && BASE="$(git rev-parse HEAD~1 2>/dev/null || true)"
+        [ -z "$BASE" ] && run_all "no base ref"
+
+        # --- make sure the base commit is present (shallow clones) -------------
+        if ! git cat-file -e "${BASE}^{commit}" 2>/dev/null; then
+          git fetch --no-tags --depth=1 origin "$BASE" 2>/dev/null \
+            || git fetch --no-tags --unshallow origin 2>/dev/null || true
+        fi
+        git cat-file -e "${BASE}^{commit}" 2>/dev/null || run_all "base $BASE unreachable"
+
+        # --- translate get-diff-action globs -> git :(glob) pathspecs ----------
+        # Rules (order matters): strip leading "./"; collapse "**/**" -> "**";
+        # rewrite "**." -> "**/*." (get-diff's "any file with extension"). A
+        # pattern with any "*" gets :(glob) magic; a bare path stays literal.
+        specs=()
+        while IFS= read -r pat; do
+          pat="$(printf '%s' "$pat" \
+            | sed -e 's#^[[:space:]]*##' -e 's#[[:space:]]*$##' \
+                  -e 's#^\./##' -e 's#\*\*/\*\*#**#g' -e 's#\*\*\.#**/*.#g')"
+          [ -z "$pat" ] && continue
+          case "$pat" in
+            *"*"*) specs+=(":(glob)${pat}") ;;    # any wildcard -> glob magic
+            *)     specs+=("${pat}") ;;            # literal path
+          esac
+        done <<< "$INPUT_PATTERNS"
+        [ "${#specs[@]}" -eq 0 ] && run_all "empty pattern set"
+
+        # --- diff (two-dot: tree compare, safe under shallow history) ----------
+        if ! changed="$(git diff --name-only "$BASE" HEAD -- "${specs[@]}" 2>/dev/null)"; then
+          run_all "git diff failed"
+        fi
+        if [ -n "$changed" ]; then
+          echo "GIT_DIFF=true" >> "$GITHUB_ENV"
+          echo "gate: running — matched files:"; echo "$changed" | sed 's/^/  /'
+        else
+          echo "gate: skipping — no files matched"
+        fi

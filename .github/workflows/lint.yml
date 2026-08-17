@@ -37,9 +37,9 @@ jobs:
             ${{ runner.os }}-go-
 
       # Determine diff so we don't lint when no Go files are changed
-      - uses: technote-space/get-diff-action@v6.1.2
+      - uses: ./.github/actions/changed-files
         with:
-          PATTERNS: |
+          patterns: |
             **/**.go
             go.mod
             go.sum
@@ -63,9 +63,9 @@ jobs:
         uses: actions/checkout@v5
 
       # Only run if markdown or configs changed
-      - uses: technote-space/get-diff-action@v6.1.2
+      - uses: ./.github/actions/changed-files
         with:
-          PATTERNS: |
+          patterns: |
             **/*.md
             .markdownlint.yml
             .markdownlintignore

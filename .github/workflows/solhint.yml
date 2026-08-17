@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest 
     steps:
       - uses: actions/checkout@v5
-      - uses: technote-space/get-diff-action@v6.1.2
+      - uses: ./.github/actions/changed-files
         id: git_diff
         with:
-          PATTERNS: |
+          patterns: |
             **/**.sol
       - uses: actions/setup-node@v5
         if: env.GIT_DIFF

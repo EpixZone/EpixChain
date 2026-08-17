@@ -34,10 +34,10 @@ jobs:
         id: diff_base
         if: github.event_name == 'push'
         run: echo "base=$(git rev-parse HEAD~1)" >> "$GITHUB_OUTPUT"
-      - uses: technote-space/get-diff-action@v6.1.2
+      - uses: ./.github/actions/changed-files
         with:
-          BASE: ${{ steps.diff_base.outputs.base }}
-          PATTERNS: |
+          base: ${{ steps.diff_base.outputs.base }}
+          patterns: |
             .github/workflows/test.yml
             **/**.sol
             **/**.go
@@ -80,10 +80,10 @@ jobs:
         id: diff_base
         if: github.event_name == 'push'
         run: echo "base=$(git rev-parse HEAD~1)" >> "$GITHUB_OUTPUT"
-      - uses: technote-space/get-diff-action@v6.1.2
+      - uses: ./.github/actions/changed-files
         with:
-          BASE: ${{ steps.diff_base.outputs.base }}
-          PATTERNS: |
+          base: ${{ steps.diff_base.outputs.base }}
+          patterns: |
             **/**.go
             go.mod
             go.sum
@@ -101,10 +101,10 @@ jobs:
         id: diff_base
         if: github.event_name == 'push'
         run: echo "base=$(git rev-parse HEAD~1)" >> "$GITHUB_OUTPUT"
-      - uses: technote-space/get-diff-action@v6.1.2
+      - uses: ./.github/actions/changed-files
         with:
-          BASE: ${{ steps.diff_base.outputs.base }}
-          PATTERNS: |
+          base: ${{ steps.diff_base.outputs.base }}
+          patterns: |
             .github/workflows/test.yml
             ./scripts/**
       - name: Setup Python

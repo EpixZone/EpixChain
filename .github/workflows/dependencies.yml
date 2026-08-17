@@ -23,9 +23,9 @@ jobs:
           # the dependency-review action diffs the latest commit against
           # its parent (default depth=1 truncates history to one commit).
           fetch-depth: 2
-      - uses: technote-space/get-diff-action@v6.1.2
+      - uses: ./.github/actions/changed-files
         with:
-          PATTERNS: |
+          patterns: |
             **/**.go
             go.mod
             go.sum

@@ -15,10 +15,10 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v5
-      - uses: technote-space/get-diff-action@v6.1.2
+      - uses: ./.github/actions/changed-files
         id: git_diff
         with:
-          PATTERNS: |
+          patterns: |
             **/**.proto
             **/buf.yaml
             buf.work.yaml

@@ -18,15 +18,13 @@ on:
       - release/**
 permissions: read-all
 
-jobs:
-  cleanup-runs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: rokroskar/workflow-run-cleanup-action@master
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-    if: ${{ !startsWith(github.ref, 'refs/tags/') && github.ref != 'refs/heads/main' }}
+# Cancel superseded in-progress runs on the same ref — native replacement for
+# the old cleanup-runs job. Never cancel on main or release tags.
+concurrency:
+  group: jsonrpc-compat-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
 
+jobs:
   jsonrpc-compatibility-test:
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -47,10 +45,10 @@ jobs:
         if: github.event_name == 'push'
         run: echo "base=$(git rev-parse HEAD~1)" >> "$GITHUB_OUTPUT"
 
-      - uses: technote-space/get-diff-action@v6.1.2
+      - uses: ./.github/actions/changed-files
         with:
-          BASE: ${{ steps.diff_base.outputs.base }}
-          PATTERNS: |
+          base: ${{ steps.diff_base.outputs.base }}
+          patterns: |
             .github/workflows/jsonrpc-compatibility.yml
             tests/jsonrpc/**
             rpc/**

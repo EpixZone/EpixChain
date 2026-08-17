@@ -15,9 +15,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
       - name: Get Diff
-        uses: technote-space/get-diff-action@v6.1.2
+        uses: ./.github/actions/changed-files
         with:
-          PATTERNS: |
+          patterns: |
             **/*.sol
       - name: Node dependencies Install
         run: |
