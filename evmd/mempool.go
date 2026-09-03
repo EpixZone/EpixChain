@@ -54,9 +54,7 @@ func (app *EVMD) configureEVMMempool(appOpts servertypes.AppOptions, logger log.
 	app.EVMMempool = mempool
 
 	// create ABCI handlers
-	prepareProposalHandler := baseapp.
-		NewDefaultProposalHandler(mempool, NewNoCheckProposalTxVerifier(app.BaseApp)).
-		PrepareProposalHandler()
+	proposalHandler := baseapp.NewDefaultProposalHandler(mempool, NewNoCheckProposalTxVerifier(app.BaseApp))
 
 	insertTxHandler := mempool.NewInsertTxHandler(app.TxDecode)
 	reapTxsHandler := mempool.NewReapTxsHandler()
@@ -64,8 +62,11 @@ func (app *EVMD) configureEVMMempool(appOpts servertypes.AppOptions, logger log.
 
 	// set handlers and the mempool. Capture the EVM PrepareProposal so the xID
 	// vote-extension wrapper (registerAttestationHandlers) can delegate to it.
-	app.evmPrepareProposal = prepareProposalHandler
-	app.SetPrepareProposal(prepareProposalHandler)
+	// ProcessProposal is intentionally not set here, unlike upstream: the xID
+	// wrapper injects ExtendedCommitInfo as tx[0], which is not an sdk.Tx, so a
+	// tx-verifying ProcessProposal would reject vote-extension proposals.
+	app.evmPrepareProposal = proposalHandler.PrepareProposalHandler()
+	app.SetPrepareProposal(app.evmPrepareProposal)
 	app.SetInsertTxHandler(insertTxHandler)
 	app.SetReapTxsHandler(reapTxsHandler)
 	app.SetCheckTxHandler(checkTxHandler)

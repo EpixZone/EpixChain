@@ -138,6 +138,7 @@ func (s *stateObject) AddBalance(amount *uint256.Int) uint256.Int {
 	if amount.IsZero() {
 		return *(s.Balance())
 	}
+
 	newBalance, overflowed := new(uint256.Int).AddOverflow(s.Balance(), amount)
 	if overflowed {
 		panic(fmt.Sprintf(

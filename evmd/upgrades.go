@@ -45,7 +45,7 @@ const UpgradeName_v0_7_2 = "v0.7.2"
 const UpgradeName = UpgradeName_v0_7_2
 
 // RegisterUpgradeHandlers registers upgrade handlers for v0.5.1 and v0.5.2
-func (app EVMD) RegisterUpgradeHandlers() {
+func (app *EVMD) RegisterUpgradeHandlers() {
 	// Register v0.5.1 upgrade handler (the one that's currently stuck)
 	app.UpgradeKeeper.SetUpgradeHandler(
 		UpgradeName_v0_5_1,
@@ -333,7 +333,7 @@ func (app EVMD) RegisterUpgradeHandlers() {
 // - Sets denom metadata for aepix/epix
 // - Updates EVM params and coin info
 // - Initializes missing IBC channel sequence counters
-func (app EVMD) applyRecoveryFix(ctx context.Context) error {
+func (app *EVMD) applyRecoveryFix(ctx context.Context) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	// Set denom metadata for EpixChain's native token (aepix/epix)
