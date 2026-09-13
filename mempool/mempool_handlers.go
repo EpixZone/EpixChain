@@ -80,6 +80,14 @@ func (m *Mempool) NewCheckTxHandler(txDecoder sdk.TxDecoder, timeout time.Durati
 			return nil, fmt.Errorf("decoding tx: %w", err)
 		}
 
+		// The decoder runs synchronously outside the timeout context. If decoding
+		// alone exhausted the deadline, reject deterministically here instead of
+		// relying on Insert to observe the expired context on one of its blocking
+		// paths, which it only does conditionally.
+		if err := ctx.Err(); err != nil {
+			return ErrAsCheckTxResponse(err), nil
+		}
+
 		err = m.Insert(ctx, tx)
 
 		return ErrAsCheckTxResponse(err), nil
