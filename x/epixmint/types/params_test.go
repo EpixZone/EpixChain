@@ -85,6 +85,33 @@ func TestParamsValidate(t *testing.T) {
 			expError: true,
 		},
 		{
+			name: "block time seconds exceeds one year",
+			params: types.Params{
+				MintDenom:               "aepix",
+				InitialAnnualMintAmount: math.NewInt(1000),
+				AnnualReductionRate:     math.LegacyMustNewDecFromStr("0.25"),
+				BlockTimeSeconds:        types.SecondsPerYear + 1,
+				MaxSupply:               math.NewInt(10000),
+				CommunityPoolRate:       math.LegacyMustNewDecFromStr("0.02"),
+				StakingRewardsRate:      math.LegacyMustNewDecFromStr("0.98"),
+			},
+			expError: true,
+		},
+		{
+			name: "block time seconds equal to one year is the upper bound",
+			params: types.Params{
+				MintDenom:                  "aepix",
+				InitialAnnualMintAmount:    math.NewInt(1000),
+				AnnualReductionRate:        math.LegacyMustNewDecFromStr("0.25"),
+				BlockTimeSeconds:           types.SecondsPerYear,
+				MaxSupply:                  math.NewInt(10000),
+				CommunityPoolRate:          math.LegacyMustNewDecFromStr("0.02"),
+				StakingRewardsRate:         math.LegacyMustNewDecFromStr("0.98"),
+				MinValidatorSelfDelegation: math.NewInt(1000000),
+			},
+			expError: false,
+		},
+		{
 			name: "valid custom params",
 			params: types.Params{
 				MintDenom:                  "uepix",

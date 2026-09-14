@@ -120,14 +120,38 @@ func (k Keeper) distributeMintedTokens(ctx context.Context, mintedCoins sdk.Coin
 	if stakingRewardsAmount.IsPositive() {
 		stakingRewardsCoins := sdk.NewCoins(sdk.NewCoin(params.MintDenom, stakingRewardsAmount))
 
+		bondedValidators, totalVotingPower, err := k.getBondedValidators(ctx)
+		if err != nil {
+			return err
+		}
+
+		// If there are no bonded validators, route the staking share to the
+		// community pool. This must happen before the transfer to the
+		// distribution module below, since the epixmint module account is the
+		// one still holding the coins at this point.
+		if len(bondedValidators) == 0 || totalVotingPower.IsZero() {
+			epixmintModuleAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
+			if err := k.distributionKeeper.FundCommunityPool(ctx, stakingRewardsCoins, epixmintModuleAddr); err != nil {
+				return err
+			}
+
+			sdkCtx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					types.EventTypeMint,
+					sdk.NewAttribute("staking_rewards_to_community_pool", stakingRewardsAmount.String()),
+				),
+			)
+			return nil
+		}
+
 		// Send to distribution module for validator rewards
-		err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, "distribution", stakingRewardsCoins)
+		err = k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, "distribution", stakingRewardsCoins)
 		if err != nil {
 			return err
 		}
 
 		// Allocate tokens to all bonded validators
-		err = k.allocateTokensToValidators(ctx, sdk.NewDecCoinsFromCoins(stakingRewardsCoins...))
+		err = k.allocateTokensToValidators(ctx, bondedValidators, totalVotingPower, sdk.NewDecCoinsFromCoins(stakingRewardsCoins...))
 		if err != nil {
 			return err
 		}
@@ -144,16 +168,14 @@ func (k Keeper) distributeMintedTokens(ctx context.Context, mintedCoins sdk.Coin
 	return nil
 }
 
-// allocateTokensToValidators allocates tokens to all bonded validators proportionally
-func (k Keeper) allocateTokensToValidators(ctx context.Context, tokens sdk.DecCoins) error {
-	// Get all validators
+// getBondedValidators returns the bonded validators and their total voting power.
+func (k Keeper) getBondedValidators(ctx context.Context) ([]stakingtypes.Validator, math.Int, error) {
 	validators, err := k.stakingKeeper.GetAllValidators(ctx)
 	if err != nil {
-		return err
+		return nil, math.ZeroInt(), err
 	}
 
-	// Filter for bonded validators and calculate total voting power
-	bondedValidators := make([]stakingtypes.Validator, 0)
+	bondedValidators := make([]stakingtypes.Validator, 0, len(validators))
 	totalVotingPower := math.ZeroInt()
 
 	for _, validator := range validators {
@@ -163,22 +185,19 @@ func (k Keeper) allocateTokensToValidators(ctx context.Context, tokens sdk.DecCo
 		}
 	}
 
-	// If no bonded validators, send all to community pool
-	if len(bondedValidators) == 0 || totalVotingPower.IsZero() {
-		epixmintModuleAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
-		// Convert DecCoins to Coins for community pool funding
-		coinsToFund := make(sdk.Coins, len(tokens))
-		for i, token := range tokens {
-			coinsToFund[i] = sdk.NewCoin(token.Denom, token.Amount.TruncateInt())
-		}
-		return k.distributionKeeper.FundCommunityPool(ctx, coinsToFund, epixmintModuleAddr)
-	}
+	return bondedValidators, totalVotingPower, nil
+}
 
-	// Allocate tokens to each validator proportionally
+// allocateTokensToValidators allocates tokens to the given bonded validators
+// proportionally to their voting power. The caller must ensure the tokens have
+// already been transferred to the distribution module and that
+// totalVotingPower is non-zero.
+func (k Keeper) allocateTokensToValidators(ctx context.Context, bondedValidators []stakingtypes.Validator, totalVotingPower math.Int, tokens sdk.DecCoins) error {
+	totalPower := math.LegacyNewDecFromInt(totalVotingPower)
+
 	for _, validator := range bondedValidators {
 		// Calculate validator's share based on voting power
 		validatorPower := math.LegacyNewDecFromInt(validator.GetTokens())
-		totalPower := math.LegacyNewDecFromInt(totalVotingPower)
 		validatorShare := validatorPower.Quo(totalPower)
 
 		// Calculate validator's allocation
