@@ -8,6 +8,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// SecondsPerYear is the number of seconds in a (non-leap) year. It is used to
+// derive blocks per year from BlockTimeSeconds, so BlockTimeSeconds must never
+// exceed it or the derived blocks-per-year would be zero.
+const SecondsPerYear uint64 = 365 * 24 * 60 * 60 // 31,536,000
+
 // DefaultParams returns default parameters
 func DefaultParams() Params {
 	// 10.527B EPIX in aepix (18 decimals): 10.527 * 10^9 * 10^18 = 10.527 * 10^27
@@ -132,6 +137,10 @@ func validateBlockTimeSeconds(i interface{}) error {
 
 	if v == 0 {
 		return fmt.Errorf("block time seconds cannot be zero")
+	}
+
+	if v > SecondsPerYear {
+		return fmt.Errorf("block time seconds cannot exceed %d (one year): %d", SecondsPerYear, v)
 	}
 
 	return nil

@@ -39,3 +39,6 @@ tests/systemtests/testnet
 .testnets
 
 .claude/
+
+# Local security-review artifacts (probe dumps, traces, reports); never committed
+artifacts/

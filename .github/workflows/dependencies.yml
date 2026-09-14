@@ -50,7 +50,16 @@ jobs:
           base-ref: ${{ steps.refs.outputs.base }}
           head-ref: ${{ steps.refs.outputs.head }}
       - name: "Get govulncheck"
-        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+        # Pinned: golang.org/x/vuln v1.8.0 and later require Go 1.26, which
+        # this job does not run yet. Bump the pin together with go-version.
+        run: go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
       - name: Run govulncheck
-        run: govulncheck -show verbose ./...
         shell: bash
+        # govulncheck exits 3 when it finds reachable vulnerabilities; the gate
+        # script decides what fails the job. It only fails on reachable
+        # vulnerabilities that have a fixed version available, and reports
+        # the ones with no fix yet (openpgp, pion/dtls v2, cosmos-sdk) so they
+        # stay visible without making the job permanently red.
+        run: |
+          govulncheck -format json ./... > govulncheck.json || [ $? -eq 3 ]
+          python3 .github/scripts/govulncheck-gate.py govulncheck.json

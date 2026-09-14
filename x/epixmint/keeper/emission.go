@@ -16,10 +16,11 @@ import (
 // This ensures the chain eventually reaches the 42B max supply cap.
 const MaxDecayYears = 20
 
-// calculateBlocksPerYear calculates the number of blocks per year based on block time
+// calculateBlocksPerYear calculates the number of blocks per year based on block time.
+// Params validation guarantees 0 < blockTimeSeconds <= types.SecondsPerYear, so the
+// result is always at least 1.
 func calculateBlocksPerYear(blockTimeSeconds uint64) uint64 {
-	secondsPerYear := uint64(365 * 24 * 60 * 60) // 31,536,000 seconds
-	return secondsPerYear / blockTimeSeconds
+	return types.SecondsPerYear / blockTimeSeconds
 }
 
 // calculateDecayFactorAndBlocksPerYear is a helper that computes the decay factor
