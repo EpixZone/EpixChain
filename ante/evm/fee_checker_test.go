@@ -307,12 +307,12 @@ func TestDynamicFeeCheckerNearMaxTip(t *testing.T) {
 	acceptParams.BaseFee = math.LegacyNewDec(1)
 	fees, _, err := evm.NewDynamicFeeChecker(&acceptParams)(ctx, buildTx())
 	require.NoError(t, err)
-	require.Equal(t, "10aatom", fees.String())
+	require.Equal(t, "10"+testconstants.ExampleAttoDenom, fees.String())
 
 	// raised base fee
 	recheckParams := feemarkettypes.Params{}
 	recheckParams.BaseFee = math.LegacyNewDec(2)
 	fees, _, err = evm.NewDynamicFeeChecker(&recheckParams)(ctx, buildTx())
 	require.NoError(t, err)
-	require.Equal(t, "10aatom", fees.String())
+	require.Equal(t, "10"+testconstants.ExampleAttoDenom, fees.String())
 }
