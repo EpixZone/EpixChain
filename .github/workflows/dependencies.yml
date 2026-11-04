@@ -50,9 +50,9 @@ jobs:
           base-ref: ${{ steps.refs.outputs.base }}
           head-ref: ${{ steps.refs.outputs.head }}
       - name: "Get govulncheck"
-        # Pinned: golang.org/x/vuln v1.8.0 and later require Go 1.26, which
-        # this job does not run yet. Bump the pin together with go-version.
-        run: go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
+        # Pinned so results are reproducible. v1.8.0 and later require Go 1.26,
+        # which this job now runs. Bump the pin together with go-version.
+        run: go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
       - name: Run govulncheck
         shell: bash
         # govulncheck exits 3 when it finds reachable vulnerabilities; the gate
