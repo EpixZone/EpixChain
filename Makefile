@@ -128,9 +128,19 @@ go.sum: go.mod
 	go mod verify
 	go mod tidy
 
+GO_MODULES := . $(EVMD_DIR) tests/speedtest tests/systemtests tests/jsonrpc/simulator
+
+tidy-all:
+	@for mod in $(GO_MODULES); do \
+		echo "Tidying $$mod ..."; \
+		(cd $$mod && go mod tidy) || exit 1; \
+	done
+
 vulncheck:
 	@go install golang.org/x/vuln/cmd/govulncheck@latest
 	@govulncheck ./...
+
+.PHONY: tidy-all vulncheck
 
 ###############################################################################
 ###                           Tests & Simulation                            ###
@@ -298,7 +308,7 @@ proto-check-breaking:
 ###############################################################################
 
 PACKAGE_NAME:=github.com/cosmos/evm
-GOLANG_CROSS_VERSION  = v1.22
+GOLANG_CROSS_VERSION  = v1.26.10
 GOPATH ?= '$(HOME)/go'
 release-dry-run:
 	docker run \
@@ -392,12 +402,20 @@ test-system: build-v06 build
 # built from the upstream cosmos/evm v0.6.x codebase (it still registers the
 # precisebank store), so v0.5.5 is the correct binary to upgrade FROM into the
 # v0.7 line. See UpgradeName_v0_7_0 in evmd/upgrades.go.
+#
+# v0.5.5 pins bytedance/sonic v1.14.2, which does not compile with Go >= 1.26,
+# so bump it before building and restore the tagged go.mod/go.sum afterwards.
+V06_SONIC_VERSION := v1.15.1
+
 build-v06:
 	mkdir -p ./tests/systemtests/binaries/v0.6
 	git checkout v0.5.5
-	make build
-	cp $(BUILDDIR)/epixd ./tests/systemtests/binaries/v0.6
-	git checkout -
+	(cd $(EVMD_DIR) && go get github.com/bytedance/sonic@$(V06_SONIC_VERSION)) && make build \
+		&& cp $(BUILDDIR)/epixd ./tests/systemtests/binaries/v0.6; \
+	status=$$?; \
+	git checkout -- $(EVMD_DIR)/go.mod $(EVMD_DIR)/go.sum; \
+	git checkout -; \
+	exit $$status
 
 mocks:
 	@echo "--> generating mocks"
