@@ -1,0 +1,18 @@
+{
+  "messages": [
+    {
+      "@type": "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
+      "authority": "epix10d07y265gmmuvt4z0w9aw880jnsr700j0fas3g",
+      "plan": {
+        "name": "v0.7.5",
+        "height": "6599000",
+        "info": "Binary and checksums are distributed to validators directly. Source and release notes are published on 2026-12-01."
+      }
+    }
+  ],
+  "metadata": "EpixChain v0.7.5 Upgrade Proposal",
+  "deposit": "5000000000000000000000aepix",
+  "title": "EpixChain v0.7.5 Upgrade: Osaka EVM Rules and Maintenance",
+  "summary": "What changes:\n- Activates the Osaka EVM rules, bringing EpixChain in line with current Ethereum execution behaviour. This includes a per-transaction gas limit of 16,777,216. Transactions that request more gas than that are rejected after the upgrade.\n- Includes upstream Cosmos EVM maintenance and hardening.",
+  "expedited": true
+}
