@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"strings"
-
 	"github.com/cosmos/evm/x/xid/types"
 
 	errorsmod "cosmossdk.io/errors"
@@ -39,8 +37,8 @@ func (k Keeper) CalculateRegistrationFee(ctx sdk.Context, tld, name string) (sdk
 // RegisterNameRecord registers a new name under a TLD, charges the fee, and burns it
 func (k Keeper) RegisterNameRecord(ctx sdk.Context, ownerAddr sdk.AccAddress, tld, name string) error {
 	// Normalize
-	name = strings.ToLower(name)
-	tld = strings.ToLower(tld)
+	name = types.NormalizeName(name)
+	tld = types.NormalizeTLD(tld)
 
 	// Validate name
 	if err := types.ValidateName(name); err != nil {
@@ -135,8 +133,8 @@ func (k Keeper) RegisterNameRecord(ctx sdk.Context, ownerAddr sdk.AccAddress, tl
 // TransferNameRecord transfers ownership of a name to a new address
 func (k Keeper) TransferNameRecord(ctx sdk.Context, currentOwner, newOwner sdk.AccAddress, tld, name string) error {
 	// Normalize
-	name = strings.ToLower(name)
-	tld = strings.ToLower(tld)
+	name = types.NormalizeName(name)
+	tld = types.NormalizeTLD(tld)
 
 	// Get the name record
 	record, found := k.GetNameRecord(ctx, tld, name)
