@@ -17,17 +17,18 @@ var _ types.MsgServer = &Keeper{}
 // RegisterName handles MsgRegisterName
 func (k Keeper) RegisterName(goCtx context.Context, msg *types.MsgRegisterName) (*types.MsgRegisterNameResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	name, tld := types.NormalizeName(msg.Name), types.NormalizeTLD(msg.Tld)
 
 	ownerAddr, err := sdk.AccAddressFromBech32(msg.Owner)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := k.RegisterNameRecord(ctx, ownerAddr, msg.Tld, msg.Name); err != nil {
+	if err := k.RegisterNameRecord(ctx, ownerAddr, tld, name); err != nil {
 		return nil, err
 	}
 
-	k.UpdateDomainInTree(ctx, msg.Tld, msg.Name)
+	k.UpdateDomainInTree(ctx, tld, name)
 
 	return &types.MsgRegisterNameResponse{}, nil
 }
@@ -35,6 +36,7 @@ func (k Keeper) RegisterName(goCtx context.Context, msg *types.MsgRegisterName) 
 // TransferName handles MsgTransferName
 func (k Keeper) TransferName(goCtx context.Context, msg *types.MsgTransferName) (*types.MsgTransferNameResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	name, tld := types.NormalizeName(msg.Name), types.NormalizeTLD(msg.Tld)
 
 	currentOwner, err := sdk.AccAddressFromBech32(msg.Owner)
 	if err != nil {
@@ -46,11 +48,11 @@ func (k Keeper) TransferName(goCtx context.Context, msg *types.MsgTransferName) 
 		return nil, err
 	}
 
-	if err := k.TransferNameRecord(ctx, currentOwner, newOwner, msg.Tld, msg.Name); err != nil {
+	if err := k.TransferNameRecord(ctx, currentOwner, newOwner, tld, name); err != nil {
 		return nil, err
 	}
 
-	k.UpdateDomainInTree(ctx, msg.Tld, msg.Name)
+	k.UpdateDomainInTree(ctx, tld, name)
 
 	return &types.MsgTransferNameResponse{}, nil
 }
@@ -58,24 +60,25 @@ func (k Keeper) TransferName(goCtx context.Context, msg *types.MsgTransferName) 
 // UpdateProfile handles MsgUpdateProfile
 func (k Keeper) UpdateProfile(goCtx context.Context, msg *types.MsgUpdateProfile) (*types.MsgUpdateProfileResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	name, tld := types.NormalizeName(msg.Name), types.NormalizeTLD(msg.Tld)
 
 	// Verify name exists and caller is owner
-	record, found := k.GetNameRecord(ctx, msg.Tld, msg.Name)
+	record, found := k.GetNameRecord(ctx, tld, name)
 	if !found {
-		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", msg.Name, msg.Tld)
+		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", name, tld)
 	}
 	if record.Owner != msg.Owner {
 		return nil, errorsmod.Wrapf(types.ErrNotOwner, "sender %s is not the owner", msg.Owner)
 	}
 
-	k.SetProfileRecord(ctx, msg.Tld, msg.Name, msg.Profile)
-	k.UpdateDomainInTree(ctx, msg.Tld, msg.Name)
+	k.SetProfileRecord(ctx, tld, name, msg.Profile)
+	k.UpdateDomainInTree(ctx, tld, name)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			"xid_profile_updated",
-			sdk.NewAttribute("name", msg.Name),
-			sdk.NewAttribute("tld", msg.Tld),
+			sdk.NewAttribute("name", name),
+			sdk.NewAttribute("tld", tld),
 			sdk.NewAttribute("owner", msg.Owner),
 		),
 	})
@@ -86,23 +89,24 @@ func (k Keeper) UpdateProfile(goCtx context.Context, msg *types.MsgUpdateProfile
 // SetDNSRecord handles MsgSetDNSRecord
 func (k Keeper) SetDNSRecord(goCtx context.Context, msg *types.MsgSetDNSRecord) (*types.MsgSetDNSRecordResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	name, tld := types.NormalizeName(msg.Name), types.NormalizeTLD(msg.Tld)
 
 	// Verify name exists and caller is owner
-	record, found := k.GetNameRecord(ctx, msg.Tld, msg.Name)
+	record, found := k.GetNameRecord(ctx, tld, name)
 	if !found {
-		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", msg.Name, msg.Tld)
+		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", name, tld)
 	}
 	if record.Owner != msg.Owner {
 		return nil, errorsmod.Wrapf(types.ErrNotOwner, "sender %s is not the owner", msg.Owner)
 	}
 
-	k.SetDNSRecordEntry(ctx, msg.Tld, msg.Name, msg.Record)
-	k.UpdateDomainInTree(ctx, msg.Tld, msg.Name)
+	k.SetDNSRecordEntry(ctx, tld, name, msg.Record)
+	k.UpdateDomainInTree(ctx, tld, name)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			"xid_dns_record_set",
-			sdk.NewAttribute("name", msg.Name+"."+msg.Tld),
+			sdk.NewAttribute("name", name+"."+tld),
 			sdk.NewAttribute("value", msg.Record.Value),
 		),
 	})
@@ -113,28 +117,29 @@ func (k Keeper) SetDNSRecord(goCtx context.Context, msg *types.MsgSetDNSRecord) 
 // DeleteDNSRecord handles MsgDeleteDNSRecord
 func (k Keeper) DeleteDNSRecord(goCtx context.Context, msg *types.MsgDeleteDNSRecord) (*types.MsgDeleteDNSRecordResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	name, tld := types.NormalizeName(msg.Name), types.NormalizeTLD(msg.Tld)
 
 	// Verify name exists and caller is owner
-	record, found := k.GetNameRecord(ctx, msg.Tld, msg.Name)
+	record, found := k.GetNameRecord(ctx, tld, name)
 	if !found {
-		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", msg.Name, msg.Tld)
+		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", name, tld)
 	}
 	if record.Owner != msg.Owner {
 		return nil, errorsmod.Wrapf(types.ErrNotOwner, "sender %s is not the owner", msg.Owner)
 	}
 
 	// Verify the DNS record exists
-	if _, found := k.GetDNSRecordEntry(ctx, msg.Tld, msg.Name, msg.RecordType); !found {
-		return nil, errorsmod.Wrapf(types.ErrDNSRecordNotFound, "record type %d not found for %s.%s", msg.RecordType, msg.Name, msg.Tld)
+	if _, found := k.GetDNSRecordEntry(ctx, tld, name, msg.RecordType); !found {
+		return nil, errorsmod.Wrapf(types.ErrDNSRecordNotFound, "record type %d not found for %s.%s", msg.RecordType, name, tld)
 	}
 
-	k.DeleteDNSRecordEntry(ctx, msg.Tld, msg.Name, msg.RecordType)
-	k.UpdateDomainInTree(ctx, msg.Tld, msg.Name)
+	k.DeleteDNSRecordEntry(ctx, tld, name, msg.RecordType)
+	k.UpdateDomainInTree(ctx, tld, name)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			"xid_dns_record_deleted",
-			sdk.NewAttribute("name", msg.Name+"."+msg.Tld),
+			sdk.NewAttribute("name", name+"."+tld),
 		),
 	})
 
@@ -148,18 +153,20 @@ func (k Keeper) CreateTLD(goCtx context.Context, msg *types.MsgCreateTLD) (*type
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	tldConfig := msg.TldConfig
+	tldConfig.Tld = types.NormalizeTLD(tldConfig.Tld)
 
 	// Check TLD doesn't already exist
-	if k.HasTLDConfig(ctx, msg.TldConfig.Tld) {
-		return nil, errorsmod.Wrapf(types.ErrTLDAlreadyExists, "TLD %q already exists", msg.TldConfig.Tld)
+	if k.HasTLDConfig(ctx, tldConfig.Tld) {
+		return nil, errorsmod.Wrapf(types.ErrTLDAlreadyExists, "TLD %q already exists", tldConfig.Tld)
 	}
 
-	k.SetTLDConfig(ctx, msg.TldConfig)
+	k.SetTLDConfig(ctx, tldConfig)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			"xid_tld_created",
-			sdk.NewAttribute("tld", msg.TldConfig.Tld),
+			sdk.NewAttribute("tld", tldConfig.Tld),
 		),
 	})
 
@@ -173,18 +180,20 @@ func (k Keeper) UpdateTLDConfig(goCtx context.Context, msg *types.MsgUpdateTLDCo
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	tldConfig := msg.TldConfig
+	tldConfig.Tld = types.NormalizeTLD(tldConfig.Tld)
 
 	// Check TLD exists
-	if !k.HasTLDConfig(ctx, msg.TldConfig.Tld) {
-		return nil, errorsmod.Wrapf(types.ErrTLDNotFound, "TLD %q not found", msg.TldConfig.Tld)
+	if !k.HasTLDConfig(ctx, tldConfig.Tld) {
+		return nil, errorsmod.Wrapf(types.ErrTLDNotFound, "TLD %q not found", tldConfig.Tld)
 	}
 
-	k.SetTLDConfig(ctx, msg.TldConfig)
+	k.SetTLDConfig(ctx, tldConfig)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			"xid_tld_updated",
-			sdk.NewAttribute("tld", msg.TldConfig.Tld),
+			sdk.NewAttribute("tld", tldConfig.Tld),
 		),
 	})
 
@@ -209,33 +218,34 @@ func (k Keeper) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) 
 // LinkIdentity handles MsgLinkIdentity
 func (k Keeper) LinkIdentity(goCtx context.Context, msg *types.MsgLinkIdentity) (*types.MsgLinkIdentityResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	name, tld := types.NormalizeName(msg.Name), types.NormalizeTLD(msg.Tld)
 
 	// Verify name exists and caller is owner
-	record, found := k.GetNameRecord(ctx, msg.Tld, msg.Name)
+	record, found := k.GetNameRecord(ctx, tld, name)
 	if !found {
-		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", msg.Name, msg.Tld)
+		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", name, tld)
 	}
 	if record.Owner != msg.Owner {
 		return nil, errorsmod.Wrapf(types.ErrNotOwner, "sender %s is not the owner", msg.Owner)
 	}
 
-	if err := k.SetLinkedIdentityEntry(ctx, msg.Tld, msg.Name, msg.Identity); err != nil {
+	if err := k.SetLinkedIdentityEntry(ctx, tld, name, msg.Identity); err != nil {
 		return nil, err
 	}
 
-	newRoot := k.RecomputeAndStoreContentRoot(ctx, msg.Tld, msg.Name)
-	k.UpdateDomainInTree(ctx, msg.Tld, msg.Name)
+	newRoot := k.RecomputeAndStoreContentRoot(ctx, tld, name)
+	k.UpdateDomainInTree(ctx, tld, name)
 
 	events := sdk.Events{
 		sdk.NewEvent(
 			"xid_identity_linked",
-			sdk.NewAttribute("name", msg.Name+"."+msg.Tld),
+			sdk.NewAttribute("name", name+"."+tld),
 			sdk.NewAttribute("address", msg.Identity.Address),
 			sdk.NewAttribute("label", msg.Identity.Label),
 		),
 		sdk.NewEvent(
 			"xid_content_root_updated",
-			sdk.NewAttribute("name", msg.Name+"."+msg.Tld),
+			sdk.NewAttribute("name", name+"."+tld),
 			sdk.NewAttribute("root", newRoot),
 		),
 	}
@@ -252,41 +262,42 @@ func (k Keeper) UpdateContentRoot(_ context.Context, _ *types.MsgUpdateContentRo
 // UnlinkIdentity handles MsgUnlinkIdentity
 func (k Keeper) UnlinkIdentity(goCtx context.Context, msg *types.MsgUnlinkIdentity) (*types.MsgUnlinkIdentityResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	name, tld := types.NormalizeName(msg.Name), types.NormalizeTLD(msg.Tld)
 
 	// Verify name exists and caller is owner
-	record, found := k.GetNameRecord(ctx, msg.Tld, msg.Name)
+	record, found := k.GetNameRecord(ctx, tld, name)
 	if !found {
-		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", msg.Name, msg.Tld)
+		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", name, tld)
 	}
 	if record.Owner != msg.Owner {
 		return nil, errorsmod.Wrapf(types.ErrNotOwner, "sender %s is not the owner", msg.Owner)
 	}
 
 	// Verify the linked identity exists and is currently active
-	identity, found := k.GetLinkedIdentityEntry(ctx, msg.Tld, msg.Name, msg.Address)
+	identity, found := k.GetLinkedIdentityEntry(ctx, tld, name, msg.Address)
 	if !found {
-		return nil, errorsmod.Wrapf(types.ErrIdentityNotFound, "identity %s not found for %s.%s", msg.Address, msg.Name, msg.Tld)
+		return nil, errorsmod.Wrapf(types.ErrIdentityNotFound, "identity %s not found for %s.%s", msg.Address, name, tld)
 	}
 	if !identity.Active {
-		return nil, errorsmod.Wrapf(types.ErrIdentityNotFound, "identity %s is already unlinked for %s.%s", msg.Address, msg.Name, msg.Tld)
+		return nil, errorsmod.Wrapf(types.ErrIdentityNotFound, "identity %s is already unlinked for %s.%s", msg.Address, name, tld)
 	}
 
-	if err := k.RevokeLinkedIdentityEntry(ctx, msg.Tld, msg.Name, msg.Address); err != nil {
+	if err := k.RevokeLinkedIdentityEntry(ctx, tld, name, msg.Address); err != nil {
 		return nil, err
 	}
 
-	newRoot := k.RecomputeAndStoreContentRoot(ctx, msg.Tld, msg.Name)
-	k.UpdateDomainInTree(ctx, msg.Tld, msg.Name)
+	newRoot := k.RecomputeAndStoreContentRoot(ctx, tld, name)
+	k.UpdateDomainInTree(ctx, tld, name)
 
 	events := sdk.Events{
 		sdk.NewEvent(
 			"xid_identity_unlinked",
-			sdk.NewAttribute("name", msg.Name+"."+msg.Tld),
+			sdk.NewAttribute("name", name+"."+tld),
 			sdk.NewAttribute("address", msg.Address),
 		),
 		sdk.NewEvent(
 			"xid_content_root_updated",
-			sdk.NewAttribute("name", msg.Name+"."+msg.Tld),
+			sdk.NewAttribute("name", name+"."+tld),
 			sdk.NewAttribute("root", newRoot),
 		),
 	}
@@ -298,6 +309,7 @@ func (k Keeper) UnlinkIdentity(goCtx context.Context, msg *types.MsgUnlinkIdenti
 // SetPrimaryName handles MsgSetPrimaryName
 func (k Keeper) SetPrimaryName(goCtx context.Context, msg *types.MsgSetPrimaryName) (*types.MsgSetPrimaryNameResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	name, tld := types.NormalizeName(msg.Name), types.NormalizeTLD(msg.Tld)
 
 	ownerAddr, err := sdk.AccAddressFromBech32(msg.Owner)
 	if err != nil {
@@ -305,21 +317,21 @@ func (k Keeper) SetPrimaryName(goCtx context.Context, msg *types.MsgSetPrimaryNa
 	}
 
 	// Verify name exists and caller is owner
-	record, found := k.GetNameRecord(ctx, msg.Tld, msg.Name)
+	record, found := k.GetNameRecord(ctx, tld, name)
 	if !found {
-		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", msg.Name, msg.Tld)
+		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", name, tld)
 	}
 	if record.Owner != msg.Owner {
 		return nil, errorsmod.Wrapf(types.ErrNotOwner, "sender %s is not the owner", msg.Owner)
 	}
 
-	k.SetPrimaryNameEntry(ctx, ownerAddr, msg.Tld, msg.Name)
+	k.SetPrimaryNameEntry(ctx, ownerAddr, tld, name)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			"xid_primary_name_set",
-			sdk.NewAttribute("name", msg.Name),
-			sdk.NewAttribute("tld", msg.Tld),
+			sdk.NewAttribute("name", name),
+			sdk.NewAttribute("tld", tld),
 			sdk.NewAttribute("owner", msg.Owner),
 		),
 	})

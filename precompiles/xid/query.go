@@ -7,6 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/cosmos/evm/x/xid/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -30,6 +32,7 @@ func (p Precompile) Resolve(
 		return nil, fmt.Errorf("invalid argument type for tld: %T", args[1])
 	}
 
+	name, tld = types.NormalizeName(name), types.NormalizeTLD(tld)
 	record, found := p.xidKeeper.GetNameRecord(ctx, tld, name)
 	if !found {
 		// Return zero address if not found
@@ -125,6 +128,7 @@ func (p Precompile) GetProfile(
 		return nil, fmt.Errorf("invalid argument type for tld: %T", args[1])
 	}
 
+	name, tld = types.NormalizeName(name), types.NormalizeTLD(tld)
 	profile, found := p.xidKeeper.GetProfileRecord(ctx, tld, name)
 	if !found {
 		return method.Outputs.Pack("", "")
@@ -157,6 +161,7 @@ func (p Precompile) GetDNSRecord(
 		return nil, fmt.Errorf("invalid argument type for recordType: %T", args[2])
 	}
 
+	name, tld = types.NormalizeName(name), types.NormalizeTLD(tld)
 	record, found := p.xidKeeper.GetDNSRecordEntry(ctx, tld, name, uint32(recordType))
 	if !found {
 		return method.Outputs.Pack("", uint32(0))
@@ -185,6 +190,7 @@ func (p Precompile) GetRegistrationFee(
 		return nil, fmt.Errorf("invalid argument type for tld: %T", args[1])
 	}
 
+	name, tld = types.NormalizeName(name), types.NormalizeTLD(tld)
 	fee, err := p.xidKeeper.CalculateRegistrationFee(ctx, tld, name)
 	if err != nil {
 		return nil, err
@@ -213,6 +219,7 @@ func (p Precompile) GetLinkedIdentities(
 		return nil, fmt.Errorf("invalid argument type for tld: %T", args[1])
 	}
 
+	name, tld = types.NormalizeName(name), types.NormalizeTLD(tld)
 	identities := p.xidKeeper.GetAllLinkedIdentities(ctx, tld, name)
 
 	addresses := make([]string, len(identities))
@@ -253,6 +260,7 @@ func (p Precompile) GetContentRoot(
 		return nil, fmt.Errorf("invalid argument type for tld: %T", args[1])
 	}
 
+	name, tld = types.NormalizeName(name), types.NormalizeTLD(tld)
 	root, found := p.xidKeeper.GetContentRoot(ctx, tld, name)
 	if !found {
 		return method.Outputs.Pack("", uint64(0))

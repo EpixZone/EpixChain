@@ -12,6 +12,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// Every write method below normalizes the name and TLD to their stored
+// (lowercase) form and runs the ValidateBasic of the equivalent Cosmos Msg
+// before touching state, so the EVM path accepts exactly what the Cosmos tx
+// path accepts. Keep the two in step when adding a method or a Msg check.
+
 // Register handles the register(name, tld) function.
 // The registration fee is deducted directly from the caller's bank balance
 // and burned via the xID module account.
@@ -37,6 +42,12 @@ func (p Precompile) Register(
 
 	caller := contract.Caller()
 	callerAddr := sdk.AccAddress(caller.Bytes())
+	name, tld = types.NormalizeName(name), types.NormalizeTLD(tld)
+
+	msg := &types.MsgRegisterName{Owner: callerAddr.String(), Name: name, Tld: tld}
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 
 	// Delegate to the keeper which handles validation, fee collection
 	// (SendCoinsFromAccountToModule), burning (BurnCoins), and storage.
@@ -82,6 +93,12 @@ func (p Precompile) TransferName(
 	caller := contract.Caller()
 	callerAddr := sdk.AccAddress(caller.Bytes())
 	newOwner := sdk.AccAddress(newOwnerAddr.Bytes())
+	name, tld = types.NormalizeName(name), types.NormalizeTLD(tld)
+
+	msg := &types.MsgTransferName{Owner: callerAddr.String(), NewOwner: newOwner.String(), Name: name, Tld: tld}
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 
 	if err := p.xidKeeper.TransferNameRecord(ctx, callerAddr, newOwner, tld, name); err != nil {
 		return nil, err
@@ -127,22 +144,27 @@ func (p Precompile) UpdateProfile(
 	}
 
 	caller := contract.Caller()
+	callerAddr := sdk.AccAddress(caller.Bytes())
+	name, tld = types.NormalizeName(name), types.NormalizeTLD(tld)
+
+	profile := types.Profile{
+		Avatar: avatar,
+		Bio:    bio,
+	}
+	msg := &types.MsgUpdateProfile{Owner: callerAddr.String(), Name: name, Tld: tld, Profile: profile}
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 
 	// Verify ownership
 	record, found := p.xidKeeper.GetNameRecord(ctx, tld, name)
 	if !found {
 		return nil, fmt.Errorf("%s.%s not found", name, tld)
 	}
-
-	callerAddr := sdk.AccAddress(caller.Bytes())
 	if record.Owner != callerAddr.String() {
 		return nil, fmt.Errorf("caller is not the owner of %s.%s", name, tld)
 	}
 
-	profile := types.Profile{
-		Avatar: avatar,
-		Bio:    bio,
-	}
 	p.xidKeeper.SetProfileRecord(ctx, tld, name, profile)
 
 	p.xidKeeper.RecomputeAndStoreStateDigest(ctx)
@@ -189,23 +211,28 @@ func (p Precompile) SetDNSRecord(
 	}
 
 	caller := contract.Caller()
-
-	// Verify ownership
-	record, found := p.xidKeeper.GetNameRecord(ctx, tld, name)
-	if !found {
-		return nil, fmt.Errorf("%s.%s not found", name, tld)
-	}
-
 	callerAddr := sdk.AccAddress(caller.Bytes())
-	if record.Owner != callerAddr.String() {
-		return nil, fmt.Errorf("caller is not the owner of %s.%s", name, tld)
-	}
+	name, tld = types.NormalizeName(name), types.NormalizeTLD(tld)
 
 	dnsRecord := types.DNSRecord{
 		RecordType: uint32(recordType),
 		Value:      value,
 		Ttl:        ttl,
 	}
+	msg := &types.MsgSetDNSRecord{Owner: callerAddr.String(), Name: name, Tld: tld, Record: dnsRecord}
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
+	// Verify ownership
+	record, found := p.xidKeeper.GetNameRecord(ctx, tld, name)
+	if !found {
+		return nil, fmt.Errorf("%s.%s not found", name, tld)
+	}
+	if record.Owner != callerAddr.String() {
+		return nil, fmt.Errorf("caller is not the owner of %s.%s", name, tld)
+	}
+
 	p.xidKeeper.SetDNSRecordEntry(ctx, tld, name, dnsRecord)
 
 	p.xidKeeper.RecomputeAndStoreStateDigest(ctx)
@@ -244,16 +271,26 @@ func (p Precompile) DeleteDNSRecord(
 	}
 
 	caller := contract.Caller()
+	callerAddr := sdk.AccAddress(caller.Bytes())
+	name, tld = types.NormalizeName(name), types.NormalizeTLD(tld)
+
+	msg := &types.MsgDeleteDNSRecord{Owner: callerAddr.String(), Name: name, Tld: tld, RecordType: uint32(recordType)}
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 
 	// Verify ownership
 	record, found := p.xidKeeper.GetNameRecord(ctx, tld, name)
 	if !found {
 		return nil, fmt.Errorf("%s.%s not found", name, tld)
 	}
-
-	callerAddr := sdk.AccAddress(caller.Bytes())
 	if record.Owner != callerAddr.String() {
 		return nil, fmt.Errorf("caller is not the owner of %s.%s", name, tld)
+	}
+
+	// Verify the DNS record exists, as the Cosmos MsgDeleteDNSRecord handler does
+	if _, found := p.xidKeeper.GetDNSRecordEntry(ctx, tld, name, uint32(recordType)); !found {
+		return nil, fmt.Errorf("record type %d not found for %s.%s", recordType, name, tld)
 	}
 
 	p.xidKeeper.DeleteDNSRecordEntry(ctx, tld, name, uint32(recordType))
@@ -298,22 +335,27 @@ func (p Precompile) LinkIdentity(
 	}
 
 	caller := contract.Caller()
+	callerAddr := sdk.AccAddress(caller.Bytes())
+	name, tld = types.NormalizeName(name), types.NormalizeTLD(tld)
+
+	identity := types.LinkedIdentity{
+		Address: identityAddress,
+		Label:   label,
+	}
+	msg := &types.MsgLinkIdentity{Owner: callerAddr.String(), Name: name, Tld: tld, Identity: identity}
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 
 	// Verify ownership
 	record, found := p.xidKeeper.GetNameRecord(ctx, tld, name)
 	if !found {
 		return nil, fmt.Errorf("%s.%s not found", name, tld)
 	}
-
-	callerAddr := sdk.AccAddress(caller.Bytes())
 	if record.Owner != callerAddr.String() {
 		return nil, fmt.Errorf("caller is not the owner of %s.%s", name, tld)
 	}
 
-	identity := types.LinkedIdentity{
-		Address: identityAddress,
-		Label:   label,
-	}
 	if err := p.xidKeeper.SetLinkedIdentityEntry(ctx, tld, name, identity); err != nil {
 		return nil, err
 	}
@@ -357,16 +399,31 @@ func (p Precompile) UnlinkIdentity(
 	}
 
 	caller := contract.Caller()
+	callerAddr := sdk.AccAddress(caller.Bytes())
+	name, tld = types.NormalizeName(name), types.NormalizeTLD(tld)
+
+	msg := &types.MsgUnlinkIdentity{Owner: callerAddr.String(), Name: name, Tld: tld, Address: identityAddress}
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 
 	// Verify ownership
 	record, found := p.xidKeeper.GetNameRecord(ctx, tld, name)
 	if !found {
 		return nil, fmt.Errorf("%s.%s not found", name, tld)
 	}
-
-	callerAddr := sdk.AccAddress(caller.Bytes())
 	if record.Owner != callerAddr.String() {
 		return nil, fmt.Errorf("caller is not the owner of %s.%s", name, tld)
+	}
+
+	// Verify the linked identity exists and is currently active, as the Cosmos
+	// MsgUnlinkIdentity handler does
+	existing, found := p.xidKeeper.GetLinkedIdentityEntry(ctx, tld, name, identityAddress)
+	if !found {
+		return nil, fmt.Errorf("identity %s not found for %s.%s", identityAddress, name, tld)
+	}
+	if !existing.Active {
+		return nil, fmt.Errorf("identity %s is already unlinked for %s.%s", identityAddress, name, tld)
 	}
 
 	if err := p.xidKeeper.RevokeLinkedIdentityEntry(ctx, tld, name, identityAddress); err != nil {
@@ -415,6 +472,9 @@ func (p Precompile) AttestStateDigest(
 		Digest:    digest,
 		Signature: signature,
 	}
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 
 	if err := p.xidKeeper.SubmitAttestation(ctx, msg); err != nil {
 		return nil, err
@@ -446,6 +506,12 @@ func (p Precompile) SetPrimaryName(
 
 	caller := contract.Caller()
 	callerAddr := sdk.AccAddress(caller.Bytes())
+	name, tld = types.NormalizeName(name), types.NormalizeTLD(tld)
+
+	msg := &types.MsgSetPrimaryName{Owner: callerAddr.String(), Name: name, Tld: tld}
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
 
 	// Verify ownership
 	record, found := p.xidKeeper.GetNameRecord(ctx, tld, name)

@@ -13,6 +13,19 @@ var nameRegex = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`)
 // tldRegex matches lowercase alphabetic TLD strings
 var tldRegex = regexp.MustCompile(`^[a-z]{2,16}$`)
 
+// NormalizeName returns the canonical form of a name label: the lowercase form
+// under which RegisterNameRecord stores it. Every entry point that looks a name
+// up by its store key must normalize with this first.
+func NormalizeName(name string) string {
+	return strings.ToLower(name)
+}
+
+// NormalizeTLD returns the canonical (lowercase) form of a TLD, as used in
+// every store key.
+func NormalizeTLD(tld string) string {
+	return strings.ToLower(tld)
+}
+
 // ValidateName checks that a name label is valid
 func ValidateName(name string) error {
 	if len(name) == 0 {

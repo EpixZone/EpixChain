@@ -23,10 +23,11 @@ func (k Keeper) ResolveName(goCtx context.Context, req *types.QueryResolveNameRe
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	name, tld := types.NormalizeName(req.Name), types.NormalizeTLD(req.Tld)
 
-	record, found := k.GetNameRecord(ctx, req.Tld, req.Name)
+	record, found := k.GetNameRecord(ctx, tld, name)
 	if !found {
-		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", req.Name, req.Tld)
+		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", name, tld)
 	}
 
 	return &types.QueryResolveNameResponse{Record: &record}, nil
@@ -71,13 +72,14 @@ func (k Keeper) GetProfile(goCtx context.Context, req *types.QueryGetProfileRequ
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	name, tld := types.NormalizeName(req.Name), types.NormalizeTLD(req.Tld)
 
 	// Verify name exists
-	if !k.HasNameRecord(ctx, req.Tld, req.Name) {
-		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", req.Name, req.Tld)
+	if !k.HasNameRecord(ctx, tld, name) {
+		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", name, tld)
 	}
 
-	profile, found := k.GetProfileRecord(ctx, req.Tld, req.Name)
+	profile, found := k.GetProfileRecord(ctx, tld, name)
 	if !found {
 		return &types.QueryGetProfileResponse{}, nil
 	}
@@ -92,13 +94,14 @@ func (k Keeper) GetDNSRecords(goCtx context.Context, req *types.QueryGetDNSRecor
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	name, tld := types.NormalizeName(req.Name), types.NormalizeTLD(req.Tld)
 
 	// Verify name exists
-	if !k.HasNameRecord(ctx, req.Tld, req.Name) {
-		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", req.Name, req.Tld)
+	if !k.HasNameRecord(ctx, tld, name) {
+		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", name, tld)
 	}
 
-	records := k.GetAllDNSRecords(ctx, req.Tld, req.Name)
+	records := k.GetAllDNSRecords(ctx, tld, name)
 	return &types.QueryGetDNSRecordsResponse{Records: records}, nil
 }
 
@@ -110,7 +113,7 @@ func (k Keeper) GetTLD(goCtx context.Context, req *types.QueryGetTLDRequest) (*t
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	config, found := k.GetTLDConfig(ctx, req.Tld)
+	config, found := k.GetTLDConfig(ctx, types.NormalizeTLD(req.Tld))
 	if !found {
 		return nil, errorsmod.Wrapf(types.ErrTLDNotFound, "TLD %q not found", req.Tld)
 	}
@@ -208,8 +211,9 @@ func (k Keeper) GetRegistrationFee(goCtx context.Context, req *types.QueryGetReg
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	name, tld := types.NormalizeName(req.Name), types.NormalizeTLD(req.Tld)
 
-	fee, err := k.CalculateRegistrationFee(ctx, req.Tld, req.Name)
+	fee, err := k.CalculateRegistrationFee(ctx, tld, name)
 	if err != nil {
 		return nil, err
 	}
@@ -224,13 +228,14 @@ func (k Keeper) GetLinkedIdentities(goCtx context.Context, req *types.QueryGetLi
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	name, tld := types.NormalizeName(req.Name), types.NormalizeTLD(req.Tld)
 
 	// Verify name exists
-	if !k.HasNameRecord(ctx, req.Tld, req.Name) {
-		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", req.Name, req.Tld)
+	if !k.HasNameRecord(ctx, tld, name) {
+		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", name, tld)
 	}
 
-	identities := k.GetAllLinkedIdentities(ctx, req.Tld, req.Name)
+	identities := k.GetAllLinkedIdentities(ctx, tld, name)
 	return &types.QueryGetLinkedIdentitiesResponse{Identities: identities}, nil
 }
 
@@ -364,11 +369,12 @@ func (k Keeper) ResolveWithProof(goCtx context.Context, req *types.QueryResolveW
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	name, tld := types.NormalizeName(req.Name), types.NormalizeTLD(req.Tld)
 
 	// Verify name exists
-	record, found := k.GetNameRecord(ctx, req.Tld, req.Name)
+	record, found := k.GetNameRecord(ctx, tld, name)
 	if !found {
-		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", req.Name, req.Tld)
+		return nil, errorsmod.Wrapf(types.ErrNameNotFound, "%s.%s not found", name, tld)
 	}
 
 	// Build the domain snapshot
@@ -376,26 +382,26 @@ func (k Keeper) ResolveWithProof(goCtx context.Context, req *types.QueryResolveW
 		Record: record,
 	}
 
-	if profile, found := k.GetProfileRecord(ctx, req.Tld, req.Name); found {
+	if profile, found := k.GetProfileRecord(ctx, tld, name); found {
 		snap.Profile = &profile
 	}
 
-	dns := k.GetAllDNSRecords(ctx, req.Tld, req.Name)
+	dns := k.GetAllDNSRecords(ctx, tld, name)
 	if len(dns) > 0 {
 		snap.DnsRecords = dns
 	}
 
-	identities := k.GetAllLinkedIdentities(ctx, req.Tld, req.Name)
+	identities := k.GetAllLinkedIdentities(ctx, tld, name)
 	if len(identities) > 0 {
 		snap.Identities = identities
 	}
 
-	if cr, found := k.GetContentRoot(ctx, req.Tld, req.Name); found && cr.Root != "" {
+	if cr, found := k.GetContentRoot(ctx, tld, name); found && cr.Root != "" {
 		snap.ContentRoot = cr.Root
 	}
 
 	// Generate Merkle proof
-	proof, err := k.GenerateProof(ctx, req.Tld, req.Name)
+	proof, err := k.GenerateProof(ctx, tld, name)
 	if err != nil {
 		return nil, errorsmod.Wrap(types.ErrInvalidName, err.Error())
 	}
@@ -415,7 +421,7 @@ func (k Keeper) ResolveWithProof(goCtx context.Context, req *types.QueryResolveW
 		Height: digest.Height,
 		// The exact canonical bytes hashed to proof.LeafHash, so the client binds
 		// the returned data to the proven leaf instead of trusting the payload.
-		LeafPreimage: hex.EncodeToString(k.computeLeafPreimage(ctx, req.Tld, req.Name)),
+		LeafPreimage: hex.EncodeToString(k.computeLeafPreimage(ctx, tld, name)),
 	}, nil
 }
 
